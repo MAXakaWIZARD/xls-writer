@@ -1,8 +1,10 @@
+# xls-writer
 Port of PEAR Spreadsheet Excel Writer
 
-Usage
-=====
-## Write spreadsheet to file
+## Usage
+
+### Write spreadsheet to file
+```php
     require('vendor/autoload.php');
 
     // We give the path to our file here
@@ -21,3 +23,7 @@ Usage
 
     // We still need to explicitly close the workbook
     $workbook->close();
+```
+
+## License
+This library is released under [MIT](http://www.tldrlegal.com/license/mit-license) license.
