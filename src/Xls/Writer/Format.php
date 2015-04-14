@@ -42,7 +42,7 @@ namespace Xls\Writer;
  * @package  Spreadsheet_Excel_Writer
  */
 
-class Format // extends PEAR
+class Format
 {
     /**
      * The index given by the workbook when creating a new format.

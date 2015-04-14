@@ -508,7 +508,7 @@ class Worksheet extends BIFFwriter
             // open_basedir restriction in effect - store data in memory
             // ToDo: Let the error actually have an effect somewhere
             $this->_using_tmpfile = false;
-            return new PEAR_Error('Temp file could not be opened since open_basedir restriction in effect - please use setTmpDir() - using memory storage instead');
+            throw new \Exception('Temp file could not be opened since open_basedir restriction in effect - please use setTmpDir() - using memory storage instead');
         }
 
         // Open tmp file for storing Worksheet data
@@ -1281,7 +1281,7 @@ class Worksheet extends BIFFwriter
                 $col++;
             }
         } else {
-            $retval = new PEAR_Error('$val needs to be an array');
+            throw new \Exception('$val needs to be an array');
         }
         return ($retval);
     }
@@ -1306,7 +1306,7 @@ class Worksheet extends BIFFwriter
                 $row++;
             }
         } else {
-            $retval = new PEAR_Error('$val needs to be an array');
+            throw new \Exception('$val needs to be an array');
         }
         return ($retval);
     }
@@ -1390,8 +1390,7 @@ class Worksheet extends BIFFwriter
             return (array($row1, $col1));
         }
 
-        // TODO use real error codes
-        throw new \Exception("Unknown cell reference $cell", 0, PEAR_ERROR_DIE);
+        throw new \Exception("Unknown cell reference $cell", 0);
     }
 
     /**

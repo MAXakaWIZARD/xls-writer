@@ -107,7 +107,7 @@ define('SPREADSHEET_EXCEL_WRITER_CONCAT', "&");
  * @package  Spreadsheet_Excel_Writer
  */
 
-class Parser // extends PEAR
+class Parser
 {
     /**
      * The index of the character we are currently looking at
@@ -718,7 +718,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $token An Excel range in the Sheet1!A1:A2 format.
-     * @return mixed The packed ptgArea3d token on success, PEAR_Error on failure.
+     * @return mixed The packed ptgArea3d token on success
      */
     function _convertRange3d($token)
     {
@@ -815,7 +815,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $cell An Excel cell reference
-     * @return mixed The packed ptgRef3d token on success, PEAR_Error on failure.
+     * @return mixed The packed ptgRef3d token on success
      */
     function _convertRef3d($cell)
     {
@@ -905,8 +905,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $ext_ref The name of the external reference
-     * @return mixed The reference index in packed() format on success,
-     *               PEAR_Error on failure
+     * @return mixed The reference index in packed() format on success
      */
     function _getRefIndex($ext_ref)
     {
@@ -1281,7 +1280,7 @@ class Parser // extends PEAR
      * @access public
      * @param string $formula The formula to parse, without the initial equal
      *                        sign (=).
-     * @return mixed true on success, PEAR_Error on failure
+     * @return mixed true on success
      */
     function parse($formula)
     {
@@ -1301,7 +1300,7 @@ class Parser // extends PEAR
      * Cond -> Expr [(">" | "<") Expr]
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _condition()
     {
@@ -1369,7 +1368,7 @@ class Parser // extends PEAR
      *      -> "-" Term
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _expression()
     {
@@ -1430,7 +1429,7 @@ class Parser // extends PEAR
      * Term -> Fact [("*" | "/") Fact]
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _term()
     {
@@ -1469,7 +1468,7 @@ class Parser // extends PEAR
      *       | Function
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _fact()
     {
@@ -1549,7 +1548,7 @@ class Parser // extends PEAR
      * Func -> ( Expr [,Expr]* )
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _func()
     {

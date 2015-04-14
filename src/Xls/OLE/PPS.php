@@ -28,85 +28,85 @@ namespace Xls\OLE;
  * @category Structures
  * @package  OLE
  */
-class PPS // extends PEAR
+class PPS
 {
     /**
      * The PPS index
      * @var integer
      */
-    var $No;
+    public $No;
 
     /**
      * The PPS name (in Unicode)
      * @var string
      */
-    var $Name;
+    public $Name;
 
     /**
      * The PPS type. Dir, Root or File
      * @var integer
      */
-    var $Type;
+    public $Type;
 
     /**
      * The index of the previous PPS
      * @var integer
      */
-    var $PrevPps;
+    public $PrevPps;
 
     /**
      * The index of the next PPS
      * @var integer
      */
-    var $NextPps;
+    public $NextPps;
 
     /**
      * The index of it's first child if this is a Dir or Root PPS
      * @var integer
      */
-    var $DirPps;
+    public $DirPps;
 
     /**
      * A timestamp
      * @var integer
      */
-    var $Time1st;
+    public $Time1st;
 
     /**
      * A timestamp
      * @var integer
      */
-    var $Time2nd;
+    public $Time2nd;
 
     /**
      * Starting block (small or big) for this PPS's data  inside the container
      * @var integer
      */
-    var $_StartBlock;
+    public $_StartBlock;
 
     /**
      * The size of the PPS's data (in bytes)
      * @var integer
      */
-    var $Size;
+    public $Size;
 
     /**
      * The PPS's data (only used if it's not using a temporary file)
      * @var string
      */
-    var $_data;
+    public $_data;
 
     /**
      * Array of child PPS's (only used by Root and Dir PPS's)
      * @var array
      */
-    var $children = array();
+    public $children = array();
 
     /**
      * Pointer to OLE container
-     * @var OLE
+     * @var \Xls\OLE
      */
-    var $ole;
+    public $ole;
 
     /**
      * The constructor
@@ -123,7 +123,7 @@ class PPS // extends PEAR
      * @param string $data  The (usually binary) source data of the PPS
      * @param array $children Array containing children PPS for this PPS
      */
-    function __construct($No, $name, $type, $prev, $next, $dir, $time_1st, $time_2nd, $data, $children)
+    public function __construct($No, $name, $type, $prev, $next, $dir, $time_1st, $time_2nd, $data, $children)
     {
         $this->No = $No;
         $this->Name = $name;
@@ -148,7 +148,7 @@ class PPS // extends PEAR
      * @access private
      * @return integer The amount of data (in bytes)
      */
-    function _DataLen()
+    public function _DataLen()
     {
         if (!isset($this->_data)) {
             return 0;
@@ -168,7 +168,7 @@ class PPS // extends PEAR
      * @access private
      * @return string The binary string
      */
-    function _getPpsWk()
+    public function _getPpsWk()
     {
         $ret = $this->Name;
         for ($i = 0; $i < (64 - strlen($this->Name)); $i++) {
@@ -189,11 +189,11 @@ class PPS // extends PEAR
             . \Xls\OLE::LocalDate2OLE($this->Time2nd) // 116
             . pack(
                 "V",
-                isset($this->_StartBlock) ?
-                    $this->_StartBlock : 0
+                isset($this->_StartBlock) ? $this->_StartBlock : 0
             ) // 120
             . pack("V", $this->Size) // 124
             . pack("V", 0); // 128
+
         return $ret;
     }
 
@@ -206,7 +206,7 @@ class PPS // extends PEAR
      *                          container
      * @return integer          The index for this PPS
      */
-    static function _savePpsSetPnt(&$raList, $to_save, $depth = 0)
+    public static function _savePpsSetPnt(&$raList, $to_save, $depth = 0)
     {
         if (!is_array($to_save) || (count($to_save) == 0)) {
             return 0xFFFFFFFF;
@@ -218,9 +218,10 @@ class PPS // extends PEAR
             $raList[$cnt]->PrevPps = 0xFFFFFFFF;
             $raList[$cnt]->NextPps = 0xFFFFFFFF;
             $raList[$cnt]->DirPps = self::_savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
+
             return $cnt;
         } else {
-            $iPos = floor(count($to_save) / 2);
+            $iPos = (int) floor(count($to_save) / 2);
             $aPrev = array_slice($to_save, 0, $iPos);
             $aNext = array_slice($to_save, $iPos + 1);
 
@@ -236,5 +237,3 @@ class PPS // extends PEAR
         }
     }
 }
-
-?>

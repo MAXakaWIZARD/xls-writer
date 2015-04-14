@@ -19,8 +19,7 @@ namespace Xls\Writer;
  * @package  Spreadsheet_Excel_Writer
  */
 
-//TODO: deal with PEAR class
-class BIFFwriter // extends PEAR
+class BIFFwriter
 {
     /**
      * The BIFF/Excel version (5).
