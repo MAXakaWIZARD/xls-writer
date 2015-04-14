@@ -537,8 +537,7 @@ class Parser
      *
      * @access private
      * @param mixed $token The token to convert.
-     * @return mixed the converted token on success. PEAR_Error if the token
-     *               is not recognized
+     * @return mixed the converted token on success.
      */
     function _convert($token)
     {
@@ -622,8 +621,7 @@ class Parser
      *
      * @access private
      * @param string $string A string for conversion to its ptg value.
-     * @return mixed the converted token on success. PEAR_Error if the string
-     *               is longer than 255 characters.
+     * @return mixed the converted token on success.
      */
     function _convertString($string)
     {
@@ -638,6 +636,8 @@ class Parser
         } elseif ($this->_BIFF_version == 0x0600) {
             $encoding = 0; // TODO: Unicode support
             return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
+        } else {
+            throw new \Exception("Unknows BIFF version");
         }
     }
 
@@ -680,10 +680,8 @@ class Parser
             list($cell1, $cell2) = explode(':', $range);
         } elseif (preg_match("/^([A-Ia-i]?[A-Za-z])(\d+)\.\.([A-Ia-i]?[A-Za-z])(\d+)$/", $range)) {
             list($cell1, $cell2) = explode('..', $range);
-
         } else {
-            // TODO: use real error codes
-            throw new \Exception("Unknown range separator", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown range separator");
         }
 
         // Convert the cell references
@@ -706,9 +704,9 @@ class Parser
         } elseif ($class == 2) {
             $ptgArea = pack("C", $this->ptg['ptgAreaA']);
         } else {
-            // TODO: use real error codes
-            throw new \Exception("Unknown class $class", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown class $class", 0);
         }
+
         return $ptgArea . $row1 . $row2 . $col1 . $col2;
     }
 
@@ -806,6 +804,7 @@ class Parser
             // TODO: use real error codes
             throw new \Exception("Unknown class $class");
         }
+
         return $ptgRef . $row . $col;
     }
 
@@ -848,7 +847,7 @@ class Parser
         } elseif ($class == 2) {
             $ptgRef = pack("C", $this->ptg['ptgRef3dA']);
         } else {
-            throw new \Exception("Unknown class $class", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown class $class", 0);
         }
 
         return $ptgRef . $ext_ref . $row . $col;
@@ -1292,6 +1291,7 @@ class Parser
         if (pearIsError($this->_parse_tree)) {
             return $this->_parse_tree;
         }
+
         return true;
     }
 
@@ -1407,6 +1407,7 @@ class Parser
                 $result = $this->_createTree('ptgSub', $result, $result2);
             }
         }
+
         return $result;
     }
 
@@ -1421,6 +1422,7 @@ class Parser
     function _parenthesizedExpression()
     {
         $result = $this->_createTree('ptgParen', $this->_expression(), '');
+
         return $result;
     }
 
@@ -1456,6 +1458,7 @@ class Parser
                 $result = $this->_createTree('ptgDiv', $result, $result2);
             }
         }
+
         return $result;
     }
 
@@ -1536,6 +1539,7 @@ class Parser
             $result = $this->_func();
             return $result;
         }
+
         throw new \Exception(
             "Syntax error: " . $this->_current_token .
             ", lookahead: " . $this->_lookahead .
@@ -1595,6 +1599,7 @@ class Parser
 
         $result = $this->_createTree($function, $result, $num_args);
         $this->_advance(); // eat the ")"
+
         return $result;
     }
 
@@ -1697,6 +1702,7 @@ class Parser
             }
         }
         $polish .= $converted_tree;
+
         return $polish;
     }
 }

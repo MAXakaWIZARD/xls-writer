@@ -1266,7 +1266,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col    The first col (leftmost col) we are writing to
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
-     * @return mixed PEAR_Error on failure
+     * @return mixed
      */
     public function writeRow($row, $col, $val, $format = null)
     {
@@ -1294,7 +1294,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col    The col we are writing to
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
-     * @return mixed PEAR_Error on failure
+     * @return mixed
      */
     public function writeCol($row, $col, $val, $format = null)
     {
@@ -1363,6 +1363,7 @@ class Worksheet extends BIFFwriter
      *
      * @access private
      * @param string $cell The cell reference. Or range of cells.
+     * @throws \Exception
      * @return array
      */
     protected function _substituteCellref($cell)
@@ -1541,7 +1542,8 @@ class Worksheet extends BIFFwriter
         }
 
         $this->_append($header . $data . $xl_double);
-        return (0);
+
+        return 0;
     }
 
     /**
@@ -1601,6 +1603,7 @@ class Worksheet extends BIFFwriter
         $header = pack("vv", $record, $length);
         $data = pack("vvvv", $row, $col, $xf, $strlen);
         $this->_append($header . $data . $str);
+
         return ($str_error);
     }
 
@@ -1609,6 +1612,7 @@ class Worksheet extends BIFFwriter
      *
      * @access public
      * @param string $encoding The encoding. Ex: 'UTF-16LE', 'utf-8', 'ISO-859-7'
+     * @throws \Exception
      */
     public function setInputEncoding($encoding)
     {
@@ -1668,6 +1672,7 @@ class Worksheet extends BIFFwriter
         $header = pack('vv', $record, $length);
         $data = pack('vvvV', $row, $col, $xf, $this->_str_table[$str]);
         $this->_append($header . $data);
+
         return $str_error;
     }
 
@@ -1701,6 +1706,7 @@ class Worksheet extends BIFFwriter
         if ($col > $this->_dim_colmax) {
             $this->_dim_colmax = $col;
         }
+
         return true;
     }
 
@@ -1753,7 +1759,8 @@ class Worksheet extends BIFFwriter
             $data = pack("vvv", -1, 0, strlen($chunk));
             $this->_append($header . $data . $chunk);
         }
-        return (0);
+
+        return 0;
     }
 
     /**
@@ -1772,12 +1779,13 @@ class Worksheet extends BIFFwriter
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param mixed $format The XF format
+     * @return int
      */
     public function writeBlank($row, $col, $format)
     {
         // Don't write a blank cell unless it has a format
         if (!$format) {
-            return (0);
+            return 0;
         }
 
         $record = 0x0201; // Record identifier
@@ -1807,6 +1815,7 @@ class Worksheet extends BIFFwriter
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $row, $col, $xf);
         $this->_append($header . $data);
+
         return 0;
     }
 
@@ -1886,6 +1895,7 @@ class Worksheet extends BIFFwriter
         );
 
         $this->_append($header . $data . $formula);
+
         return 0;
     }
 
@@ -2310,6 +2320,7 @@ class Worksheet extends BIFFwriter
      * Writes Excel DIMENSIONS to define the area in which there is data.
      *
      * @access private
+     * @throw \Exception
      */
     protected function _storeDimensions()
     {
@@ -2340,7 +2351,10 @@ class Worksheet extends BIFFwriter
                 $col_max,
                 $reserved
             );
+        } else {
+            throw new \Exception('Unsupported BIFF version');
         }
+
         $header = pack("vv", $record, $length);
         $this->_prepend($header . $data);
     }
@@ -3162,7 +3176,6 @@ class Worksheet extends BIFFwriter
         $this->_prepend($header . $data);
     }
 
-
     /**
      * Write the VERTICALPAGEBREAKS BIFF record.
      *
@@ -3270,7 +3283,7 @@ class Worksheet extends BIFFwriter
     public function insertBitmap($row, $col, $bitmap, $x = 0, $y = 0, $scale_x = 1, $scale_y = 1)
     {
         $bitmap_array = $this->_processBitmap($bitmap);
-        if ($this->isError($bitmap_array)) {
+        if (pearIsError($bitmap_array)) {
             $this->writeString($row, $col, $bitmap_array->getMessage());
             return;
         }
@@ -3619,7 +3632,7 @@ class Worksheet extends BIFFwriter
         $header = pack("Vvvvv", 0x000c, $width, $height, 0x01, 0x18);
         $data = $header . $data;
 
-        return (array($width, $height, $size, $data));
+        return array($width, $height, $size, $data);
     }
 
     /**
