@@ -1700,5 +1700,3 @@ class Parser
         return $polish;
     }
 }
-
-?>

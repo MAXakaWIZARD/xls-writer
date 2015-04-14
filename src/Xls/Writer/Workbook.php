@@ -1350,7 +1350,6 @@ class Workbook extends BIFFwriter
             // the CONTINUE boundary. If the string is very long it may need to be
             // written in more than one CONTINUE record.
             while ($block_length >= $continue_limit) {
-
                 // We need to avoid the case where a string is continued in the first
                 // n bytes that contain the string header information.
                 $header_length = 3; // Min string + header size -1
@@ -1497,7 +1496,6 @@ class Workbook extends BIFFwriter
 
         /* TODO: not good for performance */
         foreach (array_keys($this->_str_table) as $string) {
-
             $string_length = strlen($string);
             $headerinfo = unpack("vlength/Cencoding", $string);
             $encoding = $headerinfo["encoding"];
@@ -1521,7 +1519,6 @@ class Workbook extends BIFFwriter
             // written in more than one CONTINUE record.
             //
             while ($block_length >= $continue_limit) {
-
                 // We need to avoid the case where a string is continued in the first
                 // n bytes that contain the string header information.
                 //
@@ -1555,7 +1552,6 @@ class Workbook extends BIFFwriter
                         $split_string = 1;
                     }
                 }
-
 
                 if ($space_remaining > $header_length) {
                     // Write as much as possible of the string in the current block

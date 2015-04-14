@@ -25,48 +25,47 @@ class BIFFwriter
      * The BIFF/Excel version (5).
      * @var integer
      */
-    var $_BIFF_version = 0x0500;
+    public $_BIFF_version = 0x0500;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer
      */
-    var $_byte_order;
+    public $_byte_order;
 
     /**
      * The string containing the data of the BIFF stream
      * @var string
      */
-    var $_data;
+    public $_data;
 
     /**
      * The size of the data in bytes. Should be the same as strlen($this->_data)
      * @var integer
      */
-    var $_datasize;
+    public $_datasize;
 
     /**
      * The maximun length for a BIFF record. See _addContinue()
      * @var integer
      * @see _addContinue()
      */
-    var $_limit;
+    public $_limit;
 
     /**
      * The temporary dir for storing the OLE file
      * @var string
      */
-    var $_tmp_dir;
+    public $_tmp_dir;
 
     /**
      * The temporary file for storing the OLE file
      * @var string
      */
-    var $_tmp_file;
+    public $_tmp_file;
 
     /**
-     * Constructor
-     *
+     * @throws \Exception
      */
     public function __construct()
     {
@@ -83,9 +82,8 @@ class BIFFwriter
      * Determine the byte order and store it as class data to avoid
      * recalculating it for each call to new().
      *
-     * @access private
      */
-    function _setByteOrder()
+    protected function _setByteOrder()
     {
         // Check if "pack" gives the required IEEE 64bit float
         $teststr = pack("d", 1.2345);
@@ -97,8 +95,7 @@ class BIFFwriter
         } else {
             // Give up. I'll fix this in a later version.
             throw new \Exception(
-                "Required floating point format " .
-                "not supported on this platform."
+                "Required floating point format is not supported on this platform."
             );
         }
         $this->_byte_order = $byte_order;
@@ -110,7 +107,7 @@ class BIFFwriter
      * @param string $data binary data to prepend
      * @access private
      */
-    function _prepend($data)
+    protected function _prepend($data)
     {
         if (strlen($data) > $this->_limit) {
             $data = $this->_addContinue($data);
@@ -125,7 +122,7 @@ class BIFFwriter
      * @param string $data binary data to append
      * @access private
      */
-    function _append($data)
+    protected function _append($data)
     {
         if (strlen($data) > $this->_limit) {
             $data = $this->_addContinue($data);
@@ -140,9 +137,9 @@ class BIFFwriter
      *
      * @param  integer $type Type of BIFF file to write: 0x0005 Workbook,
      *                       0x0010 Worksheet.
-     * @access private
+     * @throws \Exception
      */
-    function _storeBof($type)
+    protected function _storeBof($type)
     {
         $record = 0x0809; // Record identifier
 
@@ -158,11 +155,12 @@ class BIFFwriter
             $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
             $build = 0x0DBB;
             $year = 0x07CC;
+        } else {
+            throw new \Exception("Unknown BIFF version");
         }
-        $version = $this->_BIFF_version;
 
         $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $version, $type, $build, $year);
+        $data = pack("vvvv", $this->_BIFF_version, $type, $build, $year);
         $this->_prepend($header . $data . $unknown);
     }
 
@@ -171,7 +169,7 @@ class BIFFwriter
      *
      * @access private
      */
-    function _storeEof()
+    protected function _storeEof()
     {
         $record = 0x000A; // Record identifier
         $length = 0x0000; // Number of bytes to follow
@@ -191,7 +189,7 @@ class BIFFwriter
      * @return string        A very convenient string of continue blocks
      * @access private
      */
-    function _addContinue($data)
+    protected function _addContinue($data)
     {
         $limit = $this->_limit;
         $record = 0x003C; // Record identifier
@@ -224,14 +222,13 @@ class BIFFwriter
      * @param string $dir The dir to be used as temp dir
      * @return true if given dir is valid, false otherwise
      */
-    function setTempDir($dir)
+    public function setTempDir($dir)
     {
         if (is_dir($dir)) {
             $this->_tmp_dir = $dir;
             return true;
         }
+
         return false;
     }
 }
-
-?>
