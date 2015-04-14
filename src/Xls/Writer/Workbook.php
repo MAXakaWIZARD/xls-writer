@@ -125,6 +125,11 @@ class Workbook extends BIFFwriter
     var $_string_sizeinfo_size;
 
     /**
+     * @var int
+     */
+    protected $creationTimestamp;
+
+    /**
      * Class constructor
      *
      * @param string filename for storing the workbook. "-" for writing to stdout.
@@ -160,6 +165,24 @@ class Workbook extends BIFFwriter
         $this->_str_unique = 0;
         $this->_str_table = array();
         $this->_setPaletteXl97();
+
+        $this->creationTimestamp = time();
+    }
+
+    /**
+     * @return int
+     */
+    public function getCreationTimestamp()
+    {
+        return $this->creationTimestamp;
+    }
+
+    /**
+     * @param int $creationTime
+     */
+    public function setCreationTimestamp($creationTime)
+    {
+        $this->creationTimestamp = $creationTime;
     }
 
     /**
@@ -545,7 +568,7 @@ class Workbook extends BIFFwriter
             }
         }
 
-        $root = new \Xls\OLE\PPS\Root(time(), time(), array($OLE));
+        $root = new \Xls\OLE\PPS\Root($this->getCreationTimestamp(), $this->getCreationTimestamp(), array($OLE));
         if ($this->_tmp_dir != '') {
             $root->setTempDir($this->_tmp_dir);
         }

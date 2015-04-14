@@ -1,6 +1,8 @@
 # xls-writer
 
+[![Build Status](https://api.travis-ci.org/MAXakaWIZARD/xls-writer.png?branch=master)](https://travis-ci.org/MAXakaWIZARD/xls-writer) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/?branch=master)
+[![Coverage Status](https://coveralls.io/repos/MAXakaWIZARD/xls-writer/badge.svg?branch=master)](https://coveralls.io/r/MAXakaWIZARD/xls-writer?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/stable.svg)](https://packagist.org/packages/maxakawizard/xls-writer) 
 [![Total Downloads](https://poser.pugx.org/maxakawizard/xls-writer/downloads.svg)](https://packagist.org/packages/maxakawizard/xls-writer) 
 [![License](https://poser.pugx.org/maxakawizard/xls-writer/license.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
