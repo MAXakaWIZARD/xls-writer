@@ -683,7 +683,7 @@ class Parser // extends PEAR
 
         } else {
             // TODO: use real error codes
-            throw new \Exception("Unknown range separator", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown range separator");
         }
 
         // Convert the cell references
@@ -707,7 +707,7 @@ class Parser // extends PEAR
             $ptgArea = pack("C", $this->ptg['ptgAreaA']);
         } else {
             // TODO: use real error codes
-            throw new \Exception("Unknown class $class", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown class $class", 0);
         }
         return $ptgArea . $row1 . $row2 . $col1 . $col2;
     }
@@ -848,7 +848,7 @@ class Parser // extends PEAR
         } elseif ($class == 2) {
             $ptgRef = pack("C", $this->ptg['ptgRef3dA']);
         } else {
-            throw new \Exception("Unknown class $class", 0, PEAR_ERROR_DIE);
+            throw new \Exception("Unknown class $class", 0);
         }
 
         return $ptgRef . $ext_ref . $row . $col;

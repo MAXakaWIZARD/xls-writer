@@ -124,12 +124,12 @@ class Validator
     {
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if (PEAR::isError($error)) {
+        if (pearIsError($error)) {
             return $this->_formula1;
         }
 
         $this->_formula1 = $this->_parser->toReversePolish();
-        if (PEAR::isError($this->_formula1)) {
+        if (pearIsError($this->_formula1)) {
             return $this->_formula1;
         }
         return true;
@@ -139,12 +139,12 @@ class Validator
     {
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if (PEAR::isError($error)) {
+        if (pearIsError($error)) {
             return $this->_formula2;
         }
 
         $this->_formula2 = $this->_parser->toReversePolish();
-        if (PEAR::isError($this->_formula2)) {
+        if (pearIsError($this->_formula2)) {
             return $this->_formula2;
         }
         return true;

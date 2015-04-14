@@ -67,7 +67,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         //needed for test files comparison
         $workbook->setCreationTimestamp(1429042916);
 
-        $worksheet = $workbook->addWorksheet('My first worksheet');
+        $worksheet = $workbook->addWorksheet('New PC');
 
         $formatHeader = $workbook->addFormat();
         $formatHeader->setBold();
@@ -89,7 +89,8 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $worksheet->write(3, 2, 100);
         $worksheet->writeFormula(3, 3, '=B4*C4');
 
-        $worksheet->write(10, 0, 'Total');
+        $worksheet->write(10, 0, 'Total', $formatHeader);
+        $worksheet->mergeCells(10, 0, 10, 2);
         $worksheet->writeFormula(10, 3, '=SUM(D2:D9)');
 
         // We still need to explicitly close the workbook
