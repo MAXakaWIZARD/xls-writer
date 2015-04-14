@@ -1,8 +1,8 @@
 # xls-writer
 
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/stable.svg)](https://packagist.org/packages/maxakawizard/xls-writer) 
 [![Total Downloads](https://poser.pugx.org/maxakawizard/xls-writer/downloads.svg)](https://packagist.org/packages/maxakawizard/xls-writer) 
-[![Latest Unstable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/unstable.svg)](https://packagist.org/packages/maxakawizard/xls-writer) 
 [![License](https://poser.pugx.org/maxakawizard/xls-writer/license.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
 
 Port of [PEAR Spreadsheet Excel Writer](http://pear.php.net/package/Spreadsheet_Excel_Writer).
