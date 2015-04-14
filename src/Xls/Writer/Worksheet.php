@@ -1861,13 +1861,13 @@ class Worksheet extends BIFFwriter
 
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if ($this->isError($error)) {
+        if (pearIsError($error)) {
             $this->writeString($row, $col, $error->getMessage());
             return -1;
         }
 
         $formula = $this->_parser->toReversePolish();
-        if ($this->isError($formula)) {
+        if (pearIsError($formula)) {
             $this->writeString($row, $col, $formula->getMessage());
             return -1;
         }
