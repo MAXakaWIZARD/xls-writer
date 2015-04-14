@@ -36,5 +36,8 @@ $worksheet->write(3, 1, 32);
 $workbook->close();
 ```
 
+## Documentation
+Original docs can be found [here](https://pear.php.net/manual/en/package.fileformats.spreadsheet-excel-writer.php)
+
 ## License
 This library is released under [MIT](http://www.tldrlegal.com/license/mit-license) license.
