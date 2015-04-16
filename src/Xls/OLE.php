@@ -108,7 +108,9 @@ class OLE // extends PEAR
      */
     function __destruct()
     {
-        fclose($this->_file_handle);
+        if (is_resource($this->_file_handle)) {
+            fclose($this->_file_handle);
+        }
     }
 
     /**
@@ -226,12 +228,11 @@ class OLE // extends PEAR
      */
     function getStream($blockIdOrPps)
     {
-        include_once 'OLE/ChainedBlockStream.php';
         static $isRegistered = false;
         if (!$isRegistered) {
             stream_wrapper_register(
                 'ole-chainedblockstream',
-                'OLE_ChainedBlockStream'
+                '\Xls\OLE\ChainedBlockStream'
             );
             $isRegistered = true;
         }
@@ -240,7 +241,8 @@ class OLE // extends PEAR
         // in OLE_ChainedBlockStream::stream_open().
         // Object is removed from self::$instances in OLE_Stream::close().
         $GLOBALS['_OLE_INSTANCES'][] = $this;
-        $instanceId = end(array_keys($GLOBALS['_OLE_INSTANCES']));
+        $instancesIds = array_keys($GLOBALS['_OLE_INSTANCES']);
+        $instanceId = end($instancesIds);
 
         $path = 'ole-chainedblockstream://oleInstanceId=' . $instanceId;
         if (is_a($blockIdOrPps, 'OLE_PPS')) {

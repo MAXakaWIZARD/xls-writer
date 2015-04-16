@@ -4,3 +4,4 @@
 *.phar
 composer.lock
 build
+phpunit.xml

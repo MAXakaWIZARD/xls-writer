@@ -38,13 +38,13 @@ class Writer extends Writer\Workbook
      * Utility function for writing formulas
      * Converts a cell's coordinates to the A1 format.
      *
-     * @access public
-     * @static
      * @param integer $row Row for the cell to convert (0-indexed).
      * @param integer $col Column for the cell to convert (0-indexed).
+     *
+     * @throws \Exception
      * @return string The cell identifier in A1 format
      */
-    function rowcolToCell($row, $col)
+    public static function rowcolToCell($row, $col)
     {
         if ($col > 255) { //maximum column value exceeded
             throw new \Exception("Maximum column value exceeded: $col");
