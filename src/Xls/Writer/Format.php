@@ -44,6 +44,9 @@ namespace Xls\Writer;
 
 class Format
 {
+    const BORDER_THIN = 1;
+    const BORDER_THICK = 2;
+
     /**
      * The index given by the workbook when creating a new format.
      * @var integer
@@ -785,7 +788,7 @@ class Format
      * Sets the width for the bottom border of the cell
      *
      * @access public
-     * @param integer $style style of the cell border. 1 => thin, 2 => thick.
+     * @param integer $style style of the cell border (BORDER_THIN or BORDER_THICK).
      */
     public function setBottom($style)
     {
@@ -796,7 +799,7 @@ class Format
      * Sets the width for the top border of the cell
      *
      * @access public
-     * @param integer $style style of the cell top border. 1 => thin, 2 => thick.
+     * @param integer $style style of the cell top border (BORDER_THIN or BORDER_THICK).
      */
     public function setTop($style)
     {
@@ -807,7 +810,7 @@ class Format
      * Sets the width for the left border of the cell
      *
      * @access public
-     * @param integer $style style of the cell left border. 1 => thin, 2 => thick.
+     * @param integer $style style of the cell left border (BORDER_THIN or BORDER_THICK).
      */
     public function setLeft($style)
     {
@@ -818,7 +821,7 @@ class Format
      * Sets the width for the right border of the cell
      *
      * @access public
-     * @param integer $style style of the cell right border. 1 => thin, 2 => thick.
+     * @param integer $style style of the cell right border (BORDER_THIN or BORDER_THICK).
      */
     public function setRight($style)
     {
@@ -830,7 +833,7 @@ class Format
      * Set cells borders to the same style
      *
      * @access public
-     * @param integer $style style to apply for all cell borders. 1 => thin, 2 => thick.
+     * @param integer $style style to apply for all cell borders (BORDER_THIN or BORDER_THICK).
      */
     public function setBorder($style)
     {

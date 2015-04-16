@@ -110,7 +110,9 @@ class OLE
      */
     public function __destruct()
     {
-        fclose($this->fileHandle);
+        if (is_resource($this->fileHandle)) {
+            fclose($this->fileHandle);
+        }
     }
 
     /**

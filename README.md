@@ -14,11 +14,9 @@ If you notice compliance oversights, please send a patch via pull request.
 
 ## Usage
 
-### Write spreadsheet to file
 ```php
 require('vendor/autoload.php');
 
-// We give the path to our file here
 $workbook = new Xls\Writer('test.xls');
 
 $worksheet = $workbook->addWorksheet('My first worksheet');
@@ -32,7 +30,6 @@ $worksheet->write(2, 1, 31);
 $worksheet->write(3, 0, 'Juan Herrera');
 $worksheet->write(3, 1, 32);
 
-// We still need to explicitly close the workbook
 $workbook->close();
 ```
 
