@@ -35,7 +35,17 @@ class File extends \Xls\OLE\PPS
      * The temporary dir for storing the OLE file
      * @var string
      */
-    var $_tmp_dir;
+    public $_tmp_dir;
+
+    /**
+     * @var string
+     */
+    public $_tmp_filename;
+
+    /**
+     * @var
+     */
+    public $_PPS_FILE;
 
     /**
      * The constructor
@@ -44,11 +54,12 @@ class File extends \Xls\OLE\PPS
      * @param string $name The name of the file (in Unicode)
      * @see OLE::Asc2Ucs()
      */
-    function __construct($name)
+    public function __construct($name)
     {
         //TODO:check out how correctly replace this
         //$this->_tmp_dir = System::tmpdir();
         $this->_tmp_dir = sys_get_temp_dir();
+
         parent::__construct(
             null,
             $name,
@@ -66,26 +77,25 @@ class File extends \Xls\OLE\PPS
     /**
      * Sets the temp dir used for storing the OLE file
      *
-     * @access public
      * @param string $dir The dir to be used as temp dir
      * @return true if given dir is valid, false otherwise
      */
-    function setTempDir($dir)
+    public function setTempDir($dir)
     {
         if (is_dir($dir)) {
             $this->_tmp_dir = $dir;
             return true;
         }
+
         return false;
     }
 
     /**
      * Initialization method. Has to be called right after OLE_PPS_File().
-     *
-     * @access public
-     * @return mixed true on success. PEAR_Error on failure
+     * @throws \Exception
+     * @return mixed true on success.
      */
-    function init()
+    public function init()
     {
         $this->_tmp_filename = tempnam($this->_tmp_dir, "OLE_PPS_File");
         $fh = @fopen($this->_tmp_filename, "w+b");
@@ -103,10 +113,9 @@ class File extends \Xls\OLE\PPS
     /**
      * Append data to PPS
      *
-     * @access public
      * @param string $data The data to append
      */
-    function append($data)
+    public function append($data)
     {
         if ($this->_PPS_FILE) {
             fwrite($this->_PPS_FILE, $data);
@@ -119,10 +128,8 @@ class File extends \Xls\OLE\PPS
      * Returns a stream for reading this file using fread() etc.
      * @return  resource  a read-only stream
      */
-    function getStream()
+    public function getStream()
     {
         $this->ole->getStream($this);
     }
 }
-
-?>

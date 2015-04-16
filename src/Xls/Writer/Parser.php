@@ -107,7 +107,7 @@ define('SPREADSHEET_EXCEL_WRITER_CONCAT', "&");
  * @package  Spreadsheet_Excel_Writer
  */
 
-class Parser // extends PEAR
+class Parser
 {
     /**
      * The index of the character we are currently looking at
@@ -537,8 +537,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param mixed $token The token to convert.
-     * @return mixed the converted token on success. PEAR_Error if the token
-     *               is not recognized
+     * @return mixed the converted token on success.
      */
     function _convert($token)
     {
@@ -622,8 +621,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $string A string for conversion to its ptg value.
-     * @return mixed the converted token on success. PEAR_Error if the string
-     *               is longer than 255 characters.
+     * @return mixed the converted token on success.
      */
     function _convertString($string)
     {
@@ -638,6 +636,8 @@ class Parser // extends PEAR
         } elseif ($this->_BIFF_version == 0x0600) {
             $encoding = 0; // TODO: Unicode support
             return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
+        } else {
+            throw new \Exception("Unknows BIFF version");
         }
     }
 
@@ -680,9 +680,7 @@ class Parser // extends PEAR
             list($cell1, $cell2) = explode(':', $range);
         } elseif (preg_match("/^([A-Ia-i]?[A-Za-z])(\d+)\.\.([A-Ia-i]?[A-Za-z])(\d+)$/", $range)) {
             list($cell1, $cell2) = explode('..', $range);
-
         } else {
-            // TODO: use real error codes
             throw new \Exception("Unknown range separator");
         }
 
@@ -706,9 +704,9 @@ class Parser // extends PEAR
         } elseif ($class == 2) {
             $ptgArea = pack("C", $this->ptg['ptgAreaA']);
         } else {
-            // TODO: use real error codes
             throw new \Exception("Unknown class $class", 0);
         }
+
         return $ptgArea . $row1 . $row2 . $col1 . $col2;
     }
 
@@ -718,7 +716,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $token An Excel range in the Sheet1!A1:A2 format.
-     * @return mixed The packed ptgArea3d token on success, PEAR_Error on failure.
+     * @return mixed The packed ptgArea3d token on success
      */
     function _convertRange3d($token)
     {
@@ -806,6 +804,7 @@ class Parser // extends PEAR
             // TODO: use real error codes
             throw new \Exception("Unknown class $class");
         }
+
         return $ptgRef . $row . $col;
     }
 
@@ -815,7 +814,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $cell An Excel cell reference
-     * @return mixed The packed ptgRef3d token on success, PEAR_Error on failure.
+     * @return mixed The packed ptgRef3d token on success
      */
     function _convertRef3d($cell)
     {
@@ -905,8 +904,7 @@ class Parser // extends PEAR
      *
      * @access private
      * @param string $ext_ref The name of the external reference
-     * @return mixed The reference index in packed() format on success,
-     *               PEAR_Error on failure
+     * @return mixed The reference index in packed() format on success
      */
     function _getRefIndex($ext_ref)
     {
@@ -1281,7 +1279,7 @@ class Parser // extends PEAR
      * @access public
      * @param string $formula The formula to parse, without the initial equal
      *                        sign (=).
-     * @return mixed true on success, PEAR_Error on failure
+     * @return mixed true on success
      */
     function parse($formula)
     {
@@ -1293,6 +1291,7 @@ class Parser // extends PEAR
         if (pearIsError($this->_parse_tree)) {
             return $this->_parse_tree;
         }
+
         return true;
     }
 
@@ -1301,7 +1300,7 @@ class Parser // extends PEAR
      * Cond -> Expr [(">" | "<") Expr]
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _condition()
     {
@@ -1369,7 +1368,7 @@ class Parser // extends PEAR
      *      -> "-" Term
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _expression()
     {
@@ -1408,6 +1407,7 @@ class Parser // extends PEAR
                 $result = $this->_createTree('ptgSub', $result, $result2);
             }
         }
+
         return $result;
     }
 
@@ -1422,6 +1422,7 @@ class Parser // extends PEAR
     function _parenthesizedExpression()
     {
         $result = $this->_createTree('ptgParen', $this->_expression(), '');
+
         return $result;
     }
 
@@ -1430,7 +1431,7 @@ class Parser // extends PEAR
      * Term -> Fact [("*" | "/") Fact]
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _term()
     {
@@ -1457,6 +1458,7 @@ class Parser // extends PEAR
                 $result = $this->_createTree('ptgDiv', $result, $result2);
             }
         }
+
         return $result;
     }
 
@@ -1469,7 +1471,7 @@ class Parser // extends PEAR
      *       | Function
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _fact()
     {
@@ -1537,6 +1539,7 @@ class Parser // extends PEAR
             $result = $this->_func();
             return $result;
         }
+
         throw new \Exception(
             "Syntax error: " . $this->_current_token .
             ", lookahead: " . $this->_lookahead .
@@ -1549,7 +1552,7 @@ class Parser // extends PEAR
      * Func -> ( Expr [,Expr]* )
      *
      * @access private
-     * @return mixed The parsed ptg'd tree on success, PEAR_Error on failure
+     * @return mixed The parsed ptg'd tree on success
      */
     function _func()
     {
@@ -1596,6 +1599,7 @@ class Parser // extends PEAR
 
         $result = $this->_createTree($function, $result, $num_args);
         $this->_advance(); // eat the ")"
+
         return $result;
     }
 
@@ -1698,6 +1702,7 @@ class Parser // extends PEAR
             }
         }
         $polish .= $converted_tree;
+
         return $polish;
     }
 }

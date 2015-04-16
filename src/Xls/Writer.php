@@ -13,7 +13,7 @@ class Writer extends Writer\Workbook
      *
      * @param string $filename The optional filename for the Workbook.
      */
-    function __construct($filename = '')
+    public function __construct($filename = '')
     {
         $this->_filename = $filename;
         parent::__construct($filename);
@@ -23,9 +23,8 @@ class Writer extends Writer\Workbook
      * Send HTTP headers for the Excel file.
      *
      * @param string $filename The filename to use for HTTP headers
-     * @access public
      */
-    function send($filename)
+    public function send($filename)
     {
         header("Content-type: application/vnd.ms-excel");
         header("Content-Disposition: attachment; filename=\"$filename\"");
