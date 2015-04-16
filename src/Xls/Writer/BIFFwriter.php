@@ -37,13 +37,13 @@ class BIFFwriter
      * The string containing the data of the BIFF stream
      * @var string
      */
-    public $_data;
+    public $data;
 
     /**
-     * The size of the data in bytes. Should be the same as strlen($this->_data)
+     * The size of the data in bytes. Should be the same as strlen($this->data)
      * @var integer
      */
-    public $_datasize;
+    public $datasize;
 
     /**
      * The maximun length for a BIFF record. See _addContinue()
@@ -56,13 +56,13 @@ class BIFFwriter
      * The temporary dir for storing the OLE file
      * @var string
      */
-    public $_tmp_dir;
+    public $tmpDir;
 
     /**
      * The temporary file for storing the OLE file
      * @var string
      */
-    public $_tmp_file;
+    public $tmpFile;
 
     /**
      * @throws \Exception
@@ -70,10 +70,10 @@ class BIFFwriter
     public function __construct()
     {
         $this->_byte_order = '';
-        $this->_data = '';
-        $this->_datasize = 0;
+        $this->data = '';
+        $this->datasize = 0;
         $this->_limit = 2080;
-        $this->_tmp_dir = '';
+        $this->tmpDir = '';
         // Set the byte order
         $this->_setByteOrder();
     }
@@ -112,8 +112,8 @@ class BIFFwriter
         if (strlen($data) > $this->_limit) {
             $data = $this->_addContinue($data);
         }
-        $this->_data = $data . $this->_data;
-        $this->_datasize += strlen($data);
+        $this->data = $data . $this->data;
+        $this->datasize += strlen($data);
     }
 
     /**
@@ -127,8 +127,8 @@ class BIFFwriter
         if (strlen($data) > $this->_limit) {
             $data = $this->_addContinue($data);
         }
-        $this->_data = $this->_data . $data;
-        $this->_datasize += strlen($data);
+        $this->data = $this->data . $data;
+        $this->datasize += strlen($data);
     }
 
     /**
@@ -225,7 +225,7 @@ class BIFFwriter
     public function setTempDir($dir)
     {
         if (is_dir($dir)) {
-            $this->_tmp_dir = $dir;
+            $this->tmpDir = $dir;
             return true;
         }
 

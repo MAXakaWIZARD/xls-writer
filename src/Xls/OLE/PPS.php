@@ -21,6 +21,8 @@
 
 namespace Xls\OLE;
 
+use Xls\OLE;
+
 /**
  * Class for creating PPS's for OLE containers
  *
@@ -82,7 +84,7 @@ class PPS
      * Starting block (small or big) for this PPS's data  inside the container
      * @var integer
      */
-    public $_StartBlock;
+    public $StartBlock;
 
     /**
      * The size of the PPS's data (in bytes)
@@ -94,7 +96,7 @@ class PPS
      * The PPS's data (only used if it's not using a temporary file)
      * @var string
      */
-    public $_data;
+    public $data;
 
     /**
      * Array of child PPS's (only used by Root and Dir PPS's)
@@ -133,7 +135,7 @@ class PPS
         $this->DirPps = $dir;
         $this->Time1st = $time_1st;
         $this->Time2nd = $time_2nd;
-        $this->_data = $data;
+        $this->data = $data;
         $this->children = $children;
         if ($data != '') {
             $this->Size = strlen($data);
@@ -148,27 +150,26 @@ class PPS
      * @access private
      * @return integer The amount of data (in bytes)
      */
-    public function _DataLen()
+    public function dataLen()
     {
-        if (!isset($this->_data)) {
+        if (!isset($this->data)) {
             return 0;
         }
-        if (isset($this->_PPS_FILE)) {
-            fseek($this->_PPS_FILE, 0);
-            $stats = fstat($this->_PPS_FILE);
+        if (isset($this->ppsFile)) {
+            fseek($this->ppsFile, 0);
+            $stats = fstat($this->ppsFile);
             return $stats[7];
         } else {
-            return strlen($this->_data);
+            return strlen($this->data);
         }
     }
 
     /**
      * Returns a string with the PPS's WK (What is a WK?)
      *
-     * @access private
      * @return string The binary string
      */
-    public function _getPpsWk()
+    public function getPpsWk()
     {
         $ret = $this->Name;
         for ($i = 0; $i < (64 - strlen($this->Name)); $i++) {
@@ -185,11 +186,11 @@ class PPS
             . "\xc0\x00\x00\x00" // 92
             . "\x00\x00\x00\x46" // 96 // Seems to be ok only for Root
             . "\x00\x00\x00\x00" // 100
-            . \Xls\OLE::LocalDate2OLE($this->Time1st) // 108
-            . \Xls\OLE::LocalDate2OLE($this->Time2nd) // 116
+            . OLE::LocalDate2OLE($this->Time1st) // 108
+            . OLE::LocalDate2OLE($this->Time2nd) // 116
             . pack(
                 "V",
-                isset($this->_StartBlock) ? $this->_StartBlock : 0
+                isset($this->StartBlock) ? $this->StartBlock : 0
             ) // 120
             . pack("V", $this->Size) // 124
             . pack("V", 0); // 128
@@ -202,11 +203,11 @@ class PPS
      * PPS. I don't think it'll work with Dir PPS's.
      *
      * @access private
-     * @param array &$pps_array Reference to the array of PPS's for the whole OLE
+     * @param array &$raList Reference to the array of PPS's for the whole OLE
      *                          container
      * @return integer          The index for this PPS
      */
-    public static function _savePpsSetPnt(&$raList, $to_save, $depth = 0)
+    public static function savePpsSetPnt(&$raList, $to_save, $depth = 0)
     {
         if (!is_array($to_save) || (count($to_save) == 0)) {
             return 0xFFFFFFFF;
@@ -217,7 +218,7 @@ class PPS
             $raList[$cnt]->No = $cnt;
             $raList[$cnt]->PrevPps = 0xFFFFFFFF;
             $raList[$cnt]->NextPps = 0xFFFFFFFF;
-            $raList[$cnt]->DirPps = self::_savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
+            $raList[$cnt]->DirPps = self::savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
 
             return $cnt;
         } else {
@@ -229,9 +230,9 @@ class PPS
             // If the first entry, it's the root... Don't clone it!
             $raList[$cnt] = ($depth == 0) ? $to_save[$iPos] : clone $to_save[$iPos];
             $raList[$cnt]->No = $cnt;
-            $raList[$cnt]->PrevPps = self::_savePpsSetPnt($raList, $aPrev, $depth++);
-            $raList[$cnt]->NextPps = self::_savePpsSetPnt($raList, $aNext, $depth++);
-            $raList[$cnt]->DirPps = self::_savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
+            $raList[$cnt]->PrevPps = self::savePpsSetPnt($raList, $aPrev, $depth++);
+            $raList[$cnt]->NextPps = self::savePpsSetPnt($raList, $aNext, $depth++);
+            $raList[$cnt]->DirPps = self::savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
 
             return $cnt;
         }

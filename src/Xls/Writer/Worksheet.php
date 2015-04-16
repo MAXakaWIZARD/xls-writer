@@ -485,8 +485,8 @@ class Worksheet extends BIFFwriter
 
         $this->_dv = array();
 
-        $this->_tmp_dir = $tmp_dir;
-        $this->_tmp_file = '';
+        $this->tmpDir = $tmp_dir;
+        $this->tmpFile = '';
 
         $this->_initialize();
     }
@@ -504,7 +504,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        if ($this->_tmp_dir === '' && ini_get('open_basedir') === true) {
+        if ($this->tmpDir === '' && ini_get('open_basedir') === true) {
             // open_basedir restriction in effect - store data in memory
             // ToDo: Let the error actually have an effect somewhere
             $this->_using_tmpfile = false;
@@ -512,12 +512,12 @@ class Worksheet extends BIFFwriter
         }
 
         // Open tmp file for storing Worksheet data
-        if ($this->_tmp_dir === '') {
+        if ($this->tmpDir === '') {
             $fh = tmpfile();
         } else {
             // For people with open base dir restriction
-            $this->_tmp_file = tempnam($this->_tmp_dir, "Spreadsheet_Excel_Writer");
-            $fh = @fopen($this->_tmp_file, "w+b");
+            $this->tmpFile = tempnam($this->tmpDir, "Spreadsheet_Excel_Writer");
+            $fh = @fopen($this->tmpFile, "w+b");
         }
 
         if ($fh === false) {
@@ -649,13 +649,13 @@ class Worksheet extends BIFFwriter
         }*/
         $this->_storeEof();
 
-        if ($this->_tmp_file != '') {
+        if ($this->tmpFile != '') {
             if ($this->_filehandle) {
                 //fclose($this->_filehandle);
                 //$this->_filehandle = '';
             }
-            @unlink($this->_tmp_file);
-            $this->_tmp_file = '';
+            @unlink($this->tmpFile);
+            $this->tmpFile = '';
             $this->_using_tmpfile = true;
         }
     }
@@ -683,9 +683,9 @@ class Worksheet extends BIFFwriter
         $buffer = 4096;
 
         // Return data stored in memory
-        if (isset($this->_data)) {
-            $tmp = $this->_data;
-            unset($this->_data);
+        if (isset($this->data)) {
+            $tmp = $this->data;
+            unset($this->data);
             $fh = $this->_filehandle;
             if ($this->_using_tmpfile) {
                 fseek($fh, 0);
@@ -1349,7 +1349,7 @@ class Worksheet extends BIFFwriter
                 $data = $this->_addContinue($data);
             }
             fwrite($this->_filehandle, $data);
-            $this->_datasize += strlen($data);
+            $this->datasize += strlen($data);
         } else {
             parent::_append($data);
         }

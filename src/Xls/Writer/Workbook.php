@@ -333,7 +333,7 @@ class Workbook extends BIFFwriter
             $this->_str_table,
             $this->_url_format,
             $this->_parser,
-            $this->_tmp_dir
+            $this->tmpDir
         );
 
         $this->_worksheets[$index] = & $worksheet; // Store ref for iterator
@@ -574,14 +574,14 @@ class Workbook extends BIFFwriter
         } else {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::Asc2Ucs('Book'));
         }
-        if ($this->_tmp_dir != '') {
-            $OLE->setTempDir($this->_tmp_dir);
+        if ($this->tmpDir != '') {
+            $OLE->setTempDir($this->tmpDir);
         }
         $res = $OLE->init();
         if (!$res) {
             throw new \Exception("OLE Error: " . $res->getMessage());
         }
-        $OLE->append($this->_data);
+        $OLE->append($this->data);
 
         $total_worksheets = count($this->_worksheets);
         for ($i = 0; $i < $total_worksheets; $i++) {
@@ -591,8 +591,8 @@ class Workbook extends BIFFwriter
         }
 
         $root = new \Xls\OLE\PPS\Root($this->getCreationTimestamp(), $this->getCreationTimestamp(), array($OLE));
-        if ($this->_tmp_dir != '') {
-            $root->setTempDir($this->_tmp_dir);
+        if ($this->tmpDir != '') {
+            $root->setTempDir($this->tmpDir);
         }
 
         $res = $root->save($this->_filename);
@@ -616,7 +616,7 @@ class Workbook extends BIFFwriter
             $boundsheet_length = 11;
         }
         $EOF = 4;
-        $offset = $this->_datasize;
+        $offset = $this->datasize;
 
         if ($this->_BIFF_version == 0x0600) {
             // add the length of the SST
@@ -637,7 +637,7 @@ class Workbook extends BIFFwriter
 
         for ($i = 0; $i < $total_worksheets; $i++) {
             $this->_worksheets[$i]->offset = $offset;
-            $offset += $this->_worksheets[$i]->_datasize;
+            $offset += $this->_worksheets[$i]->datasize;
         }
         $this->_biffsize = $offset;
     }

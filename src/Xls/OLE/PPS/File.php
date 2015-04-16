@@ -22,6 +22,8 @@
 
 namespace Xls\OLE\PPS;
 
+use Xls\OLE;
+
 /**
  * Class for creating File PPS's for OLE containers
  *
@@ -29,23 +31,23 @@ namespace Xls\OLE\PPS;
  * @category Structures
  * @package  OLE
  */
-class File extends \Xls\OLE\PPS
+class File extends OLE\PPS
 {
     /**
      * The temporary dir for storing the OLE file
      * @var string
      */
-    public $_tmp_dir;
+    public $tmpDir;
 
     /**
      * @var string
      */
-    public $_tmp_filename;
+    public $tmpFilename;
 
     /**
      * @var
      */
-    public $_PPS_FILE;
+    public $ppsFile;
 
     /**
      * The constructor
@@ -56,9 +58,7 @@ class File extends \Xls\OLE\PPS
      */
     public function __construct($name)
     {
-        //TODO:check out how correctly replace this
-        //$this->_tmp_dir = System::tmpdir();
-        $this->_tmp_dir = sys_get_temp_dir();
+        $this->tmpDir = sys_get_temp_dir();
 
         parent::__construct(
             null,
@@ -83,7 +83,7 @@ class File extends \Xls\OLE\PPS
     public function setTempDir($dir)
     {
         if (is_dir($dir)) {
-            $this->_tmp_dir = $dir;
+            $this->tmpDir = $dir;
             return true;
         }
 
@@ -97,14 +97,14 @@ class File extends \Xls\OLE\PPS
      */
     public function init()
     {
-        $this->_tmp_filename = tempnam($this->_tmp_dir, "OLE_PPS_File");
-        $fh = @fopen($this->_tmp_filename, "w+b");
+        $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_File");
+        $fh = @fopen($this->tmpFilename, "w+b");
         if ($fh == false) {
             throw new \Exception("Can't create temporary file");
         }
-        $this->_PPS_FILE = $fh;
-        if ($this->_PPS_FILE) {
-            fseek($this->_PPS_FILE, 0);
+        $this->ppsFile = $fh;
+        if ($this->ppsFile) {
+            fseek($this->ppsFile, 0);
         }
 
         return true;
@@ -117,10 +117,10 @@ class File extends \Xls\OLE\PPS
      */
     public function append($data)
     {
-        if ($this->_PPS_FILE) {
-            fwrite($this->_PPS_FILE, $data);
+        if ($this->ppsFile) {
+            fwrite($this->ppsFile, $data);
         } else {
-            $this->_data .= $data;
+            $this->data .= $data;
         }
     }
 

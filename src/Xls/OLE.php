@@ -53,7 +53,7 @@ class OLE
      * The file handle for reading an OLE container
      * @var resource
      */
-    protected $fileHandle;
+    public $fileHandle;
 
     /**
      * Array of PPS's found on the OLE container
@@ -217,7 +217,7 @@ class OLE
      * @param int $blockId block id
      * @return int byte offset from beginning of file
      */
-    protected function getBlockOffset($blockId)
+    public function getBlockOffset($blockId)
     {
         return 512 + $blockId * $this->bigBlockSize;
     }
@@ -243,11 +243,12 @@ class OLE
         // in OLE_ChainedBlockStream::stream_open().
         // Object is removed from self::$instances in OLE_Stream::close().
         $GLOBALS['_OLE_INSTANCES'][] = $this;
-        $instanceId = end(array_keys($GLOBALS['_OLE_INSTANCES']));
+        $instancesIds = array_keys($GLOBALS['_OLE_INSTANCES']);
+        $instanceId = end($instancesIds);
 
         $path = 'ole-chainedblockstream://oleInstanceId=' . $instanceId;
-        if (is_a($blockIdOrPps, 'OLE_PPS')) {
-            $path .= '&blockId=' . $blockIdOrPps->startBlock;
+        if (is_a($blockIdOrPps, 'Xls\OLE\PPS')) {
+            $path .= '&blockId=' . $blockIdOrPps->StartBlock;
             $path .= '&size=' . $blockIdOrPps->Size;
         } else {
             $path .= '&blockId=' . $blockIdOrPps;
@@ -294,7 +295,7 @@ class OLE
 
     /**
      * Gets information about all PPS's on the OLE container from the PPS WK's
-     * creates an OLE_PPS object for each one.
+     * creates an OLE\PPS object for each one.
      *
      * @param integer $blockId the block id of the first block
      * @return mixed true on success
