@@ -1045,7 +1045,6 @@ class Format
                 }
                 break;
             default:
-                $this->_rotation = 0;
                 throw new \Exception(
                     "Invalid value for angle." .
                     " Possible values are: 0, 90, 270 and -1 " .
