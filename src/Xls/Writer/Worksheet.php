@@ -1190,7 +1190,6 @@ class Worksheet extends BIFFwriter
         // Confine the scale to Excel's range
         if ($scale < 10 || $scale > 400) {
             throw new \Exception("Zoom factor $scale outside range: 10 <= zoom <= 400");
-            $scale = 100;
         }
 
         $this->_zoom = floor($scale);
@@ -1208,7 +1207,6 @@ class Worksheet extends BIFFwriter
         // Confine the scale to Excel's range
         if ($scale < 10 || $scale > 400) {
             throw new \Exception("Print scale $scale outside range: 10 <= zoom <= 400");
-            $scale = 100;
         }
 
         // Turn off "fit to page" option

@@ -1047,7 +1047,6 @@ class Format // extends PEAR
                     " Possible values are: 0, 90, 270 and -1 " .
                     "for stacking top-to-bottom."
                 );
-                $this->_rotation = 0;
                 break;
         }
     }
