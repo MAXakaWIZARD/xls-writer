@@ -21,17 +21,32 @@ namespace Xls\Writer;
 
 class BIFFwriter
 {
+    /**
+     * BIFF5
+     *
+     * Microsoft Excel version 5.0 (XL5)
+     * Microsoft Excel 95 (XL7) (also called Microsoft Excel version 7)
+     */
     const VERSION_5 = 0x0500;
-    const VERSION_6 = 0x0600;
+
+    /**
+     * BIFF8
+     *
+     * Microsoft Excel 97 (XL8)
+     * Microsoft Excel 2000 (XL9)
+     * Microsoft Excel 2002 (XL10)
+     * Microsoft Office Excel 2003 (XL11)
+     * Microsoft Office Excel 2007 (XL12)
+     */
+    const VERSION_8 = 0x0600;
 
     const BYTE_ORDER_LE = 0;
     const BYTE_ORDER_BE = 1;
 
     /**
-     * The BIFF/Excel version (5).
      * @var integer
      */
-    public $BIFF_version = 0x0500;
+    public $BIFF_version = self::VERSION_5;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -71,16 +86,18 @@ class BIFFwriter
     public $tmpFile;
 
     /**
+     * @param int $biffVersion
+     *
      * @throws \Exception
      */
-    public function __construct()
+    public function __construct($biffVersion = self::VERSION_5)
     {
-        $this->byte_order = '';
+        $this->BIFF_version = $biffVersion;
         $this->data = '';
         $this->datasize = 0;
         $this->limit = 2080;
         $this->tmpDir = '';
-        // Set the byte order
+
         $this->setByteOrder();
     }
 
@@ -95,9 +112,9 @@ class BIFFwriter
         $teststr = pack("d", 1.2345);
         $number = pack("C8", 0x8D, 0x97, 0x6E, 0x12, 0x83, 0xC0, 0xF3, 0x3F);
         if ($number == $teststr) {
-            $byte_order = 0; // Little Endian
+            $byte_order = self::BYTE_ORDER_LE;
         } elseif ($number == strrev($teststr)) {
-            $byte_order = 1; // Big Endian
+            $byte_order = self::BYTE_ORDER_BE;
         } else {
             // Give up. I'll fix this in a later version.
             throw new \Exception(
@@ -151,12 +168,12 @@ class BIFFwriter
 
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == self::VERSION_5) {
             $length = 0x0008;
             $unknown = '';
             $build = 0x096C;
             $year = 0x07C9;
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == self::VERSION_8) {
             $length = 0x0010;
             $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
             $build = 0x0DBB;
@@ -245,6 +262,6 @@ class BIFFwriter
      */
     public static function isVersionSupported($version)
     {
-        return $version === self::VERSION_5 || $version === self::VERSION_6;
+        return $version === self::VERSION_5 || $version === self::VERSION_8;
     }
 }

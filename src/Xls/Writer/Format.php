@@ -355,16 +355,15 @@ class Format
         }
 
         $record = 0x00E0; // Record identifier
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version === BIFFwriter::VERSION_5) {
             $length = 0x0010; // Number of bytes to follow
-        }
-        if ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 0x0014;
         }
 
         $ifnt = $this->font_index; // Index to FONT record
         $ifmt = $this->num_format; // Index to FORMAT record
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version === BIFFwriter::VERSION_5) {
             $align = $this->text_h_align; // Alignment
             $align |= $this->text_wrap << 3;
             $align |= $this->text_v_align << 4;
@@ -404,7 +403,7 @@ class Format
                 $border1,
                 $border2
             );
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $align = $this->text_h_align; // Alignment
             $align |= $this->text_wrap << 3;
             $align |= $this->text_v_align << 4;
@@ -467,9 +466,9 @@ class Format
 
         $cch = strlen($this->font_name); // Length of font name
         $record = 0x31; // Record identifier
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $length = 0x0F + $cch; // Record length
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 0x10 + $cch;
         }
         $reserved = 0x00; // Reserved
@@ -488,7 +487,7 @@ class Format
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version === BIFFwriter::VERSION_5) {
             $data = pack(
                 "vvvvvCCCCC",
                 $dyHeight,
@@ -502,7 +501,7 @@ class Format
                 $reserved,
                 $cch
             );
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $data = pack(
                 "vvvvvCCCCCC",
                 $dyHeight,
@@ -1024,23 +1023,23 @@ class Format
                 $this->rotation = 0;
                 break;
             case 90:
-                if ($this->BIFF_version == 0x0500) {
+                if ($this->BIFF_version === BIFFwriter::VERSION_5) {
                     $this->rotation = 3;
-                } elseif ($this->BIFF_version == 0x0600) {
+                } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
                     $this->rotation = 180;
                 }
                 break;
             case 270:
-                if ($this->BIFF_version == 0x0500) {
+                if ($this->BIFF_version == BIFFwriter::VERSION_5) {
                     $this->rotation = 2;
-                } elseif ($this->BIFF_version == 0x0600) {
+                } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
                     $this->rotation = 90;
                 }
                 break;
             case -1:
-                if ($this->BIFF_version == 0x0500) {
+                if ($this->BIFF_version == BIFFwriter::VERSION_5) {
                     $this->rotation = 1;
-                } elseif ($this->BIFF_version == 0x0600) {
+                } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
                     $this->rotation = 255;
                 }
                 break;

@@ -138,12 +138,15 @@ class Workbook extends BIFFwriter
      * Class constructor
      *
      * @param string $filename filename for storing the workbook. "-" for writing to stdout.
+     * @param int $biffVersion
      * @access public
      */
-    public function __construct($filename)
-    {
+    public function __construct(
+        $filename,
+        $biffVersion = BIFFwriter::VERSION_5
+    ) {
         // It needs to call its parent's constructor explicitly
-        parent::__construct();
+        parent::__construct($biffVersion);
 
         $this->filename = $filename;
         $this->parser = new Parser($this->byte_order, $this->BIFF_version);
@@ -249,7 +252,7 @@ class Workbook extends BIFFwriter
     public function setVersion($version)
     {
         if ($version == 8) { // only accept version 8
-            $version = 0x0600;
+            $version = BIFFwriter::VERSION_8;
             $this->BIFF_version = $version;
             // change BIFFwriter limit for CONTINUE records
             $this->limit = 8228;
@@ -304,7 +307,7 @@ class Workbook extends BIFFwriter
         }
 
         // Check that sheetname is <= 31 chars (Excel limit before BIFF8).
-        if ($this->BIFF_version != 0x0600) {
+        if ($this->BIFF_version != BIFFwriter::VERSION_8) {
             if (strlen($name) > 31) {
                 throw new \Exception("Sheetname $name must be <= 31 chars");
             }
@@ -512,14 +515,14 @@ class Workbook extends BIFFwriter
         // Add Workbook globals
         $this->storeBof(0x0005);
         $this->storeCodepage();
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $this->storeWindow1();
         }
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $this->storeExterns(); // For print area and repeat rows
         }
         $this->storeNames(); // For print area and repeat rows
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $this->storeWindow1();
         }
         $this->storeDatemode();
@@ -539,7 +542,7 @@ class Workbook extends BIFFwriter
             $this->storeCountry();
         }
 
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             //$this->storeSupbookInternal();
             /* TODO: store external SUPBOOK records and XCT and CRN records
             in case of external references for BIFF8 */
@@ -568,7 +571,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeOLEFile()
     {
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
         } else {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Book'));
@@ -613,7 +616,7 @@ class Workbook extends BIFFwriter
      */
     protected function calcSheetOffsets()
     {
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $boundsheet_length = 12; // fixed length for a BOUNDSHEET record
         } else {
             $boundsheet_length = 11;
@@ -621,7 +624,7 @@ class Workbook extends BIFFwriter
         $EOF = 4;
         $offset = $this->datasize;
 
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             // add the length of the SST
             /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $offset += $this->calculateSharedStringsSizes();
@@ -629,7 +632,7 @@ class Workbook extends BIFFwriter
                 $offset += 8; // adding COUNTRY record
             }
             // add the lenght of SUPBOOK, EXTERNSHEET and NAME records
-            //$offset += 8; // FIXME: calculate real value when storing the records
+            //$offset += 8; // TODO: calculate real value when storing the records
         }
         $total_worksheets = count($this->worksheets);
         // add the length of the BOUNDSHEET records
@@ -933,21 +936,21 @@ class Workbook extends BIFFwriter
     protected function storeBoundsheet($sheetname, $offset)
     {
         $record = 0x0085; // Record identifier
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 0x08 + strlen($sheetname); // Number of bytes to follow
         } else {
             $length = 0x07 + strlen($sheetname); // Number of bytes to follow
         }
 
         $grbit = 0x0000; // Visibility and sheet type
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $cch = mb_strlen($sheetname, 'UTF-16LE'); // Length of sheet name
         } else {
             $cch = strlen($sheetname); // Length of sheet name
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $data = pack("VvCC", $offset, $grbit, $cch, 0x1);
         } else {
             $data = pack("VvC", $offset, $grbit, $cch);
@@ -983,7 +986,7 @@ class Workbook extends BIFFwriter
         $record = 0x0017; // Record identifier
         $length = 2 + 6 * $total_references; // Number of bytes to follow
 
-        $supbook_index = 0; // FIXME: only using internal SUPBOOK record
+        $supbook_index = 0; // TODO: only using internal SUPBOOK record
         $header = pack("vv", $record, $length);
         $data = pack('v', $total_references);
         for ($i = 0; $i < $total_references; $i++) {
@@ -1023,14 +1026,14 @@ class Workbook extends BIFFwriter
     {
         $record = 0x041E; // Record identifier
 
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 5 + strlen($format); // Number of bytes to follow
             $encoding = 0x0;
-        } elseif ($this->BIFF_version == 0x0500) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $length = 3 + strlen($format); // Number of bytes to follow
         }
 
-        if ($this->BIFF_version == 0x0600 && function_exists('iconv')) { // Encode format String
+        if ($this->BIFF_version == BIFFwriter::VERSION_8 && function_exists('iconv')) { // Encode format String
             if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
                 $format = iconv(mb_detect_encoding($format, 'auto'), 'UTF-16LE', $format);
             }
@@ -1042,10 +1045,10 @@ class Workbook extends BIFFwriter
         }
         $length = strlen($format);
 
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $header = pack("vv", $record, 5 + $length);
             $data = pack("vvC", $ifmt, $cch, $encoding);
-        } elseif ($this->BIFF_version == 0x0500) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $header = pack("vv", $record, 3 + $length);
             $data = pack("vC", $ifmt, $cch);
         }

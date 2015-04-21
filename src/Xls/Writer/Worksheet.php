@@ -396,8 +396,7 @@ class Worksheet extends BIFFwriter
         &$parser,
         $tmp_dir
     ) {
-        parent::__construct();
-        $this->BIFF_version = $biffVersion;
+        parent::__construct($biffVersion);
         $rowmax = 65536; // 16384 in Excel 5
         $colmax = 256;
 
@@ -593,7 +592,7 @@ class Worksheet extends BIFFwriter
         $this->storeGridset();
 
         //  Prepend GUTS
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $this->storeGuts();
         }
 
@@ -604,7 +603,7 @@ class Worksheet extends BIFFwriter
         $this->storePrintHeaders();
 
         // Prepend EXTERNSHEET references
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             for ($i = $num_sheets; $i > 0; $i--) {
                 $sheetname = $sheetnames[$i - 1];
                 $this->storeExternsheet($sheetname);
@@ -612,7 +611,7 @@ class Worksheet extends BIFFwriter
         }
 
         // Prepend the EXTERNCOUNT of external references.
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $this->storeExterncount($num_sheets);
         }
 
@@ -641,10 +640,9 @@ class Worksheet extends BIFFwriter
         $this->storeSelection($this->selection);
         $this->storeMergedCells();
 
-        /* TODO: add data validity */
-        /*if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $this->storeDataValidity();
-        }*/
+        }
 
         $this->storeEof();
 
@@ -1559,7 +1557,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeString($row, $col, $str, $format = null)
     {
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             return $this->writeStringBIFF8($row, $col, $str, $format);
         }
         $strlen = strlen($str);
@@ -2318,7 +2316,7 @@ class Worksheet extends BIFFwriter
         $col_max = $this->dim_colmax + 1; // Last column plus 1
         $reserved = 0x0000; // Reserved by Excel
 
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $length = 0x000A; // Number of bytes to follow
             $data = pack(
                 "vvvvv",
@@ -2328,7 +2326,7 @@ class Worksheet extends BIFFwriter
                 $col_max,
                 $reserved
             );
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 0x000E;
             $data = pack(
                 "VVvvv",
@@ -2354,9 +2352,9 @@ class Worksheet extends BIFFwriter
     protected function storeWindow2()
     {
         $record = 0x023E; // Record identifier
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $length = 0x000A; // Number of bytes to follow
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 0x0012;
         }
 
@@ -2393,10 +2391,10 @@ class Worksheet extends BIFFwriter
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $grbit, $rwTop, $colLeft);
 
-        if ($this->BIFF_version == 0x0500) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
             $rgbHdr = 0x00000000; // Row/column heading and gridline color
             $data .= pack("V", $rgbHdr);
-        } elseif ($this->BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $rgbHdr = 0x0040; // Row/column heading and gridline color index
             $zoom_factor_page_break = 0x0000;
             $zoom_factor_normal = 0x0000;
@@ -2775,7 +2773,7 @@ class Worksheet extends BIFFwriter
 
         $str = $this->header; // header string
         $cch = strlen($str); // Length of header string
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $encoding = 0x0;
             $length = 3 + $cch; // Bytes to follow
         } else {
@@ -2783,7 +2781,7 @@ class Worksheet extends BIFFwriter
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $data = pack("vC", $cch, $encoding);
         } else {
             $data = pack("C", $cch);
@@ -2803,7 +2801,7 @@ class Worksheet extends BIFFwriter
 
         $str = $this->footer; // Footer string
         $cch = strlen($str); // Length of footer string
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $encoding = 0x0;
             $length = 3 + $cch; // Bytes to follow
         } else {
@@ -2811,7 +2809,7 @@ class Worksheet extends BIFFwriter
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $data = pack("vC", $cch, $encoding);
         } else {
             $data = pack("C", $cch);
@@ -3142,7 +3140,7 @@ class Worksheet extends BIFFwriter
 
         $record = 0x001b; // Record identifier
         $cbrk = count($breaks); // Number of page breaks
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 2 + 6 * $cbrk; // Bytes to follow
         } else {
             $length = 2 + 2 * $cbrk; // Bytes to follow
@@ -3153,7 +3151,7 @@ class Worksheet extends BIFFwriter
 
         // Append each page break
         foreach ($breaks as $break) {
-            if ($this->BIFF_version == 0x0600) {
+            if ($this->BIFF_version == BIFFwriter::VERSION_8) {
                 $data .= pack("vvv", $break, 0x0000, 0x00ff);
             } else {
                 $data .= pack("v", $break);
@@ -3187,7 +3185,7 @@ class Worksheet extends BIFFwriter
 
         $record = 0x001a; // Record identifier
         $cbrk = count($breaks); // Number of page breaks
-        if ($this->BIFF_version == 0x0600) {
+        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
             $length = 2 + 6 * $cbrk; // Bytes to follow
         } else {
             $length = 2 + 2 * $cbrk; // Bytes to follow
@@ -3198,7 +3196,7 @@ class Worksheet extends BIFFwriter
 
         // Append each page break
         foreach ($breaks as $break) {
-            if ($this->BIFF_version == 0x0600) {
+            if ($this->BIFF_version == BIFFwriter::VERSION_8) {
                 $data .= pack("vvv", $break, 0x0000, 0xffff);
             } else {
                 $data .= pack("v", $break);

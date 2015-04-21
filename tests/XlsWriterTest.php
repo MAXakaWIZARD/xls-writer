@@ -3,6 +3,7 @@ namespace Xls\Writer\Tests;
 
 use Xls\Writer;
 use Xls\Writer\Format;
+use Xls\Writer\BIFFwriter;
 
 /**
  *

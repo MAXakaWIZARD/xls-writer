@@ -215,7 +215,7 @@ class OLE
 
     /**
      * Returns a stream for use with fread() etc. External callers should
-     * use OLE_PPS_File::getStream().
+     * use OLE\PPS\File::getStream().
      * @param int|\Xls\OLE\PPS $blockIdOrPps block id or PPS
      * @return resource read-only stream
      */
