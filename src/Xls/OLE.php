@@ -22,23 +22,6 @@
 namespace Xls;
 
 /**
- * Constants for OLE package
- */
-define('OLE_PPS_TYPE_ROOT', 5);
-define('OLE_PPS_TYPE_DIR', 1);
-define('OLE_PPS_TYPE_FILE', 2);
-define('OLE_DATA_SIZE_SMALL', 0x1000);
-define('OLE_LONG_INT_SIZE', 4);
-define('OLE_PPS_SIZE', 0x80);
-
-/**
- * Array for storing OLE instances that are accessed from
- * OLE\ChainedBlockStream::stream_open().
- * @var  array
- */
-$GLOBALS['_OLE_INSTANCES'] = array();
-
-/**
  * OLE package base class.
  *
  * @category Structures
@@ -48,6 +31,14 @@ $GLOBALS['_OLE_INSTANCES'] = array();
  */
 class OLE
 {
+    const OLE_PPS_TYPE_ROOT = 5;
+    const OLE_PPS_TYPE_DIR = 1;
+    const OLE_PPS_TYPE_FILE = 2;
+    const OLE_DATA_SIZE_SMALL = 0x1000;
+    const OLE_LONG_INT_SIZE = 4;
+    const OLE_PPS_SIZE = 0x80;
+
+    public static $instances = array();
 
     /**
      * The file handle for reading an OLE container
@@ -240,10 +231,10 @@ class OLE
         }
 
         // Store current instance in global array, so that it can be accessed
-        // in OLE_ChainedBlockStream::stream_open().
-        // Object is removed from self::$instances in OLE_Stream::close().
-        $GLOBALS['_OLE_INSTANCES'][] = $this;
-        $instancesIds = array_keys($GLOBALS['_OLE_INSTANCES']);
+        // in OLE\ChainedBlockStream::stream_open().
+        // Object is removed from self::$instances in OLE\Stream::close().
+        self::$instances[] = $this;
+        $instancesIds = array_keys(self::$instances);
         $instanceId = end($instancesIds);
 
         $path = 'ole-chainedblockstream://oleInstanceId=' . $instanceId;
@@ -311,33 +302,25 @@ class OLE
             // Simple conversion from UTF-16LE to ISO-8859-1
             $name = str_replace("\x00", "", $nameUtf16);
             $type = $this->readInt1($fh);
+
             switch ($type) {
-                case OLE_PPS_TYPE_ROOT:
-                    $pps = new OLE\PPS\Root(null, null, array());
+                case self::OLE_PPS_TYPE_ROOT:
+                    $pps = new OLE\PPS\Root();
                     $this->root = $pps;
                     break;
-                case OLE_PPS_TYPE_DIR:
-                    $pps = new OLE\PPS(
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        array()
-                    );
+                case self::OLE_PPS_TYPE_DIR:
+                    $pps = new OLE\PPS();
                     break;
-                case OLE_PPS_TYPE_FILE:
+                case self::OLE_PPS_TYPE_FILE:
                     $pps = new OLE\PPS\File($name);
                     break;
                 default:
+                    $pps = null;
                     continue;
             }
 
             fseek($fh, 1, SEEK_CUR);
+
             $pps->Type = $type;
             $pps->Name = $name;
             $pps->PrevPps = $this->readInt4($fh);
@@ -345,9 +328,10 @@ class OLE
             $pps->DirPps = $this->readInt4($fh);
 
             fseek($fh, 20, SEEK_CUR);
+
             $pps->Time1st = OLE::OLE2LocalDate(fread($fh, 8));
             $pps->Time2nd = OLE::OLE2LocalDate(fread($fh, 8));
-            $pps->startBlock = $this->readInt4($fh);
+            $pps->StartBlock = $this->readInt4($fh);
             $pps->Size = $this->readInt4($fh);
             $pps->No = count($this->list);
             $this->list[] = $pps;
@@ -363,7 +347,7 @@ class OLE
 
         // Initialize $pps->children on directories
         foreach ($this->list as $pps) {
-            if ($pps->Type == OLE_PPS_TYPE_DIR || $pps->Type == OLE_PPS_TYPE_ROOT) {
+            if ($pps->Type == self::OLE_PPS_TYPE_DIR || $pps->Type == self::OLE_PPS_TYPE_ROOT) {
                 $nos = array($pps->DirPps);
                 $pps->children = array();
                 while ($nos) {
@@ -409,7 +393,7 @@ class OLE
     public function isFile($index)
     {
         if (isset($this->list[$index])) {
-            return ($this->list[$index]->Type == OLE_PPS_TYPE_FILE);
+            return ($this->list[$index]->Type == self::OLE_PPS_TYPE_FILE);
         }
 
         return false;
@@ -424,7 +408,7 @@ class OLE
     public function isRoot($index)
     {
         if (isset($this->list[$index])) {
-            return ($this->list[$index]->Type == OLE_PPS_TYPE_ROOT);
+            return ($this->list[$index]->Type == self::OLE_PPS_TYPE_ROOT);
         }
 
         return false;
@@ -487,7 +471,7 @@ class OLE
      * @param string $ascii The ASCII string to transform
      * @return string The string in Unicode
      */
-    public static function Asc2Ucs($ascii)
+    public static function asc2Ucs($ascii)
     {
         $rawname = '';
         for ($i = 0; $i < strlen($ascii); $i++) {
@@ -505,7 +489,7 @@ class OLE
      *
      * @return string The string for the OLE container
      */
-    public static function LocalDate2OLE($date = null)
+    public static function localDate2OLE($date = null)
     {
         if (!isset($date)) {
             return "\x00\x00\x00\x00\x00\x00\x00\x00";

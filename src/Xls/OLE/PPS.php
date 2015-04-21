@@ -125,8 +125,18 @@ class PPS
      * @param string $data  The (usually binary) source data of the PPS
      * @param array $children Array containing children PPS for this PPS
      */
-    public function __construct($No, $name, $type, $prev, $next, $dir, $time_1st, $time_2nd, $data, $children)
-    {
+    public function __construct(
+        $No = null,
+        $name = null,
+        $type = null,
+        $prev = null,
+        $next = null,
+        $dir = null,
+        $time_1st = null,
+        $time_2nd = null,
+        $data = '',
+        $children = array()
+    ) {
         $this->No = $No;
         $this->Name = $name;
         $this->Type = $type;
@@ -137,6 +147,7 @@ class PPS
         $this->Time2nd = $time_2nd;
         $this->data = $data;
         $this->children = $children;
+
         if ($data != '') {
             $this->Size = strlen($data);
         } else {
@@ -186,8 +197,8 @@ class PPS
             . "\xc0\x00\x00\x00" // 92
             . "\x00\x00\x00\x46" // 96 // Seems to be ok only for Root
             . "\x00\x00\x00\x00" // 100
-            . OLE::LocalDate2OLE($this->Time1st) // 108
-            . OLE::LocalDate2OLE($this->Time2nd) // 116
+            . OLE::localDate2OLE($this->Time1st) // 108
+            . OLE::localDate2OLE($this->Time2nd) // 116
             . pack(
                 "V",
                 isset($this->StartBlock) ? $this->StartBlock : 0
@@ -202,19 +213,19 @@ class PPS
      * Updates index and pointers to previous, next and children PPS's for this
      * PPS. I don't think it'll work with Dir PPS's.
      *
-     * @access private
-     * @param array &$raList Reference to the array of PPS's for the whole OLE
-     *                          container
+     * @param array &$raList Reference to the array of PPS's for the whole OLE container
+     * @param $toSave
+     * @param $depth
      * @return integer          The index for this PPS
      */
-    public static function savePpsSetPnt(&$raList, $to_save, $depth = 0)
+    public static function savePpsSetPnt(&$raList, $toSave, $depth = 0)
     {
-        if (!is_array($to_save) || (count($to_save) == 0)) {
+        if (!is_array($toSave) || (count($toSave) == 0)) {
             return 0xFFFFFFFF;
-        } elseif (count($to_save) == 1) {
+        } elseif (count($toSave) == 1) {
             $cnt = count($raList);
             // If the first entry, it's the root... Don't clone it!
-            $raList[$cnt] = ($depth == 0) ? $to_save[0] : clone $to_save[0];
+            $raList[$cnt] = ($depth == 0) ? $toSave[0] : clone $toSave[0];
             $raList[$cnt]->No = $cnt;
             $raList[$cnt]->PrevPps = 0xFFFFFFFF;
             $raList[$cnt]->NextPps = 0xFFFFFFFF;
@@ -222,13 +233,13 @@ class PPS
 
             return $cnt;
         } else {
-            $iPos = (int) floor(count($to_save) / 2);
-            $aPrev = array_slice($to_save, 0, $iPos);
-            $aNext = array_slice($to_save, $iPos + 1);
+            $iPos = (int) floor(count($toSave) / 2);
+            $aPrev = array_slice($toSave, 0, $iPos);
+            $aNext = array_slice($toSave, $iPos + 1);
 
             $cnt = count($raList);
             // If the first entry, it's the root... Don't clone it!
-            $raList[$cnt] = ($depth == 0) ? $to_save[$iPos] : clone $to_save[$iPos];
+            $raList[$cnt] = ($depth == 0) ? $toSave[$iPos] : clone $toSave[$iPos];
             $raList[$cnt]->No = $cnt;
             $raList[$cnt]->PrevPps = self::savePpsSetPnt($raList, $aPrev, $depth++);
             $raList[$cnt]->NextPps = self::savePpsSetPnt($raList, $aNext, $depth++);

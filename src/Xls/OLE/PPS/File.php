@@ -54,7 +54,7 @@ class File extends OLE\PPS
      *
      * @access public
      * @param string $name The name of the file (in Unicode)
-     * @see OLE::Asc2Ucs()
+     * @see OLE::asc2Ucs()
      */
     public function __construct($name)
     {
@@ -63,14 +63,7 @@ class File extends OLE\PPS
         parent::__construct(
             null,
             $name,
-            OLE_PPS_TYPE_FILE,
-            null,
-            null,
-            null,
-            null,
-            null,
-            '',
-            array()
+            OLE::OLE_PPS_TYPE_FILE
         );
     }
 

@@ -21,17 +21,23 @@ namespace Xls\Writer;
 
 class BIFFwriter
 {
+    const VERSION_5 = 0x0500;
+    const VERSION_6 = 0x0600;
+
+    const BYTE_ORDER_LE = 0;
+    const BYTE_ORDER_BE = 1;
+
     /**
      * The BIFF/Excel version (5).
      * @var integer
      */
-    public $_BIFF_version = 0x0500;
+    public $BIFF_version = 0x0500;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer
      */
-    public $_byte_order;
+    public $byte_order;
 
     /**
      * The string containing the data of the BIFF stream
@@ -50,7 +56,7 @@ class BIFFwriter
      * @var integer
      * @see _addContinue()
      */
-    public $_limit;
+    public $limit;
 
     /**
      * The temporary dir for storing the OLE file
@@ -69,13 +75,13 @@ class BIFFwriter
      */
     public function __construct()
     {
-        $this->_byte_order = '';
+        $this->byte_order = '';
         $this->data = '';
         $this->datasize = 0;
-        $this->_limit = 2080;
+        $this->limit = 2080;
         $this->tmpDir = '';
         // Set the byte order
-        $this->_setByteOrder();
+        $this->setByteOrder();
     }
 
     /**
@@ -83,7 +89,7 @@ class BIFFwriter
      * recalculating it for each call to new().
      *
      */
-    protected function _setByteOrder()
+    protected function setByteOrder()
     {
         // Check if "pack" gives the required IEEE 64bit float
         $teststr = pack("d", 1.2345);
@@ -98,7 +104,7 @@ class BIFFwriter
                 "Required floating point format is not supported on this platform."
             );
         }
-        $this->_byte_order = $byte_order;
+        $this->byte_order = $byte_order;
     }
 
     /**
@@ -107,10 +113,10 @@ class BIFFwriter
      * @param string $data binary data to prepend
      * @access private
      */
-    protected function _prepend($data)
+    protected function prepend($data)
     {
-        if (strlen($data) > $this->_limit) {
-            $data = $this->_addContinue($data);
+        if (strlen($data) > $this->limit) {
+            $data = $this->addContinue($data);
         }
         $this->data = $data . $this->data;
         $this->datasize += strlen($data);
@@ -122,10 +128,10 @@ class BIFFwriter
      * @param string $data binary data to append
      * @access private
      */
-    protected function _append($data)
+    protected function append($data)
     {
-        if (strlen($data) > $this->_limit) {
-            $data = $this->_addContinue($data);
+        if (strlen($data) > $this->limit) {
+            $data = $this->addContinue($data);
         }
         $this->data = $this->data . $data;
         $this->datasize += strlen($data);
@@ -139,18 +145,18 @@ class BIFFwriter
      *                       0x0010 Worksheet.
      * @throws \Exception
      */
-    protected function _storeBof($type)
+    protected function storeBof($type)
     {
         $record = 0x0809; // Record identifier
 
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->_BIFF_version == 0x0500) {
+        if ($this->BIFF_version == 0x0500) {
             $length = 0x0008;
             $unknown = '';
             $build = 0x096C;
             $year = 0x07C9;
-        } elseif ($this->_BIFF_version == 0x0600) {
+        } elseif ($this->BIFF_version == 0x0600) {
             $length = 0x0010;
             $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
             $build = 0x0DBB;
@@ -160,8 +166,8 @@ class BIFFwriter
         }
 
         $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $this->_BIFF_version, $type, $build, $year);
-        $this->_prepend($header . $data . $unknown);
+        $data = pack("vvvv", $this->BIFF_version, $type, $build, $year);
+        $this->prepend($header . $data . $unknown);
     }
 
     /**
@@ -169,12 +175,12 @@ class BIFFwriter
      *
      * @access private
      */
-    protected function _storeEof()
+    protected function storeEof()
     {
         $record = 0x000A; // Record identifier
         $length = 0x0000; // Number of bytes to follow
         $header = pack("vv", $record, $length);
-        $this->_append($header);
+        $this->append($header);
     }
 
     /**
@@ -189,9 +195,9 @@ class BIFFwriter
      * @return string        A very convenient string of continue blocks
      * @access private
      */
-    protected function _addContinue($data)
+    protected function addContinue($data)
     {
-        $limit = $this->_limit;
+        $limit = $this->limit;
         $record = 0x003C; // Record identifier
 
         // The first 2080/8224 bytes remain intact. However, we have to change
@@ -230,5 +236,15 @@ class BIFFwriter
         }
 
         return false;
+    }
+
+    /**
+     * @param $version
+     *
+     * @return bool
+     */
+    public static function isVersionSupported($version)
+    {
+        return $version === self::VERSION_5 || $version === self::VERSION_6;
     }
 }

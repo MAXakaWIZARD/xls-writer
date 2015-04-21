@@ -42,47 +42,47 @@ class Validator
     const OP_GTE = 0x06;
     const OP_LTE = 0x07;
 
-    protected $_type;
-    protected $_style;
-    protected $_fixedList;
-    protected $_blank;
-    protected $_incell;
-    protected $_showprompt;
-    protected $_showerror;
-    protected $_title_prompt;
-    protected $_descr_prompt;
-    protected $_title_error;
-    protected $_descr_error;
-    protected $_operator;
-    protected $_formula1;
-    protected $_formula2;
+    protected $type;
+    protected $style;
+    protected $fixedList;
+    protected $blank;
+    protected $incell;
+    protected $showprompt;
+    protected $showerror;
+    protected $title_prompt;
+    protected $descr_prompt;
+    protected $title_error;
+    protected $descr_error;
+    protected $operator;
+    protected $formula1;
+    protected $formula2;
 
     /**
      * The parser from the workbook. Used to parse validation formulas also
      * @var Parser
      */
-    protected $_parser;
+    protected $parser;
 
     /**
      * @param $parser
      */
-    public function __construct(&$parser)
+    public function __construct($parser)
     {
-        $this->_parser = $parser;
-        $this->_type = 0x01; // FIXME: add method for setting datatype
-        $this->_style = 0x00;
-        $this->_fixedList = false;
-        $this->_blank = false;
-        $this->_incell = false;
-        $this->_showprompt = false;
-        $this->_showerror = true;
-        $this->_title_prompt = "\x00";
-        $this->_descr_prompt = "\x00";
-        $this->_title_error = "\x00";
-        $this->_descr_error = "\x00";
-        $this->_operator = self::OP_BETWEEN;
-        $this->_formula1 = '';
-        $this->_formula2 = '';
+        $this->parser = $parser;
+        $this->type = 0x01; // FIXME: add method for setting datatype
+        $this->style = 0x00;
+        $this->fixedList = false;
+        $this->blank = false;
+        $this->incell = false;
+        $this->showprompt = false;
+        $this->showerror = true;
+        $this->title_prompt = "\x00";
+        $this->descr_prompt = "\x00";
+        $this->title_error = "\x00";
+        $this->descr_error = "\x00";
+        $this->operator = self::OP_BETWEEN;
+        $this->formula1 = '';
+        $this->formula2 = '';
     }
 
     /**
@@ -92,9 +92,9 @@ class Validator
      */
     public function setPrompt($promptTitle = "\x00", $promptDescription = "\x00", $showPrompt = true)
     {
-        $this->_showprompt = $showPrompt;
-        $this->_title_prompt = $promptTitle;
-        $this->_descr_prompt = $promptDescription;
+        $this->showprompt = $showPrompt;
+        $this->title_prompt = $promptTitle;
+        $this->descr_prompt = $promptDescription;
     }
 
     /**
@@ -104,9 +104,9 @@ class Validator
      */
     public function setError($errorTitle = "\x00", $errorDescription = "\x00", $showError = true)
     {
-        $this->_showerror = $showError;
-        $this->_title_error = $errorTitle;
-        $this->_descr_error = $errorDescription;
+        $this->showerror = $showError;
+        $this->title_error = $errorTitle;
+        $this->descr_error = $errorDescription;
     }
 
     /**
@@ -114,7 +114,7 @@ class Validator
      */
     public function allowBlank()
     {
-        $this->_blank = true;
+        $this->blank = true;
     }
 
     /**
@@ -122,7 +122,7 @@ class Validator
      */
     public function onInvalidStop()
     {
-        $this->_style = 0x00;
+        $this->style = 0x00;
     }
 
     /**
@@ -130,7 +130,7 @@ class Validator
      */
     public function onInvalidWarn()
     {
-        $this->_style = 0x01;
+        $this->style = 0x01;
     }
 
     /**
@@ -138,7 +138,7 @@ class Validator
      */
     public function onInvalidInfo()
     {
-        $this->_style = 0x02;
+        $this->style = 0x02;
     }
 
     /**
@@ -149,14 +149,14 @@ class Validator
     public function setFormula1($formula)
     {
         // Parse the formula using the parser in Parser.php
-        $error = $this->_parser->parse($formula);
+        $error = $this->parser->parse($formula);
         if (pearIsError($error)) {
-            return $this->_formula1;
+            return $this->formula1;
         }
 
-        $this->_formula1 = $this->_parser->toReversePolish();
-        if (pearIsError($this->_formula1)) {
-            return $this->_formula1;
+        $this->formula1 = $this->parser->toReversePolish();
+        if (pearIsError($this->formula1)) {
+            return $this->formula1;
         }
         return true;
     }
@@ -169,14 +169,14 @@ class Validator
     public function setFormula2($formula)
     {
         // Parse the formula using the parser in Parser.php
-        $error = $this->_parser->parse($formula);
+        $error = $this->parser->parse($formula);
         if (pearIsError($error)) {
-            return $this->_formula2;
+            return $this->formula2;
         }
 
-        $this->_formula2 = $this->_parser->toReversePolish();
-        if (pearIsError($this->_formula2)) {
-            return $this->_formula2;
+        $this->formula2 = $this->parser->toReversePolish();
+        if (pearIsError($this->formula2)) {
+            return $this->formula2;
         }
         return true;
     }
@@ -184,26 +184,26 @@ class Validator
     /**
      * @return int
      */
-    public function _getOptions()
+    public function getOptions()
     {
-        $options = $this->_type;
-        $options |= $this->_style << 3;
-        if ($this->_fixedList) {
+        $options = $this->type;
+        $options |= $this->style << 3;
+        if ($this->fixedList) {
             $options |= 0x80;
         }
-        if ($this->_blank) {
+        if ($this->blank) {
             $options |= 0x100;
         }
-        if (!$this->_incell) {
+        if (!$this->incell) {
             $options |= 0x200;
         }
-        if ($this->_showprompt) {
+        if ($this->showprompt) {
             $options |= 0x40000;
         }
-        if ($this->_showerror) {
+        if ($this->showerror) {
             $options |= 0x80000;
         }
-        $options |= $this->_operator << 20;
+        $options |= $this->operator << 20;
 
         return $options;
     }
@@ -211,24 +211,24 @@ class Validator
     /**
      * @return string
      */
-    public function _getData()
+    public function getData()
     {
-        $title_prompt_len = strlen($this->_title_prompt);
-        $descr_prompt_len = strlen($this->_descr_prompt);
-        $title_error_len = strlen($this->_title_error);
-        $descr_error_len = strlen($this->_descr_error);
+        $title_prompt_len = strlen($this->title_prompt);
+        $descr_prompt_len = strlen($this->descr_prompt);
+        $title_error_len = strlen($this->title_error);
+        $descr_error_len = strlen($this->descr_error);
 
-        $formula1_size = strlen($this->_formula1);
-        $formula2_size = strlen($this->_formula2);
+        $formula1_size = strlen($this->formula1);
+        $formula2_size = strlen($this->formula2);
 
-        $data = pack("V", $this->_getOptions());
-        $data .= pack("vC", $title_prompt_len, 0x00) . $this->_title_prompt;
-        $data .= pack("vC", $title_error_len, 0x00) . $this->_title_error;
-        $data .= pack("vC", $descr_prompt_len, 0x00) . $this->_descr_prompt;
-        $data .= pack("vC", $descr_error_len, 0x00) . $this->_descr_error;
+        $data = pack("V", $this->getOptions());
+        $data .= pack("vC", $title_prompt_len, 0x00) . $this->title_prompt;
+        $data .= pack("vC", $title_error_len, 0x00) . $this->title_error;
+        $data .= pack("vC", $descr_prompt_len, 0x00) . $this->descr_prompt;
+        $data .= pack("vC", $descr_error_len, 0x00) . $this->descr_error;
 
-        $data .= pack("vv", $formula1_size, 0x0000) . $this->_formula1;
-        $data .= pack("vv", $formula2_size, 0x0000) . $this->_formula2;
+        $data .= pack("vv", $formula1_size, 0x0000) . $this->formula1;
+        $data .= pack("vv", $formula2_size, 0x0000) . $this->formula2;
 
         return $data;
     }

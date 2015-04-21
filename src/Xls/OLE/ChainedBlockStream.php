@@ -29,7 +29,7 @@ use Xls\OLE;
 /**
  * Stream wrapper for reading data stored in an OLE file. Implements methods
  * for PHP's stream_wrapper_register(). For creating streams using this
- * wrapper, use OLE_PPS_File::getStream().
+ * wrapper, use OLE\PPS\File::getStream().
  *
  * @category   Structures
  * @package    OLE
@@ -90,7 +90,7 @@ class ChainedBlockStream
         parse_str(substr($path, 25), $this->params);
         if (!isset($this->params['oleInstanceId'],
                 $this->params['blockId'],
-                $GLOBALS['_OLE_INSTANCES'][$this->params['oleInstanceId']]
+                OLE::$instances[$this->params['oleInstanceId']]
             )
         ) {
             if ($options & STREAM_REPORT_ERRORS) {
@@ -99,7 +99,7 @@ class ChainedBlockStream
 
             return false;
         }
-        $this->ole = $GLOBALS['_OLE_INSTANCES'][$this->params['oleInstanceId']];
+        $this->ole = OLE::$instances[$this->params['oleInstanceId']];
 
         $blockId = $this->params['blockId'];
         $this->data = '';
@@ -143,7 +143,7 @@ class ChainedBlockStream
     public function stream_close()
     {
         $this->ole = null;
-        unset($GLOBALS['_OLE_INSTANCES']);
+        OLE::$instances = array();
     }
 
     /**

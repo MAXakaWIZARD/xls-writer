@@ -9,17 +9,6 @@ namespace Xls;
 class Writer extends Writer\Workbook
 {
     /**
-     * The constructor. It just creates a Workbook
-     *
-     * @param string $filename The optional filename for the Workbook.
-     */
-    public function __construct($filename = '')
-    {
-        $this->_filename = $filename;
-        parent::__construct($filename);
-    }
-
-    /**
      * Send HTTP headers for the Excel file.
      *
      * @param string $filename The filename to use for HTTP headers
