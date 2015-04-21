@@ -12,8 +12,10 @@ Port of [PEAR Spreadsheet Excel Writer](http://pear.php.net/package/Spreadsheet_
 This package is compliant with [PSR-0](http://www.php-fig.org/psr/0/), [PSR-1](http://www.php-fig.org/psr/1/), and [PSR-2](http://www.php-fig.org/psr/2/).
 If you notice compliance oversights, please send a patch via pull request.
 
-## Usage
+## Known limitations
+* Supports only `XLS` format (BIFF5/7 and BIFF8)
 
+## Usage
 ```php
 require('vendor/autoload.php');
 
