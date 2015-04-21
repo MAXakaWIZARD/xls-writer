@@ -426,8 +426,8 @@ class Format
             $border1 |= $this->bottom << 12;
             $border1 |= $this->left_color << 16;
             $border1 |= $this->right_color << 23;
-            $diag_tl_to_rb = 0; // FIXME: add method
-            $diag_tr_to_lb = 0; // FIXME: add method
+            $diag_tl_to_rb = 0;
+            $diag_tr_to_lb = 0;
             $border1 |= $diag_tl_to_rb << 30;
             $border1 |= $diag_tr_to_lb << 31;
 
@@ -463,7 +463,7 @@ class Format
         $uls = $this->underline; // Underline
         $bFamily = $this->font_family; // Font family
         $bCharSet = $this->font_charset; // Character set
-        $encoding = 0; // TODO: Unicode support
+        $encoding = 0;
 
         $cch = strlen($this->font_name); // Length of font name
         $record = 0x31; // Record identifier

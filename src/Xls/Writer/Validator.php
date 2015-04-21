@@ -69,7 +69,7 @@ class Validator
     public function __construct($parser)
     {
         $this->parser = $parser;
-        $this->type = 0x01; // FIXME: add method for setting datatype
+        $this->type = 0x01;
         $this->style = 0x00;
         $this->fixedList = false;
         $this->blank = false;

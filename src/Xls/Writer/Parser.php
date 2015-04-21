@@ -545,7 +545,7 @@ class Parser
         if ($this->BIFF_version == 0x0500) {
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
         } elseif ($this->BIFF_version == 0x0600) {
-            $encoding = 0; // TODO: Unicode support
+            $encoding = 0;
             return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
         } else {
             throw new \Exception("Unknown BIFF version");
@@ -921,13 +921,12 @@ class Parser
         // Convert 1-index to zero-index
         $row1--;
         $row2--;
-        // Trick poor inocent Excel
+        // Trick poor innocent Excel
         $col1 = 0;
-        $col2 = 16383; // FIXME: maximum possible value for Excel 5 (change this!!!)
+        $col2 = 16383; // Maximum possible value for Excel 5
 
-        // FIXME: this changes for BIFF8
-        if (($row1 >= 16384) or ($row2 >= 16384)) {
-            throw new \Exception("Row in: $range greater than 16384 ");
+        if (($row1 >= 16384) || ($row2 >= 16384)) {
+            throw new \Exception("Row in: $range greater than 16384");
         }
 
         // Set the high bits to indicate if rows are relative.
@@ -1335,7 +1334,7 @@ class Parser
         }
         $args = $this->functions[$function][1];
         // If fixed number of args eg. TIME($i,$j,$k). Check that the number of args is valid.
-        if (($args >= 0) and ($args != $num_args)) {
+        if (($args >= 0) && ($args != $num_args)) {
             throw new \Exception("Incorrect number of arguments in function $function() ");
         }
 

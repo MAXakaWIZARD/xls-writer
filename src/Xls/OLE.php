@@ -329,8 +329,8 @@ class OLE
 
             fseek($fh, 20, SEEK_CUR);
 
-            $pps->Time1st = OLE::OLE2LocalDate(fread($fh, 8));
-            $pps->Time2nd = OLE::OLE2LocalDate(fread($fh, 8));
+            $pps->Time1st = OLE::ole2LocalDate(fread($fh, 8));
+            $pps->Time2nd = OLE::ole2LocalDate(fread($fh, 8));
             $pps->StartBlock = $this->readInt4($fh);
             $pps->Size = $this->readInt4($fh);
             $pps->No = count($this->list);
@@ -474,7 +474,8 @@ class OLE
     public static function asc2Ucs($ascii)
     {
         $rawname = '';
-        for ($i = 0; $i < strlen($ascii); $i++) {
+        $len = strlen($ascii);
+        for ($i = 0; $i < $len; $i++) {
             $rawname .= $ascii{$i} . "\x00";
         }
 
@@ -542,7 +543,7 @@ class OLE
      *
      * @return string The timestamp corresponding to the string
      */
-    public static function OLE2LocalDate($string)
+    public static function ole2LocalDate($string)
     {
         if (strlen($string) != 8) {
             throw new \Exception("Expecting 8 byte string");

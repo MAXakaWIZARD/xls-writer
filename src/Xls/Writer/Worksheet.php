@@ -500,14 +500,12 @@ class Worksheet extends BIFFwriter
      */
     public function initialize()
     {
-        if ($this->using_tmpfile == false) {
+        if (!$this->using_tmpfile) {
             return;
         }
 
         if ($this->tmpDir === '' && ini_get('open_basedir') === true) {
             // open_basedir restriction in effect - store data in memory
-            // ToDo: Let the error actually have an effect somewhere
-            $this->using_tmpfile = false;
             throw new \Exception('Temp file could not be opened since open_basedir restriction in effect - please use setTmpDir() - using memory storage instead');
         }
 
@@ -558,7 +556,6 @@ class Worksheet extends BIFFwriter
         // Prepend the page setup
         $this->storeSetup();
 
-        /* FIXME: margins are actually appended */
         // Prepend the bottom margin
         $this->storeMarginBottom();
 
@@ -643,17 +640,15 @@ class Worksheet extends BIFFwriter
         }
         $this->storeSelection($this->selection);
         $this->storeMergedCells();
+
         /* TODO: add data validity */
         /*if ($this->BIFF_version == 0x0600) {
             $this->storeDataValidity();
         }*/
+
         $this->storeEof();
 
         if ($this->tmpFile != '') {
-            if ($this->filehandle) {
-                //fclose($this->filehandle);
-                //$this->filehandle = '';
-            }
             @unlink($this->tmpFile);
             $this->tmpFile = '';
             $this->using_tmpfile = true;
@@ -989,7 +984,7 @@ class Worksheet extends BIFFwriter
      * @access public
      * @param float $margin The margin to set in inches
      */
-    public function setMargins_LR($margin)
+    public function setMarginsLeftRight($margin)
     {
         $this->setMarginLeft($margin);
         $this->setMarginRight($margin);
@@ -1001,7 +996,7 @@ class Worksheet extends BIFFwriter
      * @access public
      * @param float $margin The margin to set in inches
      */
-    public function setMargins_TB($margin)
+    public function setMarginsTopBottom($margin)
     {
         $this->setMarginTop($margin);
         $this->setMarginBottom($margin);
@@ -1224,6 +1219,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col    The column of the cell we are writing to
      * @param mixed $token  What we are writing
      * @param mixed $format The optional format to apply to the cell
+     * @return mixed
      */
     public function write($row, $col, $token, $format = null)
     {
@@ -1264,6 +1260,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col    The first col (leftmost col) we are writing to
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
+     * @throws \Exception
      * @return mixed
      */
     public function writeRow($row, $col, $val, $format = null)
@@ -1292,6 +1289,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col    The col we are writing to
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
+     * @throws \Exception
      * @return mixed
      */
     public function writeCol($row, $col, $val, $format = null)
@@ -1315,7 +1313,7 @@ class Worksheet extends BIFFwriter
      * @param mixed &$format The optional XF format
      * @return integer The XF record index
      */
-    public function XF(&$format)
+    public function xf(&$format)
     {
         if ($format) {
             return ($format->getXfIndex());
@@ -1510,7 +1508,7 @@ class Worksheet extends BIFFwriter
         $record = 0x0203; // Record identifier
         $length = 0x000E; // Number of bytes to follow
 
-        $xf = $this->XF($format); // The cell format
+        $xf = $this->xf($format); // The cell format
 
         // Check that row and col are valid and store max and min values
         if ($row >= $this->xls_rowmax) {
@@ -1567,7 +1565,7 @@ class Worksheet extends BIFFwriter
         $strlen = strlen($str);
         $record = 0x0204; // Record identifier
         $length = 0x0008 + $strlen; // Bytes to follow
-        $xf = $this->XF($format); // The cell format
+        $xf = $this->xf($format); // The cell format
 
         $str_error = 0;
 
@@ -1650,12 +1648,12 @@ class Worksheet extends BIFFwriter
         }
         $record = 0x00FD; // Record identifier
         $length = 0x000A; // Bytes to follow
-        $xf = $this->XF($format); // The cell format
+        $xf = $this->xf($format); // The cell format
 
         $str_error = 0;
 
         // Check that row and col are valid and store max and min values
-        if ($this->checkRowCol($row, $col) == false) {
+        if (!$this->checkRowCol($row, $col)) {
             return -2;
         }
 
@@ -1788,7 +1786,7 @@ class Worksheet extends BIFFwriter
 
         $record = 0x0201; // Record identifier
         $length = 0x0006; // Number of bytes to follow
-        $xf = $this->XF($format); // The cell format
+        $xf = $this->xf($format); // The cell format
 
         // Check that row and col are valid and store max and min values
         if ($row >= $this->xls_rowmax) {
@@ -1842,14 +1840,14 @@ class Worksheet extends BIFFwriter
         // we set $num to zero and set the option flags in $grbit to ensure
         // automatic calculation of the formula when the file is opened.
         //
-        $xf = $this->XF($format); // The cell format
+        $xf = $this->xf($format); // The cell format
         $num = 0x00; // Current value of formula
         $grbit = 0x03; // Option flags
         $unknown = 0x0000; // Must be zero
 
 
         // Check that row and col are valid and store max and min values
-        if ($this->checkRowCol($row, $col) == false) {
+        if (!$this->checkRowCol($row, $col)) {
             return -2;
         }
 
@@ -2143,7 +2141,7 @@ class Worksheet extends BIFFwriter
                 $str,
                 $format
             );
-        if (($str_error == -2) or ($str_error == -3)) {
+        if (($str_error == -2) || ($str_error == -3)) {
             return $str_error;
         }
 
@@ -2259,13 +2257,13 @@ class Worksheet extends BIFFwriter
         $irwMac = 0x0000; // Used by Excel to optimise loading
         $reserved = 0x0000; // Reserved
         $grbit = 0x0000; // Option flags
-        $ixfe = $this->XF($format); // XF index
+        $ixfe = $this->xf($format); // XF index
 
         // set _row_sizes so _sizeRow() can use it
         $this->row_sizes[$row] = $height;
 
         // Use setRow($row, null, $XF) to set XF format without setting height
-        if ($height != null) {
+        if (!is_null($height)) {
             $miyRw = $height * 20; // row height
         } else {
             $miyRw = 0xff; // default row height is 256
@@ -2273,7 +2271,6 @@ class Worksheet extends BIFFwriter
 
         $level = max(0, min($level, 7)); // level should be between 0 and 7
         $this->outline_row_level = max($level, $this->outline_row_level);
-
 
         // Set the options flags. fUnsynced is used to show that the font and row
         // heights are not compatible. This is usually the case for WriteExcel.
@@ -2395,7 +2392,7 @@ class Worksheet extends BIFFwriter
 
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $grbit, $rwTop, $colLeft);
-        // FIXME !!!
+
         if ($this->BIFF_version == 0x0500) {
             $rgbHdr = 0x00000000; // Row/column heading and gridline color
             $data .= pack("V", $rgbHdr);
@@ -2473,7 +2470,7 @@ class Worksheet extends BIFFwriter
         $coldx += 0.72; // Fudge. Excel subtracts 0.72 !?
         $coldx *= 256; // Convert to units of 1/256 of a char
 
-        $ixfe = $this->XF($format);
+        $ixfe = $this->xf($format);
         $reserved = 0x00; // Reserved
 
         $level = max(0, min($level, 7));
@@ -2779,7 +2776,7 @@ class Worksheet extends BIFFwriter
         $str = $this->header; // header string
         $cch = strlen($str); // Length of header string
         if ($this->BIFF_version == 0x0600) {
-            $encoding = 0x0; // TODO: Unicode support
+            $encoding = 0x0;
             $length = 3 + $cch; // Bytes to follow
         } else {
             $length = 1 + $cch; // Bytes to follow
@@ -2807,7 +2804,7 @@ class Worksheet extends BIFFwriter
         $str = $this->footer; // Footer string
         $cch = strlen($str); // Length of footer string
         if ($this->BIFF_version == 0x0600) {
-            $encoding = 0x0; // TODO: Unicode support
+            $encoding = 0x0;
             $length = 3 + $cch; // Bytes to follow
         } else {
             $length = 1 + $cch;
@@ -3643,7 +3640,11 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * FIXME: add comments
+     * @param $row1
+     * @param $col1
+     * @param $row2
+     * @param $col2
+     * @param $validator
      */
     public function setValidation($row1, $col1, $row2, $col2, &$validator)
     {

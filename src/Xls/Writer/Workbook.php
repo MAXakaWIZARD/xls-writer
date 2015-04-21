@@ -160,7 +160,7 @@ class Workbook extends BIFFwriter
         $this->sheetnames = array();
         $this->formats = array();
         $this->palette = array();
-        $this->codepage = 0x04E4; // FIXME: should change for BIFF8
+        $this->codepage = 0x04E4; // Should change for BIFF8
         $this->country_code = -1;
         $this->string_sizeinfo = 3;
 
@@ -393,15 +393,14 @@ class Workbook extends BIFFwriter
         }*/
 
         // Check that the colour index is the right range
-        if ($index < 8 or $index > 64) {
-            // TODO: assign real error codes
+        if ($index < 8 || $index > 64) {
             throw new \Exception("Color index $index outside range: 8 <= index <= 64");
         }
 
         // Check that the colour components are in the right range
-        if (($red < 0 or $red > 255)
-            || ($green < 0 or $green > 255)
-            || ($blue < 0 or $blue > 255)
+        if (($red < 0 || $red > 255)
+            || ($green < 0 || $green > 255)
+            || ($blue < 0 || $blue > 255)
         ) {
             throw new \Exception("Color component outside range: 0 <= color <= 255");
         }
@@ -624,7 +623,7 @@ class Workbook extends BIFFwriter
 
         if ($this->BIFF_version == 0x0600) {
             // add the length of the SST
-            /* TODO: check this works for a lot of strings (> 8224 bytes) */
+            /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $offset += $this->calculateSharedStringsSizes();
             if ($this->country_code != -1) {
                 $offset += 8; // adding COUNTRY record
@@ -926,7 +925,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Writes Excel BIFF BOUNDSHEET record.
-     * FIXME: inconsistent with BIFF documentation
      *
      * @param string $sheetname Worksheet name
      * @param integer $offset    Location of worksheet BOF
@@ -1497,8 +1495,7 @@ class Workbook extends BIFFwriter
         $data = pack("VV", $this->str_total, $this->str_unique);
         $this->append($header . $data);
 
-
-        /* TODO: not good for performance */
+        /* TODO: Possible bottleneck */
         foreach (array_keys($this->str_table) as $string) {
             $string_length = strlen($string);
             $headerinfo = unpack("vlength/Cencoding", $string);
@@ -1507,9 +1504,7 @@ class Workbook extends BIFFwriter
 
             // Block length is the total length of the strings that will be
             // written out in a single SST or CONTINUE block.
-            //
             $block_length += $string_length;
-
 
             // We can write the string if it doesn't cross a CONTINUE boundary
             if ($block_length < $continue_limit) {
@@ -1545,12 +1540,10 @@ class Workbook extends BIFFwriter
                         if (!$split_string && $space_remaining % 2 != 1) {
                             $space_remaining--;
                             $align = 1;
-                        } // Split section without header => split on even boundary
-                        else {
-                            if ($split_string && $space_remaining % 2 == 1) {
-                                $space_remaining--;
-                                $align = 1;
-                            }
+                        } elseif ($split_string && $space_remaining % 2 == 1) {
+                            // Split section without header => split on even boundary
+                            $space_remaining--;
+                            $align = 1;
                         }
 
                         $split_string = 1;

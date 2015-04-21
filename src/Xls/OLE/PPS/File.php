@@ -92,7 +92,7 @@ class File extends OLE\PPS
     {
         $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_File");
         $fh = @fopen($this->tmpFilename, "w+b");
-        if ($fh == false) {
+        if ($fh === false) {
             throw new \Exception("Can't create temporary file");
         }
         $this->ppsFile = $fh;

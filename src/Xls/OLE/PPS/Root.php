@@ -115,12 +115,12 @@ class Root extends OLE\PPS
         if (($filename == '-') || ($filename == '')) {
             $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_Root");
             $this->fileHandlerRoot = @fopen($this->tmpFilename, "w+b");
-            if ($this->fileHandlerRoot == false) {
+            if ($this->fileHandlerRoot === false) {
                 throw new \Exception("Can't create temporary file.");
             }
         } else {
             $this->fileHandlerRoot = @fopen($filename, "wb");
-            if ($this->fileHandlerRoot == false) {
+            if ($this->fileHandlerRoot === false) {
                 throw new \Exception("Can't open $filename. It may be in use or protected.");
             }
         }
@@ -166,7 +166,8 @@ class Root extends OLE\PPS
     {
         $iSBcnt = 0;
         $iBBcnt = 0;
-        for ($i = 0; $i < count($raList); $i++) {
+        $raListCount = count($raList);
+        for ($i = 0; $i < $raListCount; $i++) {
             if ($raList[$i]->Type == OLE::OLE_PPS_TYPE_FILE) {
                 $raList[$i]->Size = $raList[$i]->dataLen();
                 if ($raList[$i]->Size < OLE::OLE_DATA_SIZE_SMALL) {
@@ -301,7 +302,8 @@ class Root extends OLE\PPS
         $FILE = $this->fileHandlerRoot;
 
         // cycle through PPS's
-        for ($i = 0; $i < count($raList); $i++) {
+        $raListCount = count($raList);
+        for ($i = 0; $i < $raListCount; $i++) {
             if ($raList[$i]->Type != OLE::OLE_PPS_TYPE_DIR) {
                 $raList[$i]->Size = $raList[$i]->dataLen();
                 if (($raList[$i]->Size >= OLE::OLE_DATA_SIZE_SMALL)
@@ -353,8 +355,8 @@ class Root extends OLE\PPS
         $sRes = '';
         $file = $this->fileHandlerRoot;
         $iSmBlk = 0;
-
-        for ($i = 0; $i < count($raList); $i++) {
+        $raListCount = count($raList);
+        for ($i = 0; $i < $raListCount; $i++) {
             // Make SBD, small data string
             if ($raList[$i]->Type == OLE::OLE_PPS_TYPE_FILE) {
                 if ($raList[$i]->Size <= 0) {
@@ -412,7 +414,8 @@ class Root extends OLE\PPS
     public function savePps(&$raList)
     {
         // Save each PPS WK
-        for ($i = 0; $i < count($raList); $i++) {
+        $raListCount = count($raList);
+        for ($i = 0; $i < $raListCount; $i++) {
             fwrite($this->fileHandlerRoot, $raList[$i]->getPpsWk());
         }
         // Adjust for Block
@@ -668,7 +671,7 @@ class Root extends OLE\PPS
 
         // BDList
         for (
-            $i = 0; $i < $bbd_info["header_blockchain_list_entries"] and $i < $bbd_info["blockchain_list_entries"]; $i++
+            $i = 0; $i < $bbd_info["header_blockchain_list_entries"] && $i < $bbd_info["blockchain_list_entries"]; $i++
         ) {
             fwrite($file, pack("V", $num_bb_blocks + $num_sb_blocks + $num_pps_blocks + $i));
         }
