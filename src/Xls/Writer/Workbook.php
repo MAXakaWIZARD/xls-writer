@@ -30,13 +30,13 @@ class Workbook extends BIFFwriter
      * The active worksheet of the workbook (0 indexed)
      * @var integer
      */
-    public $activesheet;
+    public $activeSheet;
 
     /**
      * 1st displayed worksheet in the workbook (0 indexed)
      * @var integer
      */
-    public $firstsheet;
+    public $firstSheet;
 
     /**
      * Number of workbook tabs selected
@@ -48,33 +48,33 @@ class Workbook extends BIFFwriter
      * Index for creating adding new formats to the workbook
      * @var integer
      */
-    public $xf_index;
+    public $xfIndex;
 
     /**
      * Flag for preventing close from being called twice.
      * @var integer
      * @see close()
      */
-    public $fileclosed;
+    public $fileClosed;
 
     /**
      * The BIFF file size for the workbook.
      * @var integer
      * @see _calcSheetOffsets()
      */
-    public $biffsize;
+    public $biffSize;
 
     /**
      * The default sheetname for all sheets created.
      * @var string
      */
-    public $sheetname;
+    public $sheetName;
 
     /**
      * The default XF format.
      * @var object Format
      */
-    public $tmp_format;
+    public $tmpFormat;
 
     /**
      * Array containing references to all of this workbook's worksheets
@@ -86,7 +86,7 @@ class Workbook extends BIFFwriter
      * Array of sheetnames for creating the EXTERNSHEET records
      * @var array
      */
-    public $sheetnames;
+    public $sheetNames;
 
     /**
      * Array containing references to all of this workbook's formats
@@ -104,30 +104,29 @@ class Workbook extends BIFFwriter
      * The default format for URLs.
      * @var object Format
      */
-    public $url_format;
-
-    /**
-     * The codepage indicates the text encoding used for strings
-     * @var integer
-     */
-    public $codepage;
+    public $urlFormat;
 
     /**
      * The country code used for localization
      * @var integer
      */
-    public $country_code;
+    public $countryCode;
+
+    /**
+     * @var int
+     */
+    public $stringSizeinfo;
 
     /**
      * number of bytes for sizeinfo of strings
      * @var integer
      */
-    public $string_sizeinfo_size;
+    public $stringSizeinfoSize;
 
     /**
      * @var
      */
-    protected $block_sizes;
+    protected $blockSizes;
 
     /**
      * @var int
@@ -147,32 +146,32 @@ class Workbook extends BIFFwriter
         parent::__construct($biffVersion);
 
         $this->filename = $filename;
-        $this->parser = new Parser($this->byte_order, $this->biffVersion);
+        $this->parser = new Parser($this->byteOrder, $this->biffVersion);
         $this->f1904 = 0;
         $this->selected = 0;
-        $this->xf_index = 16; // 15 style XF's and 1 cell XF.
-        $this->fileclosed = 0;
-        $this->biffsize = 0;
-        $this->sheetname = 'Sheet';
+        $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
+        $this->fileClosed = 0;
+        $this->biffSize = 0;
+        $this->sheetName = 'Sheet';
 
-        $this->activesheet = 0;
-        $this->firstsheet = 0;
+        $this->activeSheet = 0;
+        $this->firstSheet = 0;
         $this->worksheets = array();
-        $this->sheetnames = array();
+        $this->sheetNames = array();
 
         $this->formats = array();
         $this->palette = array();
-        $this->country_code = -1;
-        $this->string_sizeinfo = 3;
+        $this->countryCode = -1;
+        $this->stringSizeinfo = 3;
 
-        $this->tmp_format = new Format($this->biffVersion);
+        $this->tmpFormat = new Format($this->biffVersion);
 
         // Add the default format for hyperlinks
-        $this->url_format = $this->addFormat(array('color' => 'blue', 'underline' => 1));
+        $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
-        $this->str_total = 0;
-        $this->str_unique = 0;
-        $this->str_table = array();
+        $this->strTotal = 0;
+        $this->strUnique = 0;
+        $this->strTable = array();
         $this->setPaletteXl97();
 
         $this->creationTimestamp = time();
@@ -203,14 +202,14 @@ class Workbook extends BIFFwriter
      */
     public function close()
     {
-        if ($this->fileclosed) { // Prevent close() from being called twice.
+        if ($this->fileClosed) { // Prevent close() from being called twice.
             return true;
         }
         $res = $this->storeWorkbook();
         if (!$res) {
             throw new \Exception($res->getMessage());
         }
-        $this->fileclosed = 1;
+        $this->fileClosed = 1;
         return true;
     }
 
@@ -233,7 +232,7 @@ class Workbook extends BIFFwriter
      */
     public function setCountry($code)
     {
-        $this->country_code = $code;
+        $this->countryCode = $code;
     }
 
     /**
@@ -248,14 +247,14 @@ class Workbook extends BIFFwriter
     public function addWorksheet($name = '')
     {
         $index = count($this->worksheets);
-        $sheetname = $this->sheetname;
+        $sheetname = $this->sheetName;
 
         if ($name == '') {
             $name = $sheetname . ($index + 1);
         }
 
         // Check that sheetname is <= 31 chars (Excel limit before BIFF8).
-        if ($this->biffVersion != BIFFwriter::VERSION_8) {
+        if ($this->isBiff5()) {
             if (strlen($name) > 31) {
                 throw new \Exception("Sheetname $name must be <= 31 chars");
             }
@@ -266,8 +265,8 @@ class Workbook extends BIFFwriter
         }
 
         // Check that the worksheet name doesn't already exist: a fatal Excel error.
-        $total_worksheets = count($this->worksheets);
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        $totalWorksheets = count($this->worksheets);
+        for ($i = 0; $i < $totalWorksheets; $i++) {
             if ($this->worksheets[$i]->getName() == $name) {
                 throw new \Exception("Worksheet '$name' already exists");
             }
@@ -277,18 +276,17 @@ class Workbook extends BIFFwriter
             $this->biffVersion,
             $name,
             $index,
-            $this->activesheet,
-            $this->firstsheet,
-            $this->str_total,
-            $this->str_unique,
-            $this->str_table,
-            $this->url_format,
-            $this->parser,
-            $this->tmpDir
+            $this->activeSheet,
+            $this->firstSheet,
+            $this->strTotal,
+            $this->strUnique,
+            $this->strTable,
+            $this->urlFormat,
+            $this->parser
         );
 
-        $this->worksheets[$index] = & $worksheet; // Store ref for iterator
-        $this->sheetnames[$index] = $name; // Store EXTERNSHEET names
+        $this->worksheets[$index] = $worksheet; // Store ref for iterator
+        $this->sheetNames[$index] = $name; // Store EXTERNSHEET names
         $this->parser->setExtSheet($name, $index); // Register worksheet name with parser
 
         return $worksheet;
@@ -303,8 +301,8 @@ class Workbook extends BIFFwriter
      */
     public function addFormat($properties = array())
     {
-        $format = new Format($this->biffVersion, $this->xf_index, $properties);
-        $this->xf_index += 1;
+        $format = new Format($this->biffVersion, $this->xfIndex, $properties);
+        $this->xfIndex += 1;
         $this->formats[] = & $format;
 
         return $format;
@@ -440,31 +438,31 @@ class Workbook extends BIFFwriter
         }
 
         // Ensure that at least one worksheet has been selected.
-        if ($this->activesheet == 0) {
+        if ($this->activeSheet == 0) {
             $this->worksheets[0]->selected = 1;
         }
 
         // Calculate the number of selected worksheet tabs and call the finalization
         // methods for each worksheet
-        $total_worksheets = count($this->worksheets);
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        $totalSheets = count($this->worksheets);
+        for ($i = 0; $i < $totalSheets; $i++) {
             if ($this->worksheets[$i]->selected) {
                 $this->selected++;
             }
-            $this->worksheets[$i]->close($this->sheetnames);
+            $this->worksheets[$i]->close($this->sheetNames);
         }
 
         // Add Workbook globals
         $this->storeBof(0x0005);
         $this->storeCodepage();
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $this->storeWindow1();
         }
-        if ($this->biffVersion == BIFFwriter::VERSION_5) {
+        if ($this->isBiff5()) {
             $this->storeExterns(); // For print area and repeat rows
         }
         $this->storeNames(); // For print area and repeat rows
-        if ($this->biffVersion == BIFFwriter::VERSION_5) {
+        if ($this->isBiff5()) {
             $this->storeWindow1();
         }
         $this->storeDatemode();
@@ -476,15 +474,15 @@ class Workbook extends BIFFwriter
         $this->calcSheetOffsets();
 
         // Add BOUNDSHEET records
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        for ($i = 0; $i < $totalSheets; $i++) {
             $this->storeBoundsheet($this->worksheets[$i]->name, $this->worksheets[$i]->offset);
         }
 
-        if ($this->country_code != -1) {
+        if ($this->countryCode != -1) {
             $this->storeCountry();
         }
 
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             //$this->storeSupbookInternal();
             /* TODO: store external SUPBOOK records and XCT and CRN records
             in case of external references for BIFF8 */
@@ -512,22 +510,20 @@ class Workbook extends BIFFwriter
      */
     protected function storeOLEFile()
     {
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
         } else {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Book'));
         }
-        if ($this->tmpDir != '') {
-            $OLE->setTempDir($this->tmpDir);
-        }
+
         $res = $OLE->init();
         if (!$res) {
             throw new \Exception("OLE Error: " . $res->getMessage());
         }
         $OLE->append($this->data);
 
-        $total_worksheets = count($this->worksheets);
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        $totalSheets = count($this->worksheets);
+        for ($i = 0; $i < $totalSheets; $i++) {
             while ($tmp = $this->worksheets[$i]->getData()) {
                 $OLE->append($tmp);
             }
@@ -538,9 +534,6 @@ class Workbook extends BIFFwriter
             $this->getCreationTimestamp(),
             array($OLE)
         );
-        if ($this->tmpDir != '') {
-            $root->setTempDir($this->tmpDir);
-        }
 
         $res = $root->save($this->filename);
         if (!$res) {
@@ -555,36 +548,36 @@ class Workbook extends BIFFwriter
      */
     protected function calcSheetOffsets()
     {
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
-            $boundsheet_length = 12; // fixed length for a BOUNDSHEET record
+        if ($this->isBiff8()) {
+            $boundsheetLength = 12; // fixed length for a BOUNDSHEET record
         } else {
-            $boundsheet_length = 11;
+            $boundsheetLength = 11;
         }
         $EOF = 4;
         $offset = $this->datasize;
 
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             // add the length of the SST
             /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $offset += $this->calculateSharedStringsSizes();
-            if ($this->country_code != -1) {
+            if ($this->countryCode != -1) {
                 $offset += 8; // adding COUNTRY record
             }
             // add the lenght of SUPBOOK, EXTERNSHEET and NAME records
             //$offset += 8; // TODO: calculate real value when storing the records
         }
-        $total_worksheets = count($this->worksheets);
+        $totalSheets = count($this->worksheets);
         // add the length of the BOUNDSHEET records
-        for ($i = 0; $i < $total_worksheets; $i++) {
-            $offset += $boundsheet_length + strlen($this->worksheets[$i]->name);
+        for ($i = 0; $i < $totalSheets; $i++) {
+            $offset += $boundsheetLength + strlen($this->worksheets[$i]->name);
         }
         $offset += $EOF;
 
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        for ($i = 0; $i < $totalSheets; $i++) {
             $this->worksheets[$i]->offset = $offset;
             $offset += $this->worksheets[$i]->datasize;
         }
-        $this->biffsize = $offset;
+        $this->biffSize = $offset;
     }
 
     /**
@@ -593,7 +586,7 @@ class Workbook extends BIFFwriter
     protected function storeAllFonts()
     {
         // tmp_format is added by the constructor. We use this to write the default XF's
-        $format = $this->tmp_format;
+        $format = $this->tmpFormat;
         $font = $format->getFont();
 
         // Note: Fonts are 0-indexed. According to the SDK there is no index 4,
@@ -612,16 +605,16 @@ class Workbook extends BIFFwriter
         $key = $format->getFontKey(); // The default font from _tmp_format
         $fonts[$key] = 0; // Index of the default font
 
-        $total_formats = count($this->formats);
-        for ($i = 0; $i < $total_formats; $i++) {
+        $totalFormats = count($this->formats);
+        for ($i = 0; $i < $totalFormats; $i++) {
             $key = $this->formats[$i]->getFontKey();
             if (isset($fonts[$key])) {
                 // FONT has already been used
-                $this->formats[$i]->font_index = $fonts[$key];
+                $this->formats[$i]->fontIndex = $fonts[$key];
             } else {
                 // Add a new FONT record
                 $fonts[$key] = $index;
-                $this->formats[$i]->font_index = $index;
+                $this->formats[$i]->fontIndex = $index;
                 $index++;
                 $font = $this->formats[$i]->getFont();
                 $this->append($font);
@@ -635,42 +628,42 @@ class Workbook extends BIFFwriter
     protected function storeAllNumFormats()
     {
         // Leaning num_format syndrome
-        $hash_num_formats = array();
-        $num_formats = array();
+        $hashNumFormats = array();
+        $numFormats = array();
         $index = 164;
 
         // Iterate through the XF objects and write a FORMAT record if it isn't a
         // built-in format type and if the FORMAT string hasn't already been used.
-        $total_formats = count($this->formats);
-        for ($i = 0; $i < $total_formats; $i++) {
-            $num_format = $this->formats[$i]->num_format;
+        $totalFormats = count($this->formats);
+        for ($i = 0; $i < $totalFormats; $i++) {
+            $numFormat = $this->formats[$i]->numFormat;
 
             // Check if $num_format is an index to a built-in format.
             // Also check for a string of zeros, which is a valid format string
             // but would evaluate to zero.
             //
-            if (!preg_match("/^0+\d/", $num_format)) {
-                if (preg_match("/^\d+$/", $num_format)) { // built-in format
+            if (!preg_match("/^0+\d/", $numFormat)) {
+                if (preg_match("/^\d+$/", $numFormat)) { // built-in format
                     continue;
                 }
             }
 
-            if (isset($hash_num_formats[$num_format])) {
+            if (isset($hashNumFormats[$numFormat])) {
                 // FORMAT has already been used
-                $this->formats[$i]->num_format = $hash_num_formats[$num_format];
+                $this->formats[$i]->numFormat = $hashNumFormats[$numFormat];
             } else {
                 // Add a new FORMAT
-                $hash_num_formats[$num_format] = $index;
-                $this->formats[$i]->num_format = $index;
-                array_push($num_formats, $num_format);
+                $hashNumFormats[$numFormat] = $index;
+                $this->formats[$i]->numFormat = $index;
+                array_push($numFormats, $numFormat);
                 $index++;
             }
         }
 
         // Write the new FORMAT records starting from 0xA4
         $index = 164;
-        foreach ($num_formats as $num_format) {
-            $this->storeNumFormat($num_format, $index);
+        foreach ($numFormats as $numFormat) {
+            $this->storeNumFormat($numFormat, $index);
             $index++;
         }
     }
@@ -683,7 +676,7 @@ class Workbook extends BIFFwriter
         // _tmp_format is added by the constructor. We use this to write the default XF's
         // The default font index is 0
         //
-        $format = $this->tmp_format;
+        $format = $this->tmpFormat;
         for ($i = 0; $i <= 14; $i++) {
             $xf = $format->getXf('style'); // Style XF
             $this->append($xf);
@@ -693,8 +686,8 @@ class Workbook extends BIFFwriter
         $this->append($xf);
 
         // User defined XFs
-        $total_formats = count($this->formats);
-        for ($i = 0; $i < $total_formats; $i++) {
+        $totalFormats = count($this->formats);
+        for ($i = 0; $i < $totalFormats; $i++) {
             $xf = $this->formats[$i]->getXf('cell');
             $this->append($xf);
         }
@@ -718,7 +711,7 @@ class Workbook extends BIFFwriter
         $this->storeExterncount(count($this->worksheets));
 
         // Create EXTERNSHEET for each worksheet
-        foreach ($this->sheetnames as $sheetname) {
+        foreach ($this->sheetNames as $sheetname) {
             $this->storeExternsheet($sheetname);
         }
     }
@@ -729,28 +722,27 @@ class Workbook extends BIFFwriter
     protected function storeNames()
     {
         // Create the print area NAME records
-        $total_worksheets = count($this->worksheets);
-        for ($i = 0; $i < $total_worksheets; $i++) {
+        foreach ($this->worksheets as $sheet) {
             // Write a Name record if the print area has been defined
-            if (isset($this->worksheets[$i]->print_rowmin)) {
+            if (isset($sheet->printRowMin)) {
                 $this->storeNameShort(
-                    $this->worksheets[$i]->index,
+                    $sheet->index,
                     0x06, // NAME type
-                    $this->worksheets[$i]->print_rowmin,
-                    $this->worksheets[$i]->print_rowmax,
-                    $this->worksheets[$i]->print_colmin,
-                    $this->worksheets[$i]->print_colmax
+                    $sheet->printRowMin,
+                    $sheet->printRowMax,
+                    $sheet->printColMin,
+                    $sheet->printColMax
                 );
             }
         }
 
         // Create the print title NAME records
-        $total_worksheets = count($this->worksheets);
-        for ($i = 0; $i < $total_worksheets; $i++) {
-            $rowmin = $this->worksheets[$i]->title_rowmin;
-            $rowmax = $this->worksheets[$i]->title_rowmax;
-            $colmin = $this->worksheets[$i]->title_colmin;
-            $colmax = $this->worksheets[$i]->title_colmax;
+        $totalSheets = count($this->worksheets);
+        for ($i = 0; $i < $totalSheets; $i++) {
+            $rowmin = $this->worksheets[$i]->titleRowMin;
+            $rowmax = $this->worksheets[$i]->titleRowMax;
+            $colmin = $this->worksheets[$i]->titleColMin;
+            $colmax = $this->worksheets[$i]->titleColMax;
 
             // Determine if row + col, row, col or nothing has been defined
             // and write the appropriate record
@@ -829,8 +821,8 @@ class Workbook extends BIFFwriter
         $ctabsel = $this->selected; // Number of workbook tabs selected
         $wTabRatio = 0x0258; // Tab to scrollbar ratio
 
-        $itabFirst = $this->firstsheet; // 1st displayed worksheet
-        $itabCur = $this->activesheet; // Active worksheet
+        $itabFirst = $this->firstSheet; // 1st displayed worksheet
+        $itabCur = $this->activeSheet; // Active worksheet
 
         $header = pack("vv", $record, $length);
         $data = pack(
@@ -856,21 +848,21 @@ class Workbook extends BIFFwriter
     protected function storeBoundsheet($sheetname, $offset)
     {
         $record = 0x0085; // Record identifier
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $length = 0x08 + strlen($sheetname); // Number of bytes to follow
         } else {
             $length = 0x07 + strlen($sheetname); // Number of bytes to follow
         }
 
         $grbit = 0x0000; // Visibility and sheet type
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $cch = mb_strlen($sheetname, 'UTF-16LE'); // Length of sheet name
         } else {
             $cch = strlen($sheetname); // Length of sheet name
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $data = pack("VvCC", $offset, $grbit, $cch, 0x1);
         } else {
             $data = pack("VvC", $offset, $grbit, $cch);
@@ -897,14 +889,15 @@ class Workbook extends BIFFwriter
      */
     protected function storeExternsheetBiff8()
     {
-        $total_references = count($this->parser->references);
+        $refs = $this->parser->getReferences();
+        $refCount = count($refs);
         $record = 0x0017; // Record identifier
-        $length = 2 + 6 * $total_references; // Number of bytes to follow
+        $length = 2 + 6 * $refCount; // Number of bytes to follow
 
         $header = pack("vv", $record, $length);
-        $data = pack('v', $total_references);
-        for ($i = 0; $i < $total_references; $i++) {
-            $data .= $this->parser->references[$i];
+        $data = pack('v', $refCount);
+        for ($i = 0; $i < $refCount; $i++) {
+            $data .= $refs[$i];
         }
         $this->append($header . $data);
     }
@@ -936,14 +929,14 @@ class Workbook extends BIFFwriter
     {
         $record = 0x041E; // Record identifier
 
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $length = 5 + strlen($format); // Number of bytes to follow
             $encoding = 0x0;
         } else {
             $length = 3 + strlen($format); // Number of bytes to follow
         }
 
-        if ($this->biffVersion == BIFFwriter::VERSION_8 && function_exists('iconv')) { // Encode format String
+        if ($this->isBiff8() && function_exists('iconv')) { // Encode format String
             if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
                 $format = iconv(mb_detect_encoding($format, 'auto'), 'UTF-16LE', $format);
             }
@@ -955,7 +948,7 @@ class Workbook extends BIFFwriter
         }
         $length = strlen($format);
 
-        if ($this->biffVersion == BIFFwriter::VERSION_8) {
+        if ($this->isBiff8()) {
             $header = pack("vv", $record, 5 + $length);
             $data = pack("vvC", $ifmt, $cch, $encoding);
         } else {
@@ -1183,7 +1176,7 @@ class Workbook extends BIFFwriter
 
         $header = pack('vv', $record, $length);
         /* using the same country code always for simplicity */
-        $data = pack('vv', $this->country_code, $this->country_code);
+        $data = pack('vv', $this->countryCode, $this->countryCode);
         $this->append($header . $data);
     }
 
@@ -1227,36 +1220,36 @@ class Workbook extends BIFFwriter
              -8 : Length of additional SST header information
              -8 : Arbitrary number to keep within _add_continue() limit = 8208
         */
-        $continue_limit = 8208;
-        $block_length = 0;
+        $continueLimit = 8208;
+        $blockLength = 0;
         $written = 0;
-        $this->block_sizes = array();
+        $this->blockSizes = array();
         $continue = 0;
 
-        foreach (array_keys($this->str_table) as $string) {
-            $string_length = strlen($string);
+        foreach (array_keys($this->strTable) as $string) {
+            $stringLength = strlen($string);
             $headerinfo = unpack("vlength/Cencoding", $string);
             $encoding = $headerinfo["encoding"];
-            $split_string = 0;
+            $splitString = 0;
 
             // Block length is the total length of the strings that will be
             // written out in a single SST or CONTINUE block.
-            $block_length += $string_length;
+            $blockLength += $stringLength;
 
             // We can write the string if it doesn't cross a CONTINUE boundary
-            if ($block_length < $continue_limit) {
-                $written += $string_length;
+            if ($blockLength < $continueLimit) {
+                $written += $stringLength;
                 continue;
             }
 
             // Deal with the cases where the next string to be written will exceed
             // the CONTINUE boundary. If the string is very long it may need to be
             // written in more than one CONTINUE record.
-            while ($block_length >= $continue_limit) {
+            while ($blockLength >= $continueLimit) {
                 // We need to avoid the case where a string is continued in the first
                 // n bytes that contain the string header information.
-                $header_length = 3; // Min string + header size -1
-                $space_remaining = $continue_limit - $written - $continue;
+                $headerLength = 3; // Min string + header size -1
+                $spaceRemaining = $continueLimit - $written - $continue;
 
 
                 /* TODO: Unicode data should only be split on char (2 byte)
@@ -1268,50 +1261,50 @@ class Workbook extends BIFFwriter
                 // Only applies to Unicode strings
                 if ($encoding == 1) {
                     // Min string + header size -1
-                    $header_length = 4;
+                    $headerLength = 4;
 
-                    if ($space_remaining > $header_length) {
+                    if ($spaceRemaining > $headerLength) {
                         // String contains 3 byte header => split on odd boundary
-                        if (!$split_string && $space_remaining % 2 != 1) {
-                            $space_remaining--;
+                        if (!$splitString && $spaceRemaining % 2 != 1) {
+                            $spaceRemaining--;
                             $align = 1;
                         } // Split section without header => split on even boundary
                         else {
-                            if ($split_string && $space_remaining % 2 == 1) {
-                                $space_remaining--;
+                            if ($splitString && $spaceRemaining % 2 == 1) {
+                                $spaceRemaining--;
                                 $align = 1;
                             }
                         }
 
-                        $split_string = 1;
+                        $splitString = 1;
                     }
                 }
 
 
-                if ($space_remaining > $header_length) {
+                if ($spaceRemaining > $headerLength) {
                     // Write as much as possible of the string in the current block
-                    $written += $space_remaining;
+                    $written += $spaceRemaining;
 
                     // Reduce the current block length by the amount written
-                    $block_length -= $continue_limit - $continue - $align;
+                    $blockLength -= $continueLimit - $continue - $align;
 
                     // Store the max size for this block
-                    $this->block_sizes[] = $continue_limit - $align;
+                    $this->blockSizes[] = $continueLimit - $align;
 
                     // If the current string was split then the next CONTINUE block
                     // should have the string continue flag (grbit) set unless the
                     // split string fits exactly into the remaining space.
-                    if ($block_length > 0) {
+                    if ($blockLength > 0) {
                         $continue = 1;
                     } else {
                         $continue = 0;
                     }
                 } else {
                     // Store the max size for this block
-                    $this->block_sizes[] = $written + $continue;
+                    $this->blockSizes[] = $written + $continue;
 
                     // Not enough space to start the string in the current block
-                    $block_length -= $continue_limit - $space_remaining - $continue;
+                    $blockLength -= $continueLimit - $spaceRemaining - $continue;
                     $continue = 0;
 
                 }
@@ -1319,8 +1312,8 @@ class Workbook extends BIFFwriter
                 // If the string (or substr) is small enough we can write it in the
                 // new CONTINUE block. Else, go through the loop again to write it in
                 // one or more CONTINUE blocks
-                if ($block_length < $continue_limit) {
-                    $written = $block_length;
+                if ($blockLength < $continueLimit) {
+                    $written = $blockLength;
                 } else {
                     $written = 0;
                 }
@@ -1329,7 +1322,7 @@ class Workbook extends BIFFwriter
 
         // Store the max size for the last block unless it is empty
         if ($written + $continue) {
-            $this->block_sizes[] = $written + $continue;
+            $this->blockSizes[] = $written + $continue;
         }
 
 
@@ -1339,15 +1332,14 @@ class Workbook extends BIFFwriter
          they must be written before the SST records
         */
 
-        $tmp_block_sizes = array();
-        $tmp_block_sizes = $this->block_sizes;
+        $tmpBlockSizes = $this->blockSizes;
 
         $length = 12;
-        if (!empty($tmp_block_sizes)) {
-            $length += array_shift($tmp_block_sizes); // SST
+        if (!empty($tmpBlockSizes)) {
+            $length += array_shift($tmpBlockSizes); // SST
         }
-        while (!empty($tmp_block_sizes)) {
-            $length += 4 + array_shift($tmp_block_sizes); // CONTINUEs
+        while (!empty($tmpBlockSizes)) {
+            $length += 4 + array_shift($tmpBlockSizes); // CONTINUEs
         }
 
         return $length;
@@ -1369,20 +1361,20 @@ class Workbook extends BIFFwriter
         $total = 0x0000;
 
         // Iterate through the strings to calculate the CONTINUE block sizes
-        $continue_limit = 8208;
-        $block_length = 0;
+        $continueLimit = 8208;
+        $blockLength = 0;
         $written = 0;
         $continue = 0;
 
         // sizes are upside down
-        $tmp_block_sizes = $this->block_sizes;
+        $tmpBlockSizes = $this->blockSizes;
         // $tmp_block_sizes = array_reverse($this->block_sizes);
 
         // The SST record is required even if it contains no strings. Thus we will
         // always have a length
         //
-        if (!empty($tmp_block_sizes)) {
-            $length = 8 + array_shift($tmp_block_sizes);
+        if (!empty($tmpBlockSizes)) {
+            $length = 8 + array_shift($tmpBlockSizes);
         } else {
             // No strings
             $length = 8;
@@ -1391,24 +1383,24 @@ class Workbook extends BIFFwriter
 
         // Write the SST block header information
         $header = pack("vv", $record, $length);
-        $data = pack("VV", $this->str_total, $this->str_unique);
+        $data = pack("VV", $this->strTotal, $this->strUnique);
         $this->append($header . $data);
 
         /* TODO: Possible bottleneck */
-        foreach (array_keys($this->str_table) as $string) {
-            $string_length = strlen($string);
+        foreach (array_keys($this->strTable) as $string) {
+            $stringLength = strlen($string);
             $headerinfo = unpack("vlength/Cencoding", $string);
             $encoding = $headerinfo["encoding"];
-            $split_string = 0;
+            $splitString = 0;
 
             // Block length is the total length of the strings that will be
             // written out in a single SST or CONTINUE block.
-            $block_length += $string_length;
+            $blockLength += $stringLength;
 
             // We can write the string if it doesn't cross a CONTINUE boundary
-            if ($block_length < $continue_limit) {
+            if ($blockLength < $continueLimit) {
                 $this->append($string);
-                $written += $string_length;
+                $written += $stringLength;
                 continue;
             }
 
@@ -1416,13 +1408,12 @@ class Workbook extends BIFFwriter
             // the CONTINUE boundary. If the string is very long it may need to be
             // written in more than one CONTINUE record.
             //
-            while ($block_length >= $continue_limit) {
+            while ($blockLength >= $continueLimit) {
                 // We need to avoid the case where a string is continued in the first
                 // n bytes that contain the string header information.
                 //
-                $header_length = 3; // Min string + header size -1
-                $space_remaining = $continue_limit - $written - $continue;
-
+                $headerLength = 3; // Min string + header size -1
+                $spaceRemaining = $continueLimit - $written - $continue;
 
                 // Unicode data should only be split on char (2 byte) boundaries.
                 // Therefore, in some cases we need to reduce the amount of available
@@ -1432,53 +1423,53 @@ class Workbook extends BIFFwriter
                 // Only applies to Unicode strings
                 if ($encoding == 1) {
                     // Min string + header size -1
-                    $header_length = 4;
+                    $headerLength = 4;
 
-                    if ($space_remaining > $header_length) {
+                    if ($spaceRemaining > $headerLength) {
                         // String contains 3 byte header => split on odd boundary
-                        if (!$split_string && $space_remaining % 2 != 1) {
-                            $space_remaining--;
+                        if (!$splitString && $spaceRemaining % 2 != 1) {
+                            $spaceRemaining--;
                             $align = 1;
-                        } elseif ($split_string && $space_remaining % 2 == 1) {
+                        } elseif ($splitString && $spaceRemaining % 2 == 1) {
                             // Split section without header => split on even boundary
-                            $space_remaining--;
+                            $spaceRemaining--;
                             $align = 1;
                         }
 
-                        $split_string = 1;
+                        $splitString = 1;
                     }
                 }
 
-                if ($space_remaining > $header_length) {
+                if ($spaceRemaining > $headerLength) {
                     // Write as much as possible of the string in the current block
-                    $tmp = substr($string, 0, $space_remaining);
+                    $tmp = substr($string, 0, $spaceRemaining);
                     $this->append($tmp);
 
                     // The remainder will be written in the next block(s)
-                    $string = substr($string, $space_remaining);
+                    $string = substr($string, $spaceRemaining);
 
                     // Reduce the current block length by the amount written
-                    $block_length -= $continue_limit - $continue - $align;
+                    $blockLength -= $continueLimit - $continue - $align;
 
                     // If the current string was split then the next CONTINUE block
                     // should have the string continue flag (grbit) set unless the
                     // split string fits exactly into the remaining space.
                     //
-                    if ($block_length > 0) {
+                    if ($blockLength > 0) {
                         $continue = 1;
                     } else {
                         $continue = 0;
                     }
                 } else {
                     // Not enough space to start the string in the current block
-                    $block_length -= $continue_limit - $space_remaining - $continue;
+                    $blockLength -= $continueLimit - $spaceRemaining - $continue;
                     $continue = 0;
                 }
 
                 // Write the CONTINUE block header
-                if (!empty($this->block_sizes)) {
+                if (!empty($this->blockSizes)) {
                     $record = 0x003C;
-                    $length = array_shift($tmp_block_sizes);
+                    $length = array_shift($tmpBlockSizes);
 
                     $header = pack('vv', $record, $length);
                     if ($continue) {
@@ -1491,9 +1482,9 @@ class Workbook extends BIFFwriter
                 // new CONTINUE block. Else, go through the loop again to write it in
                 // one or more CONTINUE blocks
                 //
-                if ($block_length < $continue_limit) {
+                if ($blockLength < $continueLimit) {
                     $this->append($string);
-                    $written = $block_length;
+                    $written = $blockLength;
                 } else {
                     $written = 0;
                 }

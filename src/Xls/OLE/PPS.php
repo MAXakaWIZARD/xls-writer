@@ -1,23 +1,4 @@
 <?php
-/* vim: set expandtab tabstop=4 shiftwidth=4: */
-// +----------------------------------------------------------------------+
-// | PHP Version 4                                                        |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 1997-2002 The PHP Group                                |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.02 of the PHP license,      |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available at through the world-wide-web at                           |
-// | http://www.php.net/license/2_02.txt.                                 |
-// | If you did not receive a copy of the PHP license and are unable to   |
-// | obtain it through the world-wide-web, please send a note to          |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Author: Xavier Noguer <xnoguer@php.net>                              |
-// | Based on OLE::Storage_Lite by Kawai, Takanori                        |
-// +----------------------------------------------------------------------+
-//
-// $Id$
 
 namespace Xls\OLE;
 
@@ -111,6 +92,22 @@ class PPS
     public $ole;
 
     /**
+     * The temporary dir for storing the OLE file
+     * @var string
+     */
+    protected $tmpDir;
+
+    /**
+     * @var string
+     */
+    protected $tmpFilename;
+
+    /**
+     * @var resource
+     */
+    protected $ppsFile;
+
+    /**
      * The constructor
      *
      * @param integer $No   The PPS index
@@ -119,8 +116,8 @@ class PPS
      * @param integer $prev The index of the previous PPS
      * @param integer $next The index of the next PPS
      * @param integer $dir  The index of it's first child if this is a Dir or Root PPS
-     * @param integer $time_1st A timestamp
-     * @param integer $time_2nd A timestamp
+     * @param integer $time1st A timestamp
+     * @param integer $time2nd A timestamp
      * @param string $data  The (usually binary) source data of the PPS
      * @param array $children Array containing children PPS for this PPS
      */
@@ -131,8 +128,8 @@ class PPS
         $prev = null,
         $next = null,
         $dir = null,
-        $time_1st = null,
-        $time_2nd = null,
+        $time1st = null,
+        $time2nd = null,
         $data = '',
         $children = array()
     ) {
@@ -142,8 +139,8 @@ class PPS
         $this->PrevPps = $prev;
         $this->NextPps = $next;
         $this->DirPps = $dir;
-        $this->Time1st = $time_1st;
-        $this->Time2nd = $time_2nd;
+        $this->Time1st = $time1st;
+        $this->Time2nd = $time2nd;
         $this->data = $data;
         $this->children = $children;
 
@@ -152,6 +149,8 @@ class PPS
         } else {
             $this->Size = 0;
         }
+
+        $this->tmpDir = sys_get_temp_dir();
     }
 
     /**
@@ -164,7 +163,7 @@ class PPS
         if (!isset($this->data)) {
             return 0;
         }
-        if (isset($this->ppsFile)) {
+        if (is_resource($this->ppsFile)) {
             fseek($this->ppsFile, 0);
             $stats = fstat($this->ppsFile);
             return $stats[7];
@@ -245,5 +244,25 @@ class PPS
 
             return $cnt;
         }
+    }
+
+    /**
+     *
+     */
+    public function removeTmpFile()
+    {
+        if (is_resource($this->ppsFile)) {
+            fclose($this->ppsFile);
+            $this->ppsFile = null;
+        }
+        @unlink($this->tmpFilename);
+    }
+
+    /**
+     * @return resource
+     */
+    public function getPpsFile()
+    {
+        return $this->ppsFile;
     }
 }

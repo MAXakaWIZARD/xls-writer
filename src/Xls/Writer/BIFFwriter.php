@@ -52,7 +52,7 @@ class BIFFwriter
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer
      */
-    public $byte_order;
+    public $byteOrder;
 
     /**
      * The string containing the data of the BIFF stream
@@ -86,6 +86,12 @@ class BIFFwriter
     public $tmpFile;
 
     /**
+     * The codepage indicates the text encoding used for strings
+     * @var integer
+     */
+    public $codepage;
+
+    /**
      * @param int $biffVersion
      *
      * @throws \Exception
@@ -95,7 +101,9 @@ class BIFFwriter
         $this->data = '';
         $this->datasize = 0;
         $this->limit = 2080;
-        $this->tmpDir = '';
+
+        $this->tmpDir = sys_get_temp_dir();
+        $this->tmpFile = '';
 
         $this->setBiffVersion($biffVersion);
         $this->setVersionParams();
@@ -107,13 +115,12 @@ class BIFFwriter
      */
     protected function setVersionParams()
     {
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        $this->codepage = 0x04E4;
+
+        if ($this->isBiff5()) {
             $this->limit = 2080;
-            $this->codepage = 0x04E4;
         } else {
             $this->limit = 8228;
-            $this->codepage = 0x04B0;
-            $this->codepage = 0x04E4;
         }
     }
 
@@ -142,16 +149,15 @@ class BIFFwriter
         $teststr = pack("d", 1.2345);
         $number = pack("C8", 0x8D, 0x97, 0x6E, 0x12, 0x83, 0xC0, 0xF3, 0x3F);
         if ($number == $teststr) {
-            $byte_order = self::BYTE_ORDER_LE;
+            $this->byteOrder = self::BYTE_ORDER_LE;
         } elseif ($number == strrev($teststr)) {
-            $byte_order = self::BYTE_ORDER_BE;
+            $this->byteOrder = self::BYTE_ORDER_BE;
         } else {
             // Give up. I'll fix this in a later version.
             throw new \Exception(
                 "Required floating point format is not supported on this platform."
             );
         }
-        $this->byte_order = $byte_order;
     }
 
     /**
@@ -196,7 +202,7 @@ class BIFFwriter
 
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->biffVersion == self::VERSION_5) {
+        if ($this->isBiff5()) {
             $length = 0x0008;
             $unknown = '';
             $build = 0x096C;
@@ -247,8 +253,8 @@ class BIFFwriter
         $header = pack("vv", $record, $limit); // Headers for continue records
 
         // Retrieve chunks of 2080/8224 bytes +4 for the header.
-        $data_length = strlen($data);
-        for ($i = $limit; $i < ($data_length - $limit); $i += $limit) {
+        $dataLength = strlen($data);
+        for ($i = $limit; $i < ($dataLength - $limit); $i += $limit) {
             $tmp .= $header;
             $tmp .= substr($data, $i, $limit);
         }
@@ -262,22 +268,6 @@ class BIFFwriter
     }
 
     /**
-     * Sets the temp dir used for storing the OLE file
-     *
-     * @param string $dir The dir to be used as temp dir
-     * @return true if given dir is valid, false otherwise
-     */
-    public function setTempDir($dir)
-    {
-        if (is_dir($dir)) {
-            $this->tmpDir = $dir;
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * @param $version
      *
      * @return bool
@@ -285,5 +275,21 @@ class BIFFwriter
     public static function isVersionSupported($version)
     {
         return $version === self::VERSION_5 || $version === self::VERSION_8;
+    }
+
+    /**
+     *
+     */
+    public function isBiff5()
+    {
+        return $this->biffVersion === BIFFwriter::VERSION_5;
+    }
+
+    /**
+     *
+     */
+    public function isBiff8()
+    {
+        return $this->biffVersion === BIFFwriter::VERSION_8;
     }
 }

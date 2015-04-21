@@ -20,17 +20,6 @@ class Root extends OLE\PPS
     public $newFunc = true;
 
     /**
-     * The temporary dir for storing the OLE file
-     * @var string
-     */
-    public $tmpDir;
-
-    /**
-     * @var string
-     */
-    public $tmpFilename;
-
-    /**
      * @var
      */
     public $smallBlockSize;
@@ -48,44 +37,27 @@ class Root extends OLE\PPS
     /**
      * Constructor
      *
-     * @param integer $time_1st A timestamp
-     * @param integer $time_2nd A timestamp
+     * @param integer $time1st A timestamp
+     * @param integer $time2nd A timestamp
      * @param array $raChild
      */
     public function __construct(
-        $time_1st = null,
-        $time_2nd = null,
+        $time1st = null,
+        $time2nd = null,
         $raChild = array()
     ) {
-        $this->tmpDir = sys_get_temp_dir();
-
         parent::__construct(
             null,
             OLE::asc2Ucs('Root Entry'),
-            OLE::OLE_PPS_TYPE_ROOT,
+            OLE::PPS_TYPE_ROOT,
             null,
             null,
             null,
-            $time_1st,
-            $time_2nd,
+            $time1st,
+            $time2nd,
             null,
             $raChild
         );
-    }
-
-    /**
-     * Sets the temp dir used for storing the OLE file
-     *
-     * @param string $dir The dir to be used as temp dir
-     * @return true if given dir is valid, false otherwise
-     */
-    public function setTempDir($dir)
-    {
-        if (is_dir($dir)) {
-            $this->tmpDir = $dir;
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -165,9 +137,9 @@ class Root extends OLE\PPS
         $iBBcnt = 0;
         $raListCount = count($raList);
         for ($i = 0; $i < $raListCount; $i++) {
-            if ($raList[$i]->Type == OLE::OLE_PPS_TYPE_FILE) {
+            if ($raList[$i]->Type == OLE::PPS_TYPE_FILE) {
                 $raList[$i]->Size = $raList[$i]->dataLen();
-                if ($raList[$i]->Size < OLE::OLE_DATA_SIZE_SMALL) {
+                if ($raList[$i]->Size < OLE::DATA_SIZE_SMALL) {
                     $iSBcnt += floor($raList[$i]->Size / $this->smallBlockSize)
                         + (($raList[$i]->Size % $this->smallBlockSize) ? 1 : 0);
                 } else {
@@ -177,12 +149,12 @@ class Root extends OLE\PPS
             }
         }
         $iSmallLen = $iSBcnt * $this->smallBlockSize;
-        $iSlCnt = floor($this->bigBlockSize / OLE::OLE_LONG_INT_SIZE);
+        $iSlCnt = floor($this->bigBlockSize / OLE::LONG_INT_SIZE);
         $iSBDcnt = floor($iSBcnt / $iSlCnt) + (($iSBcnt % $iSlCnt) ? 1 : 0);
         $iBBcnt += (floor($iSmallLen / $this->bigBlockSize) +
             (($iSmallLen % $this->bigBlockSize) ? 1 : 0));
         $iCnt = count($raList);
-        $iBdCnt = $this->bigBlockSize / OLE::OLE_PPS_SIZE;
+        $iBdCnt = $this->bigBlockSize / OLE::PPS_SIZE;
         $iPPScnt = (floor($iCnt / $iBdCnt) + (($iCnt % $iBdCnt) ? 1 : 0));
 
         return array($iSBDcnt, $iBBcnt, $iPPScnt);
@@ -219,8 +191,8 @@ class Root extends OLE\PPS
         }
 
         // Calculate Basic Setting
-        $iBlCnt = $this->bigBlockSize / OLE::OLE_LONG_INT_SIZE;
-        $i1stBdL = ($this->bigBlockSize - 0x4C) / OLE::OLE_LONG_INT_SIZE;
+        $iBlCnt = $this->bigBlockSize / OLE::LONG_INT_SIZE;
+        $i1stBdL = ($this->bigBlockSize - 0x4C) / OLE::LONG_INT_SIZE;
 
         $iBdExL = 0;
         $iAll = $iBBcnt + $iPPScnt + $iSBDcnt;
@@ -296,33 +268,32 @@ class Root extends OLE\PPS
      */
     public function saveBigData($iStBlk, &$raList)
     {
-        $FILE = $this->fileHandlerRoot;
-
-        // cycle through PPS's
+        // loop through PPS's
         $raListCount = count($raList);
         for ($i = 0; $i < $raListCount; $i++) {
-            if ($raList[$i]->Type != OLE::OLE_PPS_TYPE_DIR) {
+            if ($raList[$i]->Type != OLE::PPS_TYPE_DIR) {
                 $raList[$i]->Size = $raList[$i]->dataLen();
-                if (($raList[$i]->Size >= OLE::OLE_DATA_SIZE_SMALL)
-                    || (($raList[$i]->Type == OLE::OLE_PPS_TYPE_ROOT)
+                if (($raList[$i]->Size >= OLE::DATA_SIZE_SMALL)
+                    || (($raList[$i]->Type == OLE::PPS_TYPE_ROOT)
                         && isset($raList[$i]->data))
                 ) {
                     // Write Data
-                    if (isset($raList[$i]->ppsFile)) {
+                    $ppsFile = $raList[$i]->getPpsFile();
+                    if (is_resource($ppsFile)) {
                         $iLen = 0;
-                        fseek($raList[$i]->ppsFile, 0); // To The Top
-                        while ($sBuff = fread($raList[$i]->ppsFile, 4096)) {
+                        fseek($ppsFile, 0); // To The Top
+                        while ($sBuff = fread($ppsFile, 4096)) {
                             $iLen += strlen($sBuff);
-                            fwrite($FILE, $sBuff);
+                            fwrite($this->fileHandlerRoot, $sBuff);
                         }
                     } else {
-                        fwrite($FILE, $raList[$i]->data);
+                        fwrite($this->fileHandlerRoot, $raList[$i]->data);
                     }
 
                     if ($raList[$i]->Size % $this->bigBlockSize) {
                         $loopEnd = ($this->bigBlockSize - ($raList[$i]->Size % $this->bigBlockSize));
                         for ($j = 0; $j < $loopEnd; $j++) {
-                            fwrite($FILE, "\x00");
+                            fwrite($this->fileHandlerRoot, "\x00");
                         }
                     }
                     // Set For PPS
@@ -330,12 +301,7 @@ class Root extends OLE\PPS
                     $iStBlk += (floor($raList[$i]->Size / $this->bigBlockSize) +
                         (($raList[$i]->Size % $this->bigBlockSize) ? 1 : 0));
                 }
-                // Close file for each PPS, and unlink it
-                if (isset($raList[$i]->ppsFile)) {
-                    @fclose($raList[$i]->ppsFile);
-                    $raList[$i]->ppsFile = null;
-                    @unlink($raList[$i]->tmpFilename);
-                }
+                $raList[$i]->removeTmpFile();
             }
         }
     }
@@ -354,12 +320,12 @@ class Root extends OLE\PPS
         $raListCount = count($raList);
         for ($i = 0; $i < $raListCount; $i++) {
             // Make SBD, small data string
-            if ($raList[$i]->Type == OLE::OLE_PPS_TYPE_FILE) {
+            if ($raList[$i]->Type == OLE::PPS_TYPE_FILE) {
                 if ($raList[$i]->Size <= 0) {
                     continue;
                 }
 
-                if ($raList[$i]->Size < OLE::OLE_DATA_SIZE_SMALL) {
+                if ($raList[$i]->Size < OLE::DATA_SIZE_SMALL) {
                     $iSmbCnt = floor($raList[$i]->Size / $this->smallBlockSize)
                         + (($raList[$i]->Size % $this->smallBlockSize) ? 1 : 0);
                     // Add to SBD
@@ -391,7 +357,7 @@ class Root extends OLE\PPS
             }
         }
 
-        $iSbCnt = floor($this->bigBlockSize / OLE::OLE_LONG_INT_SIZE);
+        $iSbCnt = floor($this->bigBlockSize / OLE::LONG_INT_SIZE);
         if ($iSmBlk % $iSbCnt) {
             for ($i = 0; $i < ($iSbCnt - ($iSmBlk % $iSbCnt)); $i++) {
                 fwrite($file, pack("V", -1));
@@ -415,9 +381,9 @@ class Root extends OLE\PPS
         }
         // Adjust for Block
         $iCnt = count($raList);
-        $iBCnt = $this->bigBlockSize / OLE::OLE_PPS_SIZE;
+        $iBCnt = $this->bigBlockSize / OLE::PPS_SIZE;
         if ($iCnt % $iBCnt) {
-            for ($i = 0; $i < (($iBCnt - ($iCnt % $iBCnt)) * OLE::OLE_PPS_SIZE); $i++) {
+            for ($i = 0; $i < (($iBCnt - ($iCnt % $iBCnt)) * OLE::PPS_SIZE); $i++) {
                 fwrite($this->fileHandlerRoot, "\x00");
             }
         }
@@ -437,10 +403,11 @@ class Root extends OLE\PPS
             return;
         }
 
-        $FILE = $this->fileHandlerRoot;
+        $file = $this->fileHandlerRoot;
+
         // Calculate Basic Setting
-        $iBbCnt = $this->bigBlockSize / OLE::OLE_LONG_INT_SIZE;
-        $i1stBdL = ($this->bigBlockSize - 0x4C) / OLE::OLE_LONG_INT_SIZE;
+        $iBbCnt = $this->bigBlockSize / OLE::LONG_INT_SIZE;
+        $i1stBdL = ($this->bigBlockSize - 0x4C) / OLE::LONG_INT_SIZE;
 
         $iBdExL = 0;
         $iAll = $iBsize + $iPpsCnt + $iSbdSize;
@@ -464,33 +431,33 @@ class Root extends OLE\PPS
         // Set for SBD
         if ($iSbdSize > 0) {
             for ($i = 0; $i < ($iSbdSize - 1); $i++) {
-                fwrite($FILE, pack("V", $i + 1));
+                fwrite($file, pack("V", $i + 1));
             }
-            fwrite($FILE, pack("V", -2));
+            fwrite($file, pack("V", -2));
         }
         // Set for B
         for ($i = 0; $i < ($iBsize - 1); $i++) {
-            fwrite($FILE, pack("V", $i + $iSbdSize + 1));
+            fwrite($file, pack("V", $i + $iSbdSize + 1));
         }
-        fwrite($FILE, pack("V", -2));
+        fwrite($file, pack("V", -2));
 
         // Set for PPS
         for ($i = 0; $i < ($iPpsCnt - 1); $i++) {
-            fwrite($FILE, pack("V", $i + $iSbdSize + $iBsize + 1));
+            fwrite($file, pack("V", $i + $iSbdSize + $iBsize + 1));
         }
-        fwrite($FILE, pack("V", -2));
+        fwrite($file, pack("V", -2));
         // Set for BBD itself ( 0xFFFFFFFD : BBD)
         for ($i = 0; $i < $iBdCnt; $i++) {
-            fwrite($FILE, pack("V", 0xFFFFFFFD));
+            fwrite($file, pack("V", 0xFFFFFFFD));
         }
         // Set for ExtraBDList
         for ($i = 0; $i < $iBdExL; $i++) {
-            fwrite($FILE, pack("V", 0xFFFFFFFC));
+            fwrite($file, pack("V", 0xFFFFFFFC));
         }
         // Adjust for Block
         if (($iAllW + $iBdCnt) % $iBbCnt) {
             for ($i = 0; $i < ($iBbCnt - (($iAllW + $iBdCnt) % $iBbCnt)); $i++) {
-                fwrite($FILE, pack("V", -1));
+                fwrite($file, pack("V", -1));
             }
         }
         // Extra BDList
@@ -501,90 +468,90 @@ class Root extends OLE\PPS
                 if ($iN >= ($iBbCnt - 1)) {
                     $iN = 0;
                     $iNb++;
-                    fwrite($FILE, pack("V", $iAll + $iBdCnt + $iNb));
+                    fwrite($file, pack("V", $iAll + $iBdCnt + $iNb));
                 }
-                fwrite($FILE, pack("V", $iBsize + $iSbdSize + $iPpsCnt + $i));
+                fwrite($file, pack("V", $iBsize + $iSbdSize + $iPpsCnt + $i));
             }
             if (($iBdCnt - $i1stBdL) % ($iBbCnt - 1)) {
                 for ($i = 0; $i < (($iBbCnt - 1) - (($iBdCnt - $i1stBdL) % ($iBbCnt - 1))); $i++) {
-                    fwrite($FILE, pack("V", -1));
+                    fwrite($file, pack("V", -1));
                 }
             }
-            fwrite($FILE, pack("V", -2));
+            fwrite($file, pack("V", -2));
         }
     }
 
     /**
      * New method to store Bigblock chain
      *
-     * @param integer $num_sb_blocks - number of Smallblock depot blocks
-     * @param integer $num_bb_blocks - number of Bigblock depot blocks
-     * @param integer $num_pps_blocks - number of PropertySetStorage blocks
+     * @param integer $numSbBlocks - number of Smallblock depot blocks
+     * @param integer $numBbBlocks - number of Bigblock depot blocks
+     * @param integer $numPpsBlocks - number of PropertySetStorage blocks
      */
-    protected function createBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
+    protected function createBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
-        $bbd_info = $this->caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks);
+        $bbdInfo = $this->caclBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
 
         $data = "";
 
-        if ($num_sb_blocks > 0) {
-            for ($i = 0; $i < ($num_sb_blocks - 1); $i++) {
+        if ($numSbBlocks > 0) {
+            for ($i = 0; $i < ($numSbBlocks - 1); $i++) {
                 $data .= pack("V", $i + 1);
             }
             $data .= pack("V", -2);
         }
 
-        for ($i = 0; $i < ($num_bb_blocks - 1); $i++) {
-            $data .= pack("V", $i + $num_sb_blocks + 1);
+        for ($i = 0; $i < ($numBbBlocks - 1); $i++) {
+            $data .= pack("V", $i + $numSbBlocks + 1);
         }
         $data .= pack("V", -2);
 
-        for ($i = 0; $i < ($num_pps_blocks - 1); $i++) {
-            $data .= pack("V", $i + $num_sb_blocks + $num_bb_blocks + 1);
+        for ($i = 0; $i < ($numPpsBlocks - 1); $i++) {
+            $data .= pack("V", $i + $numSbBlocks + $numBbBlocks + 1);
         }
         $data .= pack("V", -2);
 
-        for ($i = 0; $i < $bbd_info["0xFFFFFFFD_blockchain_entries"]; $i++) {
+        for ($i = 0; $i < $bbdInfo["0xFFFFFFFD_blockchain_entries"]; $i++) {
             $data .= pack("V", 0xFFFFFFFD);
         }
 
-        for ($i = 0; $i < $bbd_info["0xFFFFFFFC_blockchain_entries"]; $i++) {
+        for ($i = 0; $i < $bbdInfo["0xFFFFFFFC_blockchain_entries"]; $i++) {
             $data .= pack("V", 0xFFFFFFFC);
         }
 
         // Adjust for Block
-        $all_entries = $num_sb_blocks + $num_bb_blocks + $num_pps_blocks + $bbd_info["0xFFFFFFFD_blockchain_entries"]
-            + $bbd_info["0xFFFFFFFC_blockchain_entries"];
-        if ($all_entries % $bbd_info["entries_per_block"]) {
-            $rest = $bbd_info["entries_per_block"] - ($all_entries % $bbd_info["entries_per_block"]);
+        $allEntries = $numSbBlocks + $numBbBlocks + $numPpsBlocks + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
+            + $bbdInfo["0xFFFFFFFC_blockchain_entries"];
+        if ($allEntries % $bbdInfo["entries_per_block"]) {
+            $rest = $bbdInfo["entries_per_block"] - ($allEntries % $bbdInfo["entries_per_block"]);
             for ($i = 0; $i < $rest; $i++) {
                 $data .= pack("V", -1);
             }
         }
 
         // Extra BDList
-        if ($bbd_info["blockchain_list_entries"] > $bbd_info["header_blockchain_list_entries"]) {
+        if ($bbdInfo["blockchain_list_entries"] > $bbdInfo["header_blockchain_list_entries"]) {
             $iN = 0;
             $iNb = 0;
             for (
-                $i = $bbd_info["header_blockchain_list_entries"]; $i < $bbd_info["blockchain_list_entries"]; $i++, $iN++
+                $i = $bbdInfo["header_blockchain_list_entries"]; $i < $bbdInfo["blockchain_list_entries"]; $i++, $iN++
             ) {
-                if ($iN >= ($bbd_info["entries_per_block"] - 1)) {
+                if ($iN >= ($bbdInfo["entries_per_block"] - 1)) {
                     $iN = 0;
                     $iNb++;
                     $data .= pack(
                         "V",
-                        $num_sb_blocks + $num_bb_blocks + $num_pps_blocks + $bbd_info["0xFFFFFFFD_blockchain_entries"]
+                        $numSbBlocks + $numBbBlocks + $numPpsBlocks + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
                         + $iNb
                     );
                 }
 
-                $data .= pack("V", $num_bb_blocks + $num_sb_blocks + $num_pps_blocks + $i);
+                $data .= pack("V", $numBbBlocks + $numSbBlocks + $numPpsBlocks + $i);
             }
 
-            $all_entries = $bbd_info["blockchain_list_entries"] - $bbd_info["header_blockchain_list_entries"];
-            if (($all_entries % ($bbd_info["entries_per_block"] - 1))) {
-                $rest = ($bbd_info["entries_per_block"] - 1) - ($all_entries % ($bbd_info["entries_per_block"] - 1));
+            $allEntries = $bbdInfo["blockchain_list_entries"] - $bbdInfo["header_blockchain_list_entries"];
+            if (($allEntries % ($bbdInfo["entries_per_block"] - 1))) {
+                $rest = ($bbdInfo["entries_per_block"] - 1) - ($allEntries % ($bbdInfo["entries_per_block"] - 1));
                 for ($i = 0; $i < $rest; $i++) {
                     $data .= pack("V", -1);
                 }
@@ -604,15 +571,15 @@ class Root extends OLE\PPS
     /**
      * New method to store Header
      *
-     * @param integer $num_sb_blocks - number of Smallblock depot blocks
-     * @param integer $num_bb_blocks - number of Bigblock depot blocks
-     * @param integer $num_pps_blocks - number of PropertySetStorage blocks
+     * @param integer $numSbBlocks - number of Smallblock depot blocks
+     * @param integer $numBbBlocks - number of Bigblock depot blocks
+     * @param integer $numPpsBlocks - number of PropertySetStorage blocks
      */
-    public function createHeader($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
+    public function createHeader($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
         $file = $this->fileHandlerRoot;
 
-        $bbd_info = $this->caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks);
+        $bbdInfo = $this->caclBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
 
         // Save Header
         fwrite(
@@ -630,23 +597,23 @@ class Root extends OLE\PPS
             . pack("v", 0)
             . "\x00\x00\x00\x00"
             . "\x00\x00\x00\x00"
-            . pack("V", $bbd_info["blockchain_list_entries"])
-            . pack("V", $num_sb_blocks + $num_bb_blocks) //ROOT START
+            . pack("V", $bbdInfo["blockchain_list_entries"])
+            . pack("V", $numSbBlocks + $numBbBlocks) //ROOT START
             . pack("V", 0)
             . pack("V", 0x1000)
         );
 
         //Small Block Depot
-        if ($num_sb_blocks > 0) {
+        if ($numSbBlocks > 0) {
             fwrite($file, pack("V", 0));
         } else {
             fwrite($file, pack("V", -2));
         }
 
-        fwrite($file, pack("V", $num_sb_blocks));
+        fwrite($file, pack("V", $numSbBlocks));
 
         // Extra BDList Start, Count
-        if ($bbd_info["blockchain_list_entries"] < $bbd_info["header_blockchain_list_entries"]) {
+        if ($bbdInfo["blockchain_list_entries"] < $bbdInfo["header_blockchain_list_entries"]) {
             fwrite(
                 $file,
                 pack("V", -2) . // Extra BDList Start
@@ -657,20 +624,20 @@ class Root extends OLE\PPS
                 $file,
                 pack(
                     "V",
-                    $num_sb_blocks + $num_bb_blocks + $num_pps_blocks + $bbd_info["0xFFFFFFFD_blockchain_entries"]
-                ) . pack("V", $bbd_info["0xFFFFFFFC_blockchain_entries"])
+                    $numSbBlocks + $numBbBlocks + $numPpsBlocks + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
+                ) . pack("V", $bbdInfo["0xFFFFFFFC_blockchain_entries"])
             );
         }
 
         // BDList
         for (
-            $i = 0; $i < $bbd_info["header_blockchain_list_entries"] && $i < $bbd_info["blockchain_list_entries"]; $i++
+            $i = 0; $i < $bbdInfo["header_blockchain_list_entries"] && $i < $bbdInfo["blockchain_list_entries"]; $i++
         ) {
-            fwrite($file, pack("V", $num_bb_blocks + $num_sb_blocks + $num_pps_blocks + $i));
+            fwrite($file, pack("V", $numBbBlocks + $numSbBlocks + $numPpsBlocks + $i));
         }
 
-        if ($i < $bbd_info["header_blockchain_list_entries"]) {
-            for ($j = 0; $j < ($bbd_info["header_blockchain_list_entries"] - $i); $j++) {
+        if ($i < $bbdInfo["header_blockchain_list_entries"]) {
+            for ($j = 0; $j < ($bbdInfo["header_blockchain_list_entries"] - $i); $j++) {
                 fwrite($file, (pack("V", -1)));
             }
         }
@@ -679,62 +646,63 @@ class Root extends OLE\PPS
     /**
      * New method to calculate Bigblock chain
      *
-     * @param integer $num_sb_blocks - number of Smallblock depot blocks
-     * @param integer $num_bb_blocks - number of Bigblock depot blocks
-     * @param integer $num_pps_blocks - number of PropertySetStorage blocks
+     * @param integer $numSb - number of Smallblock depot blocks
+     * @param integer $numBb - number of Bigblock depot blocks
+     * @param integer $numPps - number of PropertySetStorage blocks
      */
-    protected function caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
+    protected function caclBigBlockChain($numSb, $numBb, $numPps)
     {
-        $bbd_info["entries_per_block"] = $this->bigBlockSize / OLE::OLE_LONG_INT_SIZE;
-        $bbd_info["header_blockchain_list_entries"] = ($this->bigBlockSize - 0x4C) / OLE::OLE_LONG_INT_SIZE;
-        $bbd_info["blockchain_entries"] = $num_sb_blocks + $num_bb_blocks + $num_pps_blocks;
-        $bbd_info["0xFFFFFFFD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-            $bbd_info["blockchain_entries"]
+        $bbdInfo["entries_per_block"] = $this->bigBlockSize / OLE::LONG_INT_SIZE;
+        $bbdInfo["header_blockchain_list_entries"] = ($this->bigBlockSize - 0x4C) / OLE::LONG_INT_SIZE;
+        $bbdInfo["blockchain_entries"] = $numSb + $numBb + $numPps;
+        $bbdInfo["0xFFFFFFFD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
+            $bbdInfo["blockchain_entries"]
         );
-        $bbd_info["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
-            $bbd_info["blockchain_entries"] + $bbd_info["0xFFFFFFFD_blockchain_entries"]
+        $bbdInfo["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
+            $bbdInfo["blockchain_entries"] + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
         );
 
         // do some magic
-        $bbd_info["ext_blockchain_list_entries"] = 0;
-        $bbd_info["0xFFFFFFFC_blockchain_entries"] = 0;
-        if ($bbd_info["blockchain_list_entries"] > $bbd_info["header_blockchain_list_entries"]) {
+        $bbdInfo["ext_blockchain_list_entries"] = 0;
+        $bbdInfo["0xFFFFFFFC_blockchain_entries"] = 0;
+        if ($bbdInfo["blockchain_list_entries"] > $bbdInfo["header_blockchain_list_entries"]) {
             do {
-                $bbd_info["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
-                    $bbd_info["blockchain_entries"] + $bbd_info["0xFFFFFFFD_blockchain_entries"]
-                    + $bbd_info["0xFFFFFFFC_blockchain_entries"]
+                $bbdInfo["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
+                    $bbdInfo["blockchain_entries"] + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
+                    + $bbdInfo["0xFFFFFFFC_blockchain_entries"]
                 );
-                $bbd_info["ext_blockchain_list_entries"]
-                    = $bbd_info["blockchain_list_entries"] - $bbd_info["header_blockchain_list_entries"];
-                $bbd_info["0xFFFFFFFC_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-                    $bbd_info["ext_blockchain_list_entries"]
+                $bbdInfo["ext_blockchain_list_entries"]
+                    = $bbdInfo["blockchain_list_entries"] - $bbdInfo["header_blockchain_list_entries"];
+                $bbdInfo["0xFFFFFFFC_blockchain_entries"] = $this->getNumberOfPointerBlocks(
+                    $bbdInfo["ext_blockchain_list_entries"]
                 );
-                $bbd_info["0xFFFFFFFD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-                    $num_sb_blocks + $num_bb_blocks + $num_pps_blocks + $bbd_info["0xFFFFFFFD_blockchain_entries"]
-                    + $bbd_info["0xFFFFFFFC_blockchain_entries"]
+                $bbdInfo["0xFFFFFFFD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
+                    $numSb + $numBb + $numPps + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
+                    + $bbdInfo["0xFFFFFFFC_blockchain_entries"]
                 );
-            } while ($bbd_info["blockchain_list_entries"] < $this->getNumberOfPointerBlocks(
-                    $bbd_info["blockchain_entries"]
-                    + $bbd_info["0xFFFFFFFD_blockchain_entries"]
-                    + $bbd_info["0xFFFFFFFC_blockchain_entries"]
+            } while ($bbdInfo["blockchain_list_entries"] < $this->getNumberOfPointerBlocks(
+                    $bbdInfo["blockchain_entries"]
+                    + $bbdInfo["0xFFFFFFFD_blockchain_entries"]
+                    + $bbdInfo["0xFFFFFFFC_blockchain_entries"]
                 )
             );
         }
 
-        return $bbd_info;
+        return $bbdInfo;
     }
 
     /**
      * Calculates number of pointer blocks
      *
-     * @param integer $num_pointers - number of pointers
-     * @return int
+     * @param integer $numPointers - number of pointers
+     *
+*@return int
      */
-    public function getNumberOfPointerBlocks($num_pointers)
+    public function getNumberOfPointerBlocks($numPointers)
     {
-        $pointers_per_block = $this->bigBlockSize / OLE::OLE_LONG_INT_SIZE;
+        $pointersPerBlock = $this->bigBlockSize / OLE::LONG_INT_SIZE;
 
-        return floor($num_pointers / $pointers_per_block) + (($num_pointers % $pointers_per_block) ? 1 : 0);
+        return floor($numPointers / $pointersPerBlock) + (($numPointers % $pointersPerBlock) ? 1 : 0);
     }
 
     /**

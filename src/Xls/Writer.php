@@ -1,11 +1,11 @@
 <?php
-/**
- * Class for writing Excel Spreadsheets
- *
-*/
 
 namespace Xls;
 
+/**
+ * Class for writing Excel Spreadsheets
+ *
+ */
 class Writer extends Writer\Workbook
 {
     /**

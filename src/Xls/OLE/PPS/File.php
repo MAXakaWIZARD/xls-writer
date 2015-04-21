@@ -1,24 +1,4 @@
 <?php
-/* vim: set expandtab tabstop=4 shiftwidth=4: */
-// +----------------------------------------------------------------------+
-// | PHP Version 4                                                        |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 1997-2002 The PHP Group                                |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.02 of the PHP license,      |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available at through the world-wide-web at                           |
-// | http://www.php.net/license/2_02.txt.                                 |
-// | If you did not receive a copy of the PHP license and are unable to   |
-// | obtain it through the world-wide-web, please send a note to          |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Author: Xavier Noguer <xnoguer@php.net>                              |
-// | Based on OLE::Storage_Lite by Kawai, Takanori                        |
-// +----------------------------------------------------------------------+
-//
-// $Id$
-
 
 namespace Xls\OLE\PPS;
 
@@ -34,22 +14,6 @@ use Xls\OLE;
 class File extends OLE\PPS
 {
     /**
-     * The temporary dir for storing the OLE file
-     * @var string
-     */
-    public $tmpDir;
-
-    /**
-     * @var string
-     */
-    public $tmpFilename;
-
-    /**
-     * @var
-     */
-    public $ppsFile;
-
-    /**
      * The constructor
      *
      * @param string $name The name of the file (in Unicode)
@@ -57,29 +21,11 @@ class File extends OLE\PPS
      */
     public function __construct($name)
     {
-        $this->tmpDir = sys_get_temp_dir();
-
         parent::__construct(
             null,
             $name,
-            OLE::OLE_PPS_TYPE_FILE
+            OLE::PPS_TYPE_FILE
         );
-    }
-
-    /**
-     * Sets the temp dir used for storing the OLE file
-     *
-     * @param string $dir The dir to be used as temp dir
-     * @return true if given dir is valid, false otherwise
-     */
-    public function setTempDir($dir)
-    {
-        if (is_dir($dir)) {
-            $this->tmpDir = $dir;
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -90,14 +36,12 @@ class File extends OLE\PPS
     public function init()
     {
         $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_File");
-        $fh = @fopen($this->tmpFilename, "w+b");
-        if ($fh === false) {
+        $this->ppsFile = @fopen($this->tmpFilename, "w+b");
+        if ($this->ppsFile === false) {
             throw new \Exception("Can't create temporary file");
         }
-        $this->ppsFile = $fh;
-        if ($this->ppsFile) {
-            fseek($this->ppsFile, 0);
-        }
+
+        fseek($this->ppsFile, 0);
 
         return true;
     }
@@ -109,7 +53,7 @@ class File extends OLE\PPS
      */
     public function append($data)
     {
-        if ($this->ppsFile) {
+        if (is_resource($this->ppsFile)) {
             fwrite($this->ppsFile, $data);
         } else {
             $this->data .= $data;

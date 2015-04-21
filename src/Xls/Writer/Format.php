@@ -1,36 +1,4 @@
 <?php
-/*
-*  Module written/ported by Xavier Noguer <xnoguer@rezebra.com>
-*
-*  The majority of this is _NOT_ my code.  I simply ported it from the
-*  PERL Spreadsheet::WriteExcel module.
-*
-*  The author of the Spreadsheet::WriteExcel module is John McNamara
-*  <jmcnamara@cpan.org>
-*
-*  I _DO_ maintain this code, and John McNamara has nothing to do with the
-*  porting of this code to PHP.  Any questions directly related to this
-*  class library should be directed to me.
-*
-*  License Information:
-*
-*    Spreadsheet_Excel_Writer:  A library for generating Excel Spreadsheets
-*    Copyright (c) 2002-2003 Xavier Noguer xnoguer@rezebra.com
-*
-*    This library is free software; you can redistribute it and/or
-*    modify it under the terms of the GNU Lesser General Public
-*    License as published by the Free Software Foundation; either
-*    version 2.1 of the License, or (at your option) any later version.
-*
-*    This library is distributed in the hope that it will be useful,
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*    Lesser General Public License for more details.
-*
-*    You should have received a copy of the GNU Lesser General Public
-*    License along with this library; if not, write to the Free Software
-*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
 
 namespace Xls\Writer;
 
@@ -54,22 +22,27 @@ class Format
     const SCRIPT_SUB = 2;
 
     /**
+     * @var integer
+     */
+    protected $biffVersion;
+
+    /**
      * The index given by the workbook when creating a new format.
      * @var integer
      */
-    public $xf_index;
+    public $xfIndex;
 
     /**
      * Index to the FONT record.
      * @var integer
      */
-    public $font_index;
+    public $fontIndex;
 
     /**
      * The font name (ASCII).
      * @var string
      */
-    public $font_name;
+    public $fontName;
 
     /**
      * Height of font (1/20 of a point)
@@ -105,43 +78,43 @@ class Format
      * Bit specifiying if the font has strikeout.
      * @var integer
      */
-    public $font_strikeout;
+    public $fontStrikeout;
 
     /**
      * Bit specifiying if the font has outline.
      * @var integer
      */
-    public $font_outline;
+    public $fontOutline;
 
     /**
      * Bit specifiying if the font has shadow.
      * @var integer
      */
-    public $font_shadow;
+    public $fontShadow;
 
     /**
      * 2 bytes specifiying the script type for the font.
      * @var integer
      */
-    public $font_script;
+    public $fontScript;
 
     /**
      * Byte specifiying the font family.
      * @var integer
      */
-    public $font_family;
+    public $fontFamily;
 
     /**
      * Byte specifiying the font charset.
      * @var integer
      */
-    public $font_charset;
+    public $fontCharset;
 
     /**
      * An index (2 bytes) to a FORMAT record (number format).
      * @var integer
      */
-    public $num_format;
+    public $numFormat;
 
     /**
      * Bit specifying if formulas are hidden.
@@ -159,25 +132,25 @@ class Format
      * The three bits specifying the text horizontal alignment.
      * @var integer
      */
-    public $text_h_align;
+    public $textHorAlign;
 
     /**
      * Bit specifying if the text is wrapped at the right border.
      * @var integer
      */
-    public $text_wrap;
+    public $textWrap;
 
     /**
      * The three bits specifying the text vertical alignment.
      * @var integer
      */
-    public $text_v_align;
+    public $textVertAlign;
 
     /**
      * 1 bit, apparently not used.
      * @var integer
      */
-    public $text_justlast;
+    public $textJustlast;
 
     /**
      * The two bits specifying the text rotation.
@@ -189,13 +162,13 @@ class Format
      * The cell's foreground color.
      * @var integer
      */
-    public $fg_color;
+    public $fgColor;
 
     /**
      * The cell's background color.
      * @var integer
      */
-    public $bg_color;
+    public $bgColor;
 
     /**
      * The cell's background fill pattern.
@@ -213,7 +186,7 @@ class Format
      * Color of the bottom border of the cell.
      * @var integer
      */
-    public $bottom_color;
+    public $bottomColor;
 
     /**
      * Style of the top border of the cell
@@ -225,7 +198,7 @@ class Format
      * Color of the top border of the cell.
      * @var integer
      */
-    public $top_color;
+    public $topColor;
 
     /**
      * Style of the left border of the cell
@@ -237,7 +210,7 @@ class Format
      * Color of the left border of the cell.
      * @var integer
      */
-    public $left_color;
+    public $leftColor;
 
     /**
      * Style of the right border of the cell
@@ -249,45 +222,46 @@ class Format
      * Color of the right border of the cell.
      * @var integer
      */
-    public $right_color;
+    public $rightColor;
 
     /**
      * Constructor
      *
+     * @param integer $biffVersion
      * @param integer $index the XF index for the format.
      * @param array $properties array with properties to be set on initialization.
      */
     public function __construct($biffVersion, $index = 0, $properties = array())
     {
-        $this->xf_index = $index;
+        $this->xfIndex = $index;
         $this->biffVersion = $biffVersion;
-        $this->font_index = 0;
-        $this->font_name = 'Arial';
+        $this->fontIndex = 0;
+        $this->fontName = 'Arial';
         $this->size = 10;
         $this->bold = 0x0190;
         $this->italic = 0;
         $this->color = 0x7FFF;
         $this->underline = 0;
-        $this->font_strikeout = 0;
-        $this->font_outline = 0;
-        $this->font_shadow = 0;
-        $this->font_script = 0;
-        $this->font_family = 0;
-        $this->font_charset = 0;
+        $this->fontStrikeout = 0;
+        $this->fontOutline = 0;
+        $this->fontShadow = 0;
+        $this->fontScript = 0;
+        $this->fontFamily = 0;
+        $this->fontCharset = 0;
 
-        $this->num_format = 0;
+        $this->numFormat = 0;
 
         $this->hidden = 0;
         $this->locked = 0;
 
-        $this->text_h_align = 0;
-        $this->text_wrap = 0;
-        $this->text_v_align = 2;
-        $this->text_justlast = 0;
+        $this->textHorAlign = 0;
+        $this->textWrap = 0;
+        $this->textVertAlign = 2;
+        $this->textJustlast = 0;
         $this->rotation = 0;
 
-        $this->fg_color = 0x40;
-        $this->bg_color = 0x41;
+        $this->fgColor = 0x40;
+        $this->bgColor = 0x41;
 
         $this->pattern = 0;
 
@@ -297,17 +271,17 @@ class Format
         $this->right = 0;
         $this->diag = 0;
 
-        $this->bottom_color = 0x40;
-        $this->top_color = 0x40;
-        $this->left_color = 0x40;
-        $this->right_color = 0x40;
+        $this->bottomColor = 0x40;
+        $this->topColor = 0x40;
+        $this->leftColor = 0x40;
+        $this->rightColor = 0x40;
         $this->diag_color = 0x40;
 
         // Set properties passed to Workbook::addFormat()
         foreach ($properties as $property => $value) {
             if (method_exists($this, 'set' . ucwords($property))) {
-                $method_name = 'set' . ucwords($property);
-                $this->$method_name($value);
+                $methodName = 'set' . ucwords($property);
+                $this->$methodName($value);
             }
         }
     }
@@ -330,30 +304,30 @@ class Format
         }
 
         // Flags to indicate if attributes have been set.
-        $atr_num = ($this->num_format != 0) ? 1 : 0;
-        $atr_fnt = ($this->font_index != 0) ? 1 : 0;
-        $atr_alc = ($this->text_wrap) ? 1 : 0;
-        $atr_bdr = ($this->bottom
+        $atrNum = ($this->numFormat != 0) ? 1 : 0;
+        $atrFnt = ($this->fontIndex != 0) ? 1 : 0;
+        $atrAlc = ($this->textWrap) ? 1 : 0;
+        $atrBdr = ($this->bottom
             || $this->top
             || $this->left
             || $this->right) ? 1 : 0;
-        $atr_pat = (($this->fg_color != 0x40)
-            || ($this->bg_color != 0x41)
+        $atrPat = (($this->fgColor != 0x40)
+            || ($this->bgColor != 0x41)
             || $this->pattern) ? 1 : 0;
-        $atr_prot = $this->locked | $this->hidden;
+        $atrProt = $this->locked | $this->hidden;
 
         // Zero the default border colour if the border has not been set.
         if ($this->bottom == 0) {
-            $this->bottom_color = 0;
+            $this->bottomColor = 0;
         }
         if ($this->top == 0) {
-            $this->top_color = 0;
+            $this->topColor = 0;
         }
         if ($this->right == 0) {
-            $this->right_color = 0;
+            $this->rightColor = 0;
         }
         if ($this->left == 0) {
-            $this->left_color = 0;
+            $this->leftColor = 0;
         }
         if ($this->diag == 0) {
             $this->diag_color = 0;
@@ -366,35 +340,35 @@ class Format
             $length = 0x0014;
         }
 
-        $ifnt = $this->font_index; // Index to FONT record
-        $ifmt = $this->num_format; // Index to FORMAT record
+        $ifnt = $this->fontIndex; // Index to FONT record
+        $ifmt = $this->numFormat; // Index to FORMAT record
         if ($this->biffVersion === BIFFwriter::VERSION_5) {
-            $align = $this->text_h_align; // Alignment
-            $align |= $this->text_wrap << 3;
-            $align |= $this->text_v_align << 4;
-            $align |= $this->text_justlast << 7;
+            $align = $this->textHorAlign; // Alignment
+            $align |= $this->textWrap << 3;
+            $align |= $this->textVertAlign << 4;
+            $align |= $this->textJustlast << 7;
             $align |= $this->rotation << 8;
-            $align |= $atr_num << 10;
-            $align |= $atr_fnt << 11;
-            $align |= $atr_alc << 12;
-            $align |= $atr_bdr << 13;
-            $align |= $atr_pat << 14;
-            $align |= $atr_prot << 15;
+            $align |= $atrNum << 10;
+            $align |= $atrFnt << 11;
+            $align |= $atrAlc << 12;
+            $align |= $atrBdr << 13;
+            $align |= $atrPat << 14;
+            $align |= $atrProt << 15;
 
-            $icv = $this->fg_color; // fg and bg pattern colors
-            $icv |= $this->bg_color << 7;
+            $icv = $this->fgColor; // fg and bg pattern colors
+            $icv |= $this->bgColor << 7;
 
             $fill = $this->pattern; // Fill and border line style
             $fill |= $this->bottom << 6;
-            $fill |= $this->bottom_color << 9;
+            $fill |= $this->bottomColor << 9;
 
             $border1 = $this->top; // Border line style and color
             $border1 |= $this->left << 3;
             $border1 |= $this->right << 6;
-            $border1 |= $this->top_color << 9;
+            $border1 |= $this->topColor << 9;
 
-            $border2 = $this->left_color; // Border color
-            $border2 |= $this->right_color << 7;
+            $border2 = $this->leftColor; // Border color
+            $border2 |= $this->rightColor << 7;
 
             $header = pack("vv", $record, $length);
             $data = pack(
@@ -409,34 +383,34 @@ class Format
                 $border2
             );
         } else {
-            $align = $this->text_h_align; // Alignment
-            $align |= $this->text_wrap << 3;
-            $align |= $this->text_v_align << 4;
-            $align |= $this->text_justlast << 7;
+            $align = $this->textHorAlign; // Alignment
+            $align |= $this->textWrap << 3;
+            $align |= $this->textVertAlign << 4;
+            $align |= $this->textJustlast << 7;
 
-            $used_attrib = $atr_num << 2;
-            $used_attrib |= $atr_fnt << 3;
-            $used_attrib |= $atr_alc << 4;
-            $used_attrib |= $atr_bdr << 5;
-            $used_attrib |= $atr_pat << 6;
-            $used_attrib |= $atr_prot << 7;
+            $usedAttr = $atrNum << 2;
+            $usedAttr |= $atrFnt << 3;
+            $usedAttr |= $atrAlc << 4;
+            $usedAttr |= $atrBdr << 5;
+            $usedAttr |= $atrPat << 6;
+            $usedAttr |= $atrProt << 7;
 
-            $icv = $this->fg_color; // fg and bg pattern colors
-            $icv |= $this->bg_color << 7;
+            $icv = $this->fgColor; // fg and bg pattern colors
+            $icv |= $this->bgColor << 7;
 
             $border1 = $this->left; // Border line style and color
             $border1 |= $this->right << 4;
             $border1 |= $this->top << 8;
             $border1 |= $this->bottom << 12;
-            $border1 |= $this->left_color << 16;
-            $border1 |= $this->right_color << 23;
-            $diag_tl_to_rb = 0;
-            $diag_tr_to_lb = 0;
-            $border1 |= $diag_tl_to_rb << 30;
-            $border1 |= $diag_tr_to_lb << 31;
+            $border1 |= $this->leftColor << 16;
+            $border1 |= $this->rightColor << 23;
+            $diagTlToRb = 0;
+            $diagTrToLb = 0;
+            $border1 |= $diagTlToRb << 30;
+            $border1 |= $diagTrToLb << 31;
 
-            $border2 = $this->top_color; // Border color
-            $border2 |= $this->bottom_color << 7;
+            $border2 = $this->topColor; // Border color
+            $border2 |= $this->bottomColor << 7;
             $border2 |= $this->diag_color << 14;
             $border2 |= $this->diag << 21;
             $border2 |= $this->pattern << 26;
@@ -444,9 +418,9 @@ class Format
             $header = pack("vv", $record, $length);
 
             $rotation = $this->rotation;
-            $biff8_options = 0x00;
+            $biff8Options = 0x00;
             $data = pack("vvvC", $ifnt, $ifmt, $style, $align);
-            $data .= pack("CCC", $rotation, $biff8_options, $used_attrib);
+            $data .= pack("CCC", $rotation, $biff8Options, $usedAttr);
             $data .= pack("VVv", $border1, $border2, $icv);
         }
 
@@ -463,13 +437,13 @@ class Format
         $dyHeight = $this->size * 20; // Height of font (1/20 of a point)
         $icv = $this->color; // Index to color palette
         $bls = $this->bold; // Bold style
-        $sss = $this->font_script; // Superscript/subscript
+        $sss = $this->fontScript; // Superscript/subscript
         $uls = $this->underline; // Underline
-        $bFamily = $this->font_family; // Font family
-        $bCharSet = $this->font_charset; // Character set
+        $bFamily = $this->fontFamily; // Font family
+        $bCharSet = $this->fontCharset; // Character set
         $encoding = 0;
 
-        $cch = strlen($this->font_name); // Length of font name
+        $cch = strlen($this->fontName); // Length of font name
         $record = 0x31; // Record identifier
         if ($this->biffVersion === BIFFwriter::VERSION_5) {
             $length = 0x0F + $cch; // Record length
@@ -482,13 +456,13 @@ class Format
         if ($this->italic) {
             $grbit |= 0x02;
         }
-        if ($this->font_strikeout) {
+        if ($this->fontStrikeout) {
             $grbit |= 0x08;
         }
-        if ($this->font_outline) {
+        if ($this->fontOutline) {
             $grbit |= 0x10;
         }
-        if ($this->font_shadow) {
+        if ($this->fontShadow) {
             $grbit |= 0x20;
         }
 
@@ -524,7 +498,7 @@ class Format
             );
         }
 
-        return ($header . $data . $this->font_name);
+        return ($header . $data . $this->fontName);
     }
 
     /**
@@ -539,11 +513,11 @@ class Format
      */
     public function getFontKey()
     {
-        $key = "$this->font_name$this->size";
-        $key .= "$this->font_script$this->underline";
-        $key .= "$this->font_strikeout$this->bold$this->font_outline";
-        $key .= "$this->font_family$this->font_charset";
-        $key .= "$this->font_shadow$this->color$this->italic";
+        $key = "$this->fontName$this->size";
+        $key .= "$this->fontScript$this->underline";
+        $key .= "$this->fontStrikeout$this->bold$this->fontOutline";
+        $key .= "$this->fontFamily$this->fontCharset";
+        $key .= "$this->fontShadow$this->color$this->italic";
         $key = str_replace(' ', '_', $key);
 
         return ($key);
@@ -556,7 +530,7 @@ class Format
      */
     public function getXfIndex()
     {
-        return $this->xf_index;
+        return $this->xfIndex;
     }
 
     /**
@@ -564,10 +538,11 @@ class Format
      * string into a number. Color range is 0..63 but we will restrict it
      * to 8..63 to comply with Gnumeric. Colors 0..7 are repeated in 8..15.
      *
-     * @param string $name_color name of the color (i.e.: 'blue', 'red', etc..). Optional.
+     * @param string $name name of the color (i.e.: 'blue', 'red', etc..). Optional.
+     *
      * @return integer The color index
      */
-    protected function getColor($name_color = '')
+    protected function getColor($name = '')
     {
         $colors = array(
             'aqua' => 0x07,
@@ -591,27 +566,27 @@ class Format
         );
 
         // Return the default color, 0x7FFF, if undef,
-        if ($name_color === '') {
+        if ($name === '') {
             return (0x7FFF);
         }
 
         // or the color string converted to an integer,
-        if (isset($colors[$name_color])) {
-            return ($colors[$name_color]);
+        if (isset($colors[$name])) {
+            return ($colors[$name]);
         }
 
         // or the default color if string is unrecognised,
-        if (preg_match("/\D/", $name_color)) {
+        if (preg_match("/\D/", $name)) {
             return (0x7FFF);
         }
 
         // or the default color if arg is outside range,
-        if ($name_color > 63) {
+        if ($name > 63) {
             return (0x7FFF);
         }
 
         // or an integer in the valid range
-        return $name_color;
+        return $name;
     }
 
     /**
@@ -628,46 +603,46 @@ class Format
         $location = strtolower($location);
 
         if ($location == 'left') {
-            $this->text_h_align = 1;
+            $this->textHorAlign = 1;
         }
         if ($location == 'centre') {
-            $this->text_h_align = 2;
+            $this->textHorAlign = 2;
         }
         if ($location == 'center') {
-            $this->text_h_align = 2;
+            $this->textHorAlign = 2;
         }
         if ($location == 'right') {
-            $this->text_h_align = 3;
+            $this->textHorAlign = 3;
         }
         if ($location == 'fill') {
-            $this->text_h_align = 4;
+            $this->textHorAlign = 4;
         }
         if ($location == 'justify') {
-            $this->text_h_align = 5;
+            $this->textHorAlign = 5;
         }
         if ($location == 'merge') {
-            $this->text_h_align = 6;
+            $this->textHorAlign = 6;
         }
         if ($location == 'equal_space') { // For T.K.
-            $this->text_h_align = 7;
+            $this->textHorAlign = 7;
         }
         if ($location == 'top') {
-            $this->text_v_align = 0;
+            $this->textVertAlign = 0;
         }
         if ($location == 'vcentre') {
-            $this->text_v_align = 1;
+            $this->textVertAlign = 1;
         }
         if ($location == 'vcenter') {
-            $this->text_v_align = 1;
+            $this->textVertAlign = 1;
         }
         if ($location == 'bottom') {
-            $this->text_v_align = 2;
+            $this->textVertAlign = 2;
         }
         if ($location == 'vjustify') {
-            $this->text_v_align = 3;
+            $this->textVertAlign = 3;
         }
         if ($location == 'vequal_space') { // For T.K.
-            $this->text_v_align = 4;
+            $this->textVertAlign = 4;
         }
     }
 
@@ -685,28 +660,28 @@ class Format
         $location = strtolower($location);
 
         if ($location == 'left') {
-            $this->text_h_align = 1;
+            $this->textHorAlign = 1;
         }
         if ($location == 'centre') {
-            $this->text_h_align = 2;
+            $this->textHorAlign = 2;
         }
         if ($location == 'center') {
-            $this->text_h_align = 2;
+            $this->textHorAlign = 2;
         }
         if ($location == 'right') {
-            $this->text_h_align = 3;
+            $this->textHorAlign = 3;
         }
         if ($location == 'fill') {
-            $this->text_h_align = 4;
+            $this->textHorAlign = 4;
         }
         if ($location == 'justify') {
-            $this->text_h_align = 5;
+            $this->textHorAlign = 5;
         }
         if ($location == 'merge') {
-            $this->text_h_align = 6;
+            $this->textHorAlign = 6;
         }
         if ($location == 'equal_space') { // For T.K.
-            $this->text_h_align = 7;
+            $this->textHorAlign = 7;
         }
     }
 
@@ -724,22 +699,22 @@ class Format
         $location = strtolower($location);
 
         if ($location == 'top') {
-            $this->text_v_align = 0;
+            $this->textVertAlign = 0;
         }
         if ($location == 'vcentre') {
-            $this->text_v_align = 1;
+            $this->textVertAlign = 1;
         }
         if ($location == 'vcenter') {
-            $this->text_v_align = 1;
+            $this->textVertAlign = 1;
         }
         if ($location == 'bottom') {
-            $this->text_v_align = 2;
+            $this->textVertAlign = 2;
         }
         if ($location == 'vjustify') {
-            $this->text_v_align = 3;
+            $this->textVertAlign = 3;
         }
         if ($location == 'vequal_space') { // For T.K.
-            $this->text_v_align = 4;
+            $this->textVertAlign = 4;
         }
     }
 
@@ -864,7 +839,7 @@ class Format
     public function setBottomColor($color)
     {
         $value = $this->getColor($color);
-        $this->bottom_color = $value;
+        $this->bottomColor = $value;
     }
 
     /**
@@ -875,7 +850,7 @@ class Format
     public function setTopColor($color)
     {
         $value = $this->getColor($color);
-        $this->top_color = $value;
+        $this->topColor = $value;
     }
 
     /**
@@ -886,7 +861,7 @@ class Format
     public function setLeftColor($color)
     {
         $value = $this->getColor($color);
-        $this->left_color = $value;
+        $this->leftColor = $value;
     }
 
     /**
@@ -897,7 +872,7 @@ class Format
     public function setRightColor($color)
     {
         $value = $this->getColor($color);
-        $this->right_color = $value;
+        $this->rightColor = $value;
     }
 
 
@@ -909,7 +884,7 @@ class Format
     public function setFgColor($color)
     {
         $value = $this->getColor($color);
-        $this->fg_color = $value;
+        $this->fgColor = $value;
         if ($this->pattern == 0) { // force color to be seen
             $this->pattern = 1;
         }
@@ -923,7 +898,7 @@ class Format
     public function setBgColor($color)
     {
         $value = $this->getColor($color);
-        $this->bg_color = $value;
+        $this->bgColor = $value;
         if ($this->pattern == 0) { // force color to be seen
             $this->pattern = 1;
         }
@@ -987,7 +962,7 @@ class Format
      */
     public function setTextWrap()
     {
-        $this->text_wrap = 1;
+        $this->textWrap = 1;
     }
 
     /**
@@ -1038,11 +1013,11 @@ class Format
      * Sets the numeric format.
      * It can be date, time, currency, etc...
      *
-     * @param integer $num_format The numeric format.
+     * @param integer $numFormat The numeric format.
      */
-    public function setNumFormat($num_format)
+    public function setNumFormat($numFormat)
     {
-        $this->num_format = $num_format;
+        $this->numFormat = $numFormat;
     }
 
     /**
@@ -1051,7 +1026,7 @@ class Format
      */
     public function setStrikeOut()
     {
-        $this->font_strikeout = 1;
+        $this->fontStrikeout = 1;
     }
 
     /**
@@ -1060,7 +1035,7 @@ class Format
      */
     public function setOutLine()
     {
-        $this->font_outline = 1;
+        $this->fontOutline = 1;
     }
 
     /**
@@ -1069,7 +1044,7 @@ class Format
      */
     public function setShadow()
     {
-        $this->font_shadow = 1;
+        $this->fontShadow = 1;
     }
 
     /**
@@ -1080,7 +1055,7 @@ class Format
      */
     public function setScript($script)
     {
-        $this->font_script = $script;
+        $this->fontScript = $script;
     }
 
     /**
@@ -1102,11 +1077,11 @@ class Format
     /**
      * Sets the font family name.
      *
-     * @param string $fontfamily The font family name. Possible values are:
+     * @param string $fontFamily The font family name. Possible values are:
      *                           'Times New Roman', 'Arial', 'Courier'.
      */
     public function setFontFamily($fontFamily)
     {
-        $this->font_name = $fontFamily;
+        $this->fontName = $fontFamily;
     }
 }

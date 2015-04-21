@@ -1,26 +1,4 @@
 <?php
-/*
-*  Module written by Herman Kuiper <herman@ozuzo.net>
-*
-*  License Information:
-*
-*    Spreadsheet_Excel_Writer:  A library for generating Excel Spreadsheets
-*    Copyright (c) 2002-2003 Xavier Noguer xnoguer@rezebra.com
-*
-*    This library is free software; you can redistribute it and/or
-*    modify it under the terms of the GNU Lesser General Public
-*    License as published by the Free Software Foundation; either
-*    version 2.1 of the License, or (at your option) any later version.
-*
-*    This library is distributed in the hope that it will be useful,
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*    Lesser General Public License for more details.
-*
-*    You should have received a copy of the GNU Lesser General Public
-*    License along with this library; if not, write to the Free Software
-*    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-*/
 
 namespace Xls\Writer;
 
@@ -49,10 +27,10 @@ class Validator
     protected $incell;
     protected $showprompt;
     protected $showerror;
-    protected $title_prompt;
-    protected $descr_prompt;
-    protected $title_error;
-    protected $descr_error;
+    protected $titlePrompt;
+    protected $descrPrompt;
+    protected $titleError;
+    protected $descrError;
     protected $operator;
     protected $formula1;
     protected $formula2;
@@ -64,9 +42,9 @@ class Validator
     protected $parser;
 
     /**
-     * @param $parser
+     * @param Parser $parser
      */
-    public function __construct($parser)
+    public function __construct(Parser $parser)
     {
         $this->parser = $parser;
         $this->type = 0x01;
@@ -76,10 +54,10 @@ class Validator
         $this->incell = false;
         $this->showprompt = false;
         $this->showerror = true;
-        $this->title_prompt = "\x00";
-        $this->descr_prompt = "\x00";
-        $this->title_error = "\x00";
-        $this->descr_error = "\x00";
+        $this->titlePrompt = "\x00";
+        $this->descrPrompt = "\x00";
+        $this->titleError = "\x00";
+        $this->descrError = "\x00";
         $this->operator = self::OP_BETWEEN;
         $this->formula1 = '';
         $this->formula2 = '';
@@ -93,8 +71,8 @@ class Validator
     public function setPrompt($promptTitle = "\x00", $promptDescription = "\x00", $showPrompt = true)
     {
         $this->showprompt = $showPrompt;
-        $this->title_prompt = $promptTitle;
-        $this->descr_prompt = $promptDescription;
+        $this->titlePrompt = $promptTitle;
+        $this->descrPrompt = $promptDescription;
     }
 
     /**
@@ -105,8 +83,8 @@ class Validator
     public function setError($errorTitle = "\x00", $errorDescription = "\x00", $showError = true)
     {
         $this->showerror = $showError;
-        $this->title_error = $errorTitle;
-        $this->descr_error = $errorDescription;
+        $this->titleError = $errorTitle;
+        $this->descrError = $errorDescription;
     }
 
     /**
@@ -203,22 +181,22 @@ class Validator
      */
     public function getData()
     {
-        $title_prompt_len = strlen($this->title_prompt);
-        $descr_prompt_len = strlen($this->descr_prompt);
-        $title_error_len = strlen($this->title_error);
-        $descr_error_len = strlen($this->descr_error);
+        $titlePromptLen = strlen($this->titlePrompt);
+        $descrPromptLen = strlen($this->descrPrompt);
+        $titleErrorLen = strlen($this->titleError);
+        $descrErrorLen = strlen($this->descrError);
 
-        $formula1_size = strlen($this->formula1);
-        $formula2_size = strlen($this->formula2);
+        $formula1Size = strlen($this->formula1);
+        $formula2Size = strlen($this->formula2);
 
         $data = pack("V", $this->getOptions());
-        $data .= pack("vC", $title_prompt_len, 0x00) . $this->title_prompt;
-        $data .= pack("vC", $title_error_len, 0x00) . $this->title_error;
-        $data .= pack("vC", $descr_prompt_len, 0x00) . $this->descr_prompt;
-        $data .= pack("vC", $descr_error_len, 0x00) . $this->descr_error;
+        $data .= pack("vC", $titlePromptLen, 0x00) . $this->titlePrompt;
+        $data .= pack("vC", $titleErrorLen, 0x00) . $this->titleError;
+        $data .= pack("vC", $descrPromptLen, 0x00) . $this->descrPrompt;
+        $data .= pack("vC", $descrErrorLen, 0x00) . $this->descrError;
 
-        $data .= pack("vv", $formula1_size, 0x0000) . $this->formula1;
-        $data .= pack("vv", $formula2_size, 0x0000) . $this->formula2;
+        $data .= pack("vv", $formula1Size, 0x0000) . $this->formula1;
+        $data .= pack("vv", $formula2Size, 0x0000) . $this->formula2;
 
         return $data;
     }

@@ -1,23 +1,4 @@
 <?php
-/* vim: set expandtab tabstop=4 shiftwidth=4: */
-// +----------------------------------------------------------------------+
-// | PHP Version 4                                                        |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 1997-2002 The PHP Group                                |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.02 of the PHP license,      |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available at through the world-wide-web at                           |
-// | http://www.php.net/license/2_02.txt.                                 |
-// | If you did not receive a copy of the PHP license and are unable to   |
-// | obtain it through the world-wide-web, please send a note to          |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Author: Xavier Noguer <xnoguer@php.net>                              |
-// | Based on OLE::Storage_Lite by Kawai, Takanori                        |
-// +----------------------------------------------------------------------+
-//
-// $Id$
 
 namespace Xls;
 
@@ -31,13 +12,16 @@ namespace Xls;
  */
 class OLE
 {
-    const OLE_PPS_TYPE_ROOT = 5;
-    const OLE_PPS_TYPE_DIR = 1;
-    const OLE_PPS_TYPE_FILE = 2;
-    const OLE_DATA_SIZE_SMALL = 0x1000;
-    const OLE_LONG_INT_SIZE = 4;
-    const OLE_PPS_SIZE = 0x80;
+    const PPS_TYPE_ROOT = 5;
+    const PPS_TYPE_DIR = 1;
+    const PPS_TYPE_FILE = 2;
+    const PPS_SIZE = 0x80;
+    const DATA_SIZE_SMALL = 0x1000;
+    const LONG_INT_SIZE = 4;
 
+    /**
+     * @var array
+     */
     public static $instances = array();
 
     /**
@@ -304,14 +288,14 @@ class OLE
             $type = $this->readInt1($fh);
 
             switch ($type) {
-                case self::OLE_PPS_TYPE_ROOT:
+                case self::PPS_TYPE_ROOT:
                     $pps = new OLE\PPS\Root();
                     $this->root = $pps;
                     break;
-                case self::OLE_PPS_TYPE_DIR:
+                case self::PPS_TYPE_DIR:
                     $pps = new OLE\PPS();
                     break;
-                case self::OLE_PPS_TYPE_FILE:
+                case self::PPS_TYPE_FILE:
                     $pps = new OLE\PPS\File($name);
                     break;
                 default:
@@ -347,7 +331,7 @@ class OLE
 
         // Initialize $pps->children on directories
         foreach ($this->list as $pps) {
-            if ($pps->Type == self::OLE_PPS_TYPE_DIR || $pps->Type == self::OLE_PPS_TYPE_ROOT) {
+            if ($pps->Type == self::PPS_TYPE_DIR || $pps->Type == self::PPS_TYPE_ROOT) {
                 $nos = array($pps->DirPps);
                 $pps->children = array();
                 while ($nos) {
@@ -393,7 +377,7 @@ class OLE
     public function isFile($index)
     {
         if (isset($this->list[$index])) {
-            return ($this->list[$index]->Type == self::OLE_PPS_TYPE_FILE);
+            return ($this->list[$index]->Type == self::PPS_TYPE_FILE);
         }
 
         return false;
@@ -408,7 +392,7 @@ class OLE
     public function isRoot($index)
     {
         if (isset($this->list[$index])) {
-            return ($this->list[$index]->Type == self::OLE_PPS_TYPE_ROOT);
+            return ($this->list[$index]->Type == self::PPS_TYPE_ROOT);
         }
 
         return false;
@@ -502,7 +486,7 @@ class OLE
         // days from 1-1-1601 until the beggining of UNIX era
         $days = 134774;
         // calculate seconds
-        $big_date = $days * 24 * 3600 +
+        $bigDate = $days * 24 * 3600 +
             gmmktime(
                 date("H", $date),
                 date("i", $date),
@@ -512,25 +496,25 @@ class OLE
                 date("Y", $date)
             );
         // multiply just to make MS happy
-        $big_date *= 10000000;
+        $bigDate *= 10000000;
 
-        $high_part = floor($big_date / $factor);
+        $highPart = floor($bigDate / $factor);
         // lower 4 bytes
-        $low_part = floor((($big_date / $factor) - $high_part) * $factor);
+        $lowPart = floor((($bigDate / $factor) - $highPart) * $factor);
 
         // Make HEX string
         $res = '';
 
         for ($i = 0; $i < 4; $i++) {
-            $hex = $low_part % 0x100;
+            $hex = $lowPart % 0x100;
             $res .= pack('c', $hex);
-            $low_part /= 0x100;
+            $lowPart /= 0x100;
         }
 
         for ($i = 0; $i < 4; $i++) {
-            $hex = $high_part % 0x100;
+            $hex = $highPart % 0x100;
             $res .= pack('c', $hex);
-            $high_part /= 0x100;
+            $highPart /= 0x100;
         }
 
         return $res;
@@ -551,30 +535,30 @@ class OLE
 
         // factor used for separating numbers into 4 bytes parts
         $factor = pow(2, 32);
-        $high_part = 0;
+        $highPart = 0;
         for ($i = 0; $i < 4; $i++) {
-            list(, $high_part) = unpack('C', $string{(7 - $i)});
+            list(, $highPart) = unpack('C', $string{(7 - $i)});
             if ($i < 3) {
-                $high_part *= 0x100;
+                $highPart *= 0x100;
             }
         }
-        $low_part = 0;
+        $lowPart = 0;
         for ($i = 4; $i < 8; $i++) {
-            list(, $low_part) = unpack('C', $string{(7 - $i)});
+            list(, $lowPart) = unpack('C', $string{(7 - $i)});
             if ($i < 7) {
-                $low_part *= 0x100;
+                $lowPart *= 0x100;
             }
         }
-        $big_date = ($high_part * $factor) + $low_part;
+        $bigDate = ($highPart * $factor) + $lowPart;
         // translate to seconds
-        $big_date /= 10000000;
+        $bigDate /= 10000000;
 
         // days from 1-1-1601 until the beggining of UNIX era
         $days = 134774;
 
         // translate to seconds from beggining of UNIX era
-        $big_date -= $days * 24 * 3600;
+        $bigDate -= $days * 24 * 3600;
 
-        return floor($big_date);
+        return floor($bigDate);
     }
 }
