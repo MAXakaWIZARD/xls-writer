@@ -149,15 +149,10 @@ class Validator
     public function setFormula1($formula)
     {
         // Parse the formula using the parser in Parser.php
-        $error = $this->parser->parse($formula);
-        if (pearIsError($error)) {
-            return $this->formula1;
-        }
+        $this->parser->parse($formula);
 
         $this->formula1 = $this->parser->toReversePolish();
-        if (pearIsError($this->formula1)) {
-            return $this->formula1;
-        }
+
         return true;
     }
 
@@ -169,15 +164,10 @@ class Validator
     public function setFormula2($formula)
     {
         // Parse the formula using the parser in Parser.php
-        $error = $this->parser->parse($formula);
-        if (pearIsError($error)) {
-            return $this->formula2;
-        }
+        $this->parser->parse($formula);
 
         $this->formula2 = $this->parser->toReversePolish();
-        if (pearIsError($this->formula2)) {
-            return $this->formula2;
-        }
+
         return true;
     }
 

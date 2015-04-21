@@ -598,14 +598,8 @@ class Parser
 
         // Convert the cell references
         $cell_array1 = $this->cellToPackedRowcol($cell1);
-        if (pearIsError($cell_array1)) {
-            return $cell_array1;
-        }
         list($row1, $col1) = $cell_array1;
         $cell_array2 = $this->cellToPackedRowcol($cell2);
-        if (pearIsError($cell_array2)) {
-            return $cell_array2;
-        }
         list($row2, $col2) = $cell_array2;
 
         // The ptg value depends on the class of the ptg.
@@ -640,14 +634,8 @@ class Parser
         // Convert the external reference part (different for BIFF8)
         if ($this->BIFF_version == 0x0500) {
             $ext_ref = $this->packExtRef($ext_ref);
-            if (pearIsError($ext_ref)) {
-                return $ext_ref;
-            }
         } elseif ($this->BIFF_version == 0x0600) {
             $ext_ref = $this->getRefIndex($ext_ref);
-            if (pearIsError($ext_ref)) {
-                return $ext_ref;
-            }
         }
 
         // Split the range into 2 cell refs
@@ -656,20 +644,11 @@ class Parser
         // Convert the cell references
         if (Token::isReference($cell1)) {
             $cell_array1 = $this->cellToPackedRowcol($cell1);
-            if (pearIsError($cell_array1)) {
-                return $cell_array1;
-            }
             list($row1, $col1) = $cell_array1;
             $cell_array2 = $this->cellToPackedRowcol($cell2);
-            if (pearIsError($cell_array2)) {
-                return $cell_array2;
-            }
             list($row2, $col2) = $cell_array2;
         } else { // It's a rows range (like 26:27)
             $cells_array = $this->rangeToPackedRange($cell1 . ':' . $cell2);
-            if (pearIsError($cells_array)) {
-                return $cells_array;
-            }
             list($row1, $col1, $row2, $col2) = $cells_array;
         }
 
@@ -700,9 +679,6 @@ class Parser
 
         // Convert the cell reference
         $cell_array = $this->cellToPackedRowcol($cell);
-        if (pearIsError($cell_array)) {
-            return $cell_array;
-        }
         list($row, $col) = $cell_array;
 
         // The ptg value depends on the class of the ptg.
@@ -737,14 +713,8 @@ class Parser
         // Convert the external reference part (different for BIFF8)
         if ($this->BIFF_version == 0x0500) {
             $ext_ref = $this->packExtRef($ext_ref);
-            if (pearIsError($ext_ref)) {
-                return $ext_ref;
-            }
         } elseif ($this->BIFF_version == 0x0600) {
             $ext_ref = $this->getRefIndex($ext_ref);
-            if (pearIsError($ext_ref)) {
-                return $ext_ref;
-            }
         }
 
         // Convert the cell reference part
@@ -1162,57 +1132,34 @@ class Parser
     protected function condition()
     {
         $result = $this->expression();
-        if (pearIsError($result)) {
-            return $result;
-        }
+
         if ($this->current_token == Token::TOKEN_LT) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgLT', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_GT) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgGT', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_LE) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgLE', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_GE) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgGE', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_EQ) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgEQ', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_NE) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgNE', $result, $result2);
         } elseif ($this->current_token == Token::TOKEN_CONCAT) {
             $this->advance();
             $result2 = $this->expression();
-            if (pearIsError($result2)) {
-                return $result2;
-            }
             $result = $this->createTree('ptgConcat', $result, $result2);
         }
         return $result;
@@ -1242,9 +1189,6 @@ class Parser
         }
 
         $result = $this->term();
-        if (pearIsError($result)) {
-            return $result;
-        }
 
         while (($this->current_token == Token::TOKEN_ADD)
             || ($this->current_token == Token::TOKEN_SUB)
@@ -1253,16 +1197,10 @@ class Parser
             if ($this->current_token == Token::TOKEN_ADD) {
                 $this->advance();
                 $result2 = $this->term();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('ptgAdd', $result, $result2);
             } else {
                 $this->advance();
                 $result2 = $this->term();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('ptgSub', $result, $result2);
             }
         }
@@ -1293,9 +1231,6 @@ class Parser
     protected function term()
     {
         $result = $this->fact();
-        if (pearIsError($result)) {
-            return $result;
-        }
 
         while (($this->current_token == Token::TOKEN_MUL)
             || ($this->current_token == Token::TOKEN_DIV)
@@ -1304,16 +1239,10 @@ class Parser
             if ($this->current_token == Token::TOKEN_MUL) {
                 $this->advance();
                 $result2 = $this->fact();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('ptgMul', $result, $result2);
             } else {
                 $this->advance();
                 $result2 = $this->fact();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('ptgDiv', $result, $result2);
             }
         }
@@ -1394,15 +1323,9 @@ class Parser
                     );
                 }
                 $result2 = $this->condition();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('arg', $result, $result2);
             } else { // first argument
                 $result2 = $this->condition();
-                if (pearIsError($result2)) {
-                    return $result2;
-                }
                 $result = $this->createTree('arg', '', $result2);
             }
             $num_args++;
@@ -1474,28 +1397,16 @@ class Parser
         }
         if (is_array($tree['left'])) {
             $converted_tree = $this->toReversePolish($tree['left']);
-            if (pearIsError($converted_tree)) {
-                return $converted_tree;
-            }
             $polish .= $converted_tree;
         } elseif ($tree['left'] != '') { // It's a final node
             $converted_tree = $this->convert($tree['left']);
-            if (pearIsError($converted_tree)) {
-                return $converted_tree;
-            }
             $polish .= $converted_tree;
         }
         if (is_array($tree['right'])) {
             $converted_tree = $this->toReversePolish($tree['right']);
-            if (pearIsError($converted_tree)) {
-                return $converted_tree;
-            }
             $polish .= $converted_tree;
         } elseif ($tree['right'] != '') { // It's a final node
             $converted_tree = $this->convert($tree['right']);
-            if (pearIsError($converted_tree)) {
-                return $converted_tree;
-            }
             $polish .= $converted_tree;
         }
 
@@ -1512,16 +1423,10 @@ class Parser
             } else {
                 $left_tree = '';
             }
-            if (pearIsError($left_tree)) {
-                return $left_tree;
-            }
             // add it's left subtree and return.
             return $left_tree . $this->convertFunction($tree['value'], $tree['right']);
         } else {
             $converted_tree = $this->convert($tree['value']);
-            if (pearIsError($converted_tree)) {
-                return $converted_tree;
-            }
         }
         $polish .= $converted_tree;
 
