@@ -32,11 +32,12 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     *
+     * @dataProvider providerGeneral
+     * @param array $params
      */
-    public function testGeneral()
+    public function testGeneral($params)
     {
-        $workbook = new Writer($this->testFilePath);
+        $workbook = new Writer($this->testFilePath, $params['format']);
 
         //needed for test files comparison
         $workbook->setCreationTimestamp(1429042916);
@@ -56,15 +57,39 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $workbook->close();
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/general.xls', $this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
     }
 
     /**
-     *
+     * @return array
      */
-    public function testRich()
+    public function providerGeneral()
     {
-        $workbook = new Writer($this->testFilePath);
+        return array(
+            array(
+                array(
+                    'format' => BIFFwriter::VERSION_5,
+                    'file' => 'general.xls'
+                )
+            ),
+            array(
+                array(
+                    'format' => BIFFwriter::VERSION_8,
+                    'file' => 'general_biff8.xls'
+                )
+            )
+        );
+    }
+
+    /**
+     * @dataProvider providerRich
+     * @param $params
+     *
+     * @throws \Exception
+     */
+    public function testRich($params)
+    {
+        $workbook = new Writer($this->testFilePath, $params['format']);
 
         //needed for test files comparison
         $workbook->setCreationTimestamp(1429042916);
@@ -129,7 +154,28 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $workbook->close();
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/rich.xls', $this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
+    }
+
+    /**
+     * @return array
+     */
+    public function providerRich()
+    {
+        return array(
+            array(
+                array(
+                    'format' => BIFFwriter::VERSION_5,
+                    'file' => 'rich.xls'
+                )
+            ),
+            array(
+                array(
+                    'format' => BIFFwriter::VERSION_8,
+                    'file' => 'rich_biff8.xls'
+                )
+            )
+        );
     }
 
     /**
