@@ -48,7 +48,6 @@ class Root extends OLE\PPS
     /**
      * Constructor
      *
-     * @access public
      * @param integer $time_1st A timestamp
      * @param integer $time_2nd A timestamp
      * @param array $raChild
@@ -77,7 +76,6 @@ class Root extends OLE\PPS
     /**
      * Sets the temp dir used for storing the OLE file
      *
-     * @access public
      * @param string $dir The dir to be used as temp dir
      * @return true if given dir is valid, false otherwise
      */
@@ -158,11 +156,10 @@ class Root extends OLE\PPS
     /**
      * Calculate some numbers
      *
-     * @access private
      * @param OLE\PPS[] $raList Reference to an array of PPS's
      * @return array The array of numbers
      */
-    public function calcSize(&$raList)
+    protected function calcSize(&$raList)
     {
         $iSBcnt = 0;
         $iBBcnt = 0;
@@ -346,11 +343,10 @@ class Root extends OLE\PPS
     /**
      * get small data (PPS's with data smaller than OLE_DATA_SIZE_SMALL)
      *
-     * @access private
      * @param OLE\PPS[] &$raList Reference to array of PPS's
      * @return string
      */
-    public function makeSmallData(&$raList)
+    protected function makeSmallData(&$raList)
     {
         $sRes = '';
         $file = $this->fileHandlerRoot;
@@ -408,10 +404,9 @@ class Root extends OLE\PPS
     /**
      * Saves all the PPS's WKs
      *
-     * @access private
      * @param OLE\PPS[] $raList Reference to an array with all PPS's
      */
-    public function savePps(&$raList)
+    protected function savePps(&$raList)
     {
         // Save each PPS WK
         $raListCount = count($raList);
@@ -431,12 +426,11 @@ class Root extends OLE\PPS
     /**
      * Saving Big Block Depot
      *
-     * @access private
      * @param integer $iSbdSize
      * @param integer $iBsize
      * @param integer $iPpsCnt
      */
-    public function saveBbd($iSbdSize, $iBsize, $iPpsCnt)
+    protected function saveBbd($iSbdSize, $iBsize, $iPpsCnt)
     {
         if ($this->newFunc) {
             $this->createBigBlockChain($iSbdSize, $iBsize, $iPpsCnt);
@@ -523,12 +517,11 @@ class Root extends OLE\PPS
     /**
      * New method to store Bigblock chain
      *
-     * @access private
      * @param integer $num_sb_blocks - number of Smallblock depot blocks
      * @param integer $num_bb_blocks - number of Bigblock depot blocks
      * @param integer $num_pps_blocks - number of PropertySetStorage blocks
      */
-    public function createBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
+    protected function createBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
     {
         $bbd_info = $this->caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks);
 
@@ -686,12 +679,11 @@ class Root extends OLE\PPS
     /**
      * New method to calculate Bigblock chain
      *
-     * @access private
      * @param integer $num_sb_blocks - number of Smallblock depot blocks
      * @param integer $num_bb_blocks - number of Bigblock depot blocks
      * @param integer $num_pps_blocks - number of PropertySetStorage blocks
      */
-    public function caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
+    protected function caclBigBlockChain($num_sb_blocks, $num_bb_blocks, $num_pps_blocks)
     {
         $bbd_info["entries_per_block"] = $this->bigBlockSize / OLE::OLE_LONG_INT_SIZE;
         $bbd_info["header_blockchain_list_entries"] = ($this->bigBlockSize - 0x4C) / OLE::OLE_LONG_INT_SIZE;
@@ -748,7 +740,6 @@ class Root extends OLE\PPS
     /**
      * Support method for some hexdumping
      *
-     * @access public
      * @param string $data - Binary data
      * @param integer $from - Start offset of data to dump
      * @param integer $to - Target offset of data to dump

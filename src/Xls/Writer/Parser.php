@@ -96,7 +96,7 @@ class Parser
      * The BIFF version for the workbook
      * @var integer
      */
-    public $BIFF_version;
+    public $biffVersion;
 
     /**
      * The class constructor
@@ -108,7 +108,7 @@ class Parser
     public function __construct($byte_order, $biff_version)
     {
         $this->current_char = 0;
-        $this->BIFF_version = $biff_version;
+        $this->biffVersion = $biff_version;
         $this->current_token = ''; // The token we are working on.
         $this->formula = ''; // The formula to parse.
         $this->lookahead = ''; // The character ahead of the current char.
@@ -121,10 +121,8 @@ class Parser
 
     /**
      * Initialize the ptg and function hashes.
-     *
-     * @access private
      */
-    public function initializeHashes()
+    protected function initializeHashes()
     {
         // The Excel ptg indices
         $this->ptg = array(
@@ -542,13 +540,11 @@ class Parser
             throw new \Exception("String is too long");
         }
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == BIFFwriter::VERSION_5) {
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
-        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        } else {
             $encoding = 0;
             return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
-        } else {
-            throw new \Exception("Unknown BIFF version");
         }
     }
 
@@ -631,9 +627,9 @@ class Parser
         list($ext_ref, $range) = explode('!', $token);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->BIFF_version === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === BIFFwriter::VERSION_5) {
             $ext_ref = $this->packExtRef($ext_ref);
-        } elseif ($this->BIFF_version === BIFFwriter::VERSION_8) {
+        } else {
             $ext_ref = $this->getRefIndex($ext_ref);
         }
 
@@ -710,9 +706,9 @@ class Parser
         list($ext_ref, $cell) = explode('!', $cell);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->BIFF_version === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === BIFFwriter::VERSION_5) {
             $ext_ref = $this->packExtRef($ext_ref);
-        } elseif ($this->BIFF_version === BIFFwriter::VERSION_8) {
+        } else {
             $ext_ref = $this->getRefIndex($ext_ref);
         }
 
@@ -887,11 +883,11 @@ class Parser
         }
 
         // Set the high bits to indicate if row or col are relative.
-        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == BIFFwriter::VERSION_5) {
             $row |= $col_rel << 14;
             $row |= $row_rel << 15;
             $col = pack('C', $col);
-        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        } else {
             $col |= $col_rel << 14;
             $col |= $row_rel << 15;
             $col = pack('v', $col);
@@ -929,12 +925,12 @@ class Parser
         }
 
         // Set the high bits to indicate if rows are relative.
-        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == BIFFwriter::VERSION_5) {
             $row1 |= $row1_rel << 14; // TODO: probably a bug
             $row2 |= $row2_rel << 15;
             $col1 = pack('C', $col1);
             $col2 = pack('C', $col2);
-        } elseif ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        } else {
             $col1 |= $row1_rel << 15;
             $col2 |= $row2_rel << 15;
             $col1 = pack('v', $col1);

@@ -139,36 +139,37 @@ class Workbook extends BIFFwriter
      *
      * @param string $filename filename for storing the workbook. "-" for writing to stdout.
      * @param int $biffVersion
-     * @access public
      */
     public function __construct(
         $filename,
         $biffVersion = BIFFwriter::VERSION_5
     ) {
-        // It needs to call its parent's constructor explicitly
         parent::__construct($biffVersion);
 
         $this->filename = $filename;
-        $this->parser = new Parser($this->byte_order, $this->BIFF_version);
+        $this->parser = new Parser($this->byte_order, $this->biffVersion);
         $this->f1904 = 0;
-        $this->activesheet = 0;
-        $this->firstsheet = 0;
         $this->selected = 0;
         $this->xf_index = 16; // 15 style XF's and 1 cell XF.
         $this->fileclosed = 0;
         $this->biffsize = 0;
         $this->sheetname = 'Sheet';
-        $this->tmp_format = new Format($this->BIFF_version);
+
+        $this->activesheet = 0;
+        $this->firstsheet = 0;
         $this->worksheets = array();
         $this->sheetnames = array();
+
         $this->formats = array();
         $this->palette = array();
-        $this->codepage = 0x04E4; // Should change for BIFF8
         $this->country_code = -1;
         $this->string_sizeinfo = 3;
 
+        $this->tmp_format = new Format($this->biffVersion);
+
         // Add the default format for hyperlinks
-        $this->url_format =& $this->addFormat(array('color' => 'blue', 'underline' => 1));
+        $this->url_format = $this->addFormat(array('color' => 'blue', 'underline' => 1));
+
         $this->str_total = 0;
         $this->str_unique = 0;
         $this->str_table = array();
@@ -197,7 +198,7 @@ class Workbook extends BIFFwriter
      * Calls finalization methods.
      * This method should always be the last one to be called on every workbook
      *
-     * @access public
+     * @throws \Exception
      * @return mixed true on success.
      */
     public function close()
@@ -214,24 +215,9 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * An accessor for the _worksheets[] array
-     * Returns an array of the worksheet objects in a workbook
-     * It actually calls to worksheets()
-     *
-     * @access public
-     * @see worksheets()
-     * @return array
-     */
-    public function sheets()
-    {
-        return $this->worksheets();
-    }
-
-    /**
      * An accessor for the _worksheets[] array.
      * Returns an array of the worksheet objects in a workbook
      *
-     * @access public
      * @return array
      */
     public function worksheets()
@@ -240,45 +226,8 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Sets the BIFF version.
-     * This method exists just to access experimental functionality
-     * from BIFF8. It will be deprecated !
-     * Only possible value is 8 (Excel 97/2000).
-     * For any other value it fails silently.
-     *
-     * @access public
-     * @param integer $version The BIFF version
-     */
-    public function setVersion($version)
-    {
-        if ($version == 8) { // only accept version 8
-            $version = BIFFwriter::VERSION_8;
-            $this->BIFF_version = $version;
-            // change BIFFwriter limit for CONTINUE records
-            $this->limit = 8228;
-            $this->tmp_format->BIFF_version = $version;
-            $this->url_format->BIFF_version = $version;
-            $this->parser->BIFF_version = $version;
-            $this->codepage = 0x04B0;
-
-            $total_worksheets = count($this->worksheets);
-            // change version for all worksheets too
-            for ($i = 0; $i < $total_worksheets; $i++) {
-                $this->worksheets[$i]->BIFF_version = $version;
-            }
-
-            $total_formats = count($this->formats);
-            // change version for all formats too
-            for ($i = 0; $i < $total_formats; $i++) {
-                $this->formats[$i]->BIFF_version = $version;
-            }
-        }
-    }
-
-    /**
      * Set the country identifier for the workbook
      *
-     * @access public
      * @param integer $code Is the international calling country code for the
      *                      chosen country.
      */
@@ -292,7 +241,6 @@ class Workbook extends BIFFwriter
      * If no name is given the name of the worksheet will be Sheeti$i, with
      * $i in [1..].
      *
-     * @access public
      * @param string $name the optional name of the worksheet
      * @throws \Exception
      * @return Worksheet
@@ -307,7 +255,7 @@ class Workbook extends BIFFwriter
         }
 
         // Check that sheetname is <= 31 chars (Excel limit before BIFF8).
-        if ($this->BIFF_version != BIFFwriter::VERSION_8) {
+        if ($this->biffVersion != BIFFwriter::VERSION_8) {
             if (strlen($name) > 31) {
                 throw new \Exception("Sheetname $name must be <= 31 chars");
             }
@@ -326,7 +274,7 @@ class Workbook extends BIFFwriter
         }
 
         $worksheet = new Worksheet(
-            $this->BIFF_version,
+            $this->biffVersion,
             $name,
             $index,
             $this->activesheet,
@@ -350,13 +298,12 @@ class Workbook extends BIFFwriter
      * Add a new format to the Excel workbook.
      * Also, pass any properties to the Format constructor.
      *
-     * @access public
      * @param array $properties array with properties for initializing the format.
-     * @return &Format reference to an Excel Format
+     * @return Format reference to an Excel Format
      */
-    public function &addFormat($properties = array())
+    public function addFormat($properties = array())
     {
-        $format = new Format($this->BIFF_version, $this->xf_index, $properties);
+        $format = new Format($this->biffVersion, $this->xf_index, $properties);
         $this->xf_index += 1;
         $this->formats[] = & $format;
 
@@ -366,20 +313,18 @@ class Workbook extends BIFFwriter
     /**
      * Create new validator.
      *
-     * @access public
-     * @return &Validator reference to a Validator
+     * @return Validator reference to a Validator
      */
-    public function &addValidator()
+    public function addValidator()
     {
-        $valid = new Validator($this->parser);
+        $validator = new Validator($this->parser);
 
-        return $valid;
+        return $validator;
     }
 
     /**
      * Change the RGB components of the elements in the colour palette.
      *
-     * @access public
      * @param integer $index colour index
      * @param integer $red   red RGB value [0-255]
      * @param integer $green green RGB value [0-255]
@@ -418,8 +363,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Sets the colour palette to the Excel 97+ default.
-     *
-     * @access private
      */
     protected function setPaletteXl97()
     {
@@ -487,7 +430,6 @@ class Workbook extends BIFFwriter
      * Assemble worksheets into a workbook and send the BIFF data to an OLE
      * storage.
      *
-     * @access private
      * @throws \Exception
      * @return mixed true on success.
      */
@@ -515,14 +457,14 @@ class Workbook extends BIFFwriter
         // Add Workbook globals
         $this->storeBof(0x0005);
         $this->storeCodepage();
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $this->storeWindow1();
         }
-        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == BIFFwriter::VERSION_5) {
             $this->storeExterns(); // For print area and repeat rows
         }
         $this->storeNames(); // For print area and repeat rows
-        if ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == BIFFwriter::VERSION_5) {
             $this->storeWindow1();
         }
         $this->storeDatemode();
@@ -542,7 +484,7 @@ class Workbook extends BIFFwriter
             $this->storeCountry();
         }
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             //$this->storeSupbookInternal();
             /* TODO: store external SUPBOOK records and XCT and CRN records
             in case of external references for BIFF8 */
@@ -565,13 +507,12 @@ class Workbook extends BIFFwriter
     /**
      * Store the workbook in an OLE container
      *
-     * @access private
      * @throws \Exception
      * @return mixed true on success.
      */
     protected function storeOLEFile()
     {
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
         } else {
             $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Book'));
@@ -611,12 +552,10 @@ class Workbook extends BIFFwriter
 
     /**
      * Calculate offsets for Worksheet BOF records.
-     *
-     * @access private
      */
     protected function calcSheetOffsets()
     {
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $boundsheet_length = 12; // fixed length for a BOUNDSHEET record
         } else {
             $boundsheet_length = 11;
@@ -624,7 +563,7 @@ class Workbook extends BIFFwriter
         $EOF = 4;
         $offset = $this->datasize;
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             // add the length of the SST
             /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $offset += $this->calculateSharedStringsSizes();
@@ -650,8 +589,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Store the Excel FONT records.
-     *
-     * @access private
      */
     protected function storeAllFonts()
     {
@@ -694,8 +631,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Store user defined numerical formats i.e. FORMAT records
-     *
-     * @access private
      */
     protected function storeAllNumFormats()
     {
@@ -742,8 +677,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write all XF records.
-     *
-     * @access private
      */
     protected function storeAllXfs()
     {
@@ -769,8 +702,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write all STYLE records.
-     *
-     * @access private
      */
     protected function storeAllStyles()
     {
@@ -780,8 +711,6 @@ class Workbook extends BIFFwriter
     /**
      * Write the EXTERNCOUNT and EXTERNSHEET records. These are used as indexes for
      * the NAME records.
-     *
-     * @access private
      */
     protected function storeExterns()
     {
@@ -796,8 +725,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write the NAME record to define the print area and the repeat rows and cols.
-     *
-     * @access private
      */
     protected function storeNames()
     {
@@ -873,25 +800,20 @@ class Workbook extends BIFFwriter
 
     /**
      * Stores the CODEPAGE biff record.
-     *
-     * @access private
      */
     protected function storeCodepage()
     {
         $record = 0x0042; // Record identifier
         $length = 0x0002; // Number of bytes to follow
-        $cv = $this->codepage; // The code page
 
         $header = pack('vv', $record, $length);
-        $data = pack('v', $cv);
+        $data = pack('v', $this->codepage);
 
         $this->append($header . $data);
     }
 
     /**
      * Write Excel BIFF WINDOW1 record.
-     *
-     * @access private
      */
     protected function storeWindow1()
     {
@@ -928,29 +850,27 @@ class Workbook extends BIFFwriter
 
     /**
      * Writes Excel BIFF BOUNDSHEET record.
-     *
      * @param string $sheetname Worksheet name
      * @param integer $offset    Location of worksheet BOF
-     * @access private
      */
     protected function storeBoundsheet($sheetname, $offset)
     {
         $record = 0x0085; // Record identifier
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $length = 0x08 + strlen($sheetname); // Number of bytes to follow
         } else {
             $length = 0x07 + strlen($sheetname); // Number of bytes to follow
         }
 
         $grbit = 0x0000; // Visibility and sheet type
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $cch = mb_strlen($sheetname, 'UTF-16LE'); // Length of sheet name
         } else {
             $cch = strlen($sheetname); // Length of sheet name
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $data = pack("VvCC", $offset, $grbit, $cch, 0x1);
         } else {
             $data = pack("VvC", $offset, $grbit, $cch);
@@ -960,8 +880,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write Internal SUPBOOK record
-     *
-     * @access private
      */
     protected function storeSupbookInternal()
     {
@@ -976,9 +894,6 @@ class Workbook extends BIFFwriter
     /**
      * Writes the Excel BIFF EXTERNSHEET record. These references are used by
      * formulas.
-     *
-     * @param string $sheetname Worksheet name
-     * @access private
      */
     protected function storeExternsheetBiff8()
     {
@@ -986,7 +901,6 @@ class Workbook extends BIFFwriter
         $record = 0x0017; // Record identifier
         $length = 2 + 6 * $total_references; // Number of bytes to follow
 
-        $supbook_index = 0; // TODO: only using internal SUPBOOK record
         $header = pack("vv", $record, $length);
         $data = pack('v', $total_references);
         for ($i = 0; $i < $total_references; $i++) {
@@ -997,8 +911,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write Excel BIFF STYLE records.
-     *
-     * @access private
      */
     protected function storeStyle()
     {
@@ -1014,26 +926,24 @@ class Workbook extends BIFFwriter
         $this->append($header . $data);
     }
 
-
     /**
      * Writes Excel FORMAT record for non "built-in" numerical formats.
      *
      * @param string $format Custom format string
      * @param integer $ifmt   Format index code
-     * @access private
      */
     protected function storeNumFormat($format, $ifmt)
     {
         $record = 0x041E; // Record identifier
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $length = 5 + strlen($format); // Number of bytes to follow
             $encoding = 0x0;
-        } elseif ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        } else {
             $length = 3 + strlen($format); // Number of bytes to follow
         }
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_8 && function_exists('iconv')) { // Encode format String
+        if ($this->biffVersion == BIFFwriter::VERSION_8 && function_exists('iconv')) { // Encode format String
             if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
                 $format = iconv(mb_detect_encoding($format, 'auto'), 'UTF-16LE', $format);
             }
@@ -1045,10 +955,10 @@ class Workbook extends BIFFwriter
         }
         $length = strlen($format);
 
-        if ($this->BIFF_version == BIFFwriter::VERSION_8) {
+        if ($this->biffVersion == BIFFwriter::VERSION_8) {
             $header = pack("vv", $record, 5 + $length);
             $data = pack("vvC", $ifmt, $cch, $encoding);
-        } elseif ($this->BIFF_version == BIFFwriter::VERSION_5) {
+        } else {
             $header = pack("vv", $record, 3 + $length);
             $data = pack("vC", $ifmt, $cch);
         }
@@ -1057,8 +967,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write DATEMODE record to indicate the date system in use (1904 or 1900).
-     *
-     * @access private
      */
     protected function storeDatemode()
     {
@@ -1084,7 +992,6 @@ class Workbook extends BIFFwriter
      * A similar method is used in Worksheet.php for a slightly different purpose.
      *
      * @param integer $cxals Number of external references
-     * @access private
      */
     protected function storeExterncount($cxals)
     {
@@ -1105,7 +1012,6 @@ class Workbook extends BIFFwriter
      * A similar method is used in Worksheet.php for a slightly different purpose.
      *
      * @param string $sheetname Worksheet name
-     * @access private
      */
     protected function storeExternsheet($sheetname)
     {
@@ -1131,7 +1037,6 @@ class Workbook extends BIFFwriter
      * @param integer $rowmax End row
      * @param integer $colmin Start colum
      * @param integer $colmax End column
-     * @access private
      */
     protected function storeNameShort($index, $type, $rowmin, $rowmax, $colmin, $colmax)
     {
@@ -1197,7 +1102,6 @@ class Workbook extends BIFFwriter
      * @param integer $rowmax End row
      * @param integer $colmin Start colum
      * @param integer $colmax End column
-     * @access private
      */
     protected function storeNameLong($index, $type, $rowmin, $rowmax, $colmin, $colmax)
     {
@@ -1271,8 +1175,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Stores the COUNTRY record for localization
-     *
-     * @access private
      */
     protected function storeCountry()
     {
@@ -1287,8 +1189,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Stores the PALETTE biff record.
-     *
-     * @access private
      */
     protected function storePalette()
     {
@@ -1317,8 +1217,6 @@ class Workbook extends BIFFwriter
      * blocks or whether it starts at the beginning of the block. (There are also
      * additional complications that will arise later when/if Rich Strings are
      * supported).
-     *
-     * @access private
      */
     protected function calculateSharedStringsSizes()
     {
@@ -1463,8 +1361,6 @@ class Workbook extends BIFFwriter
      * EXTSST record. The EXTSST record is a hash table that is used to optimise
      * access to SST. However, despite the documentation it doesn't seem to be
      * required so we will ignore it.
-     *
-     * @access private
      */
     protected function storeSharedStringsTable()
     {

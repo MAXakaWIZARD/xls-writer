@@ -52,7 +52,6 @@ class File extends OLE\PPS
     /**
      * The constructor
      *
-     * @access public
      * @param string $name The name of the file (in Unicode)
      * @see OLE::asc2Ucs()
      */

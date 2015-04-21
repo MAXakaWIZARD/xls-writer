@@ -113,7 +113,6 @@ class PPS
     /**
      * The constructor
      *
-     * @access public
      * @param integer $No   The PPS index
      * @param string $name The PPS name
      * @param integer $type The PPS type. Dir, Root or File
@@ -158,10 +157,9 @@ class PPS
     /**
      * Returns the amount of data saved for this PPS
      *
-     * @access private
      * @return integer The amount of data (in bytes)
      */
-    public function dataLen()
+    protected function dataLen()
     {
         if (!isset($this->data)) {
             return 0;

@@ -46,7 +46,7 @@ class BIFFwriter
     /**
      * @var integer
      */
-    public $BIFF_version = self::VERSION_5;
+    public $biffVersion = self::VERSION_5;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -92,13 +92,43 @@ class BIFFwriter
      */
     public function __construct($biffVersion = self::VERSION_5)
     {
-        $this->BIFF_version = $biffVersion;
         $this->data = '';
         $this->datasize = 0;
         $this->limit = 2080;
         $this->tmpDir = '';
 
+        $this->setBiffVersion($biffVersion);
+        $this->setVersionParams();
         $this->setByteOrder();
+    }
+
+    /**
+     * Sets the params according to BIFF version.
+     */
+    protected function setVersionParams()
+    {
+        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+            $this->limit = 2080;
+            $this->codepage = 0x04E4;
+        } else {
+            $this->limit = 8228;
+            $this->codepage = 0x04B0;
+            $this->codepage = 0x04E4;
+        }
+    }
+
+    /**
+     * @param $version
+     *
+     * @throws \Exception
+     */
+    protected function setBiffVersion($version)
+    {
+        if ($this->isVersionSupported($version)) {
+            $this->biffVersion = $version;
+        } else {
+            throw new \Exception("Unknown BIFF version");
+        }
     }
 
     /**
@@ -128,7 +158,6 @@ class BIFFwriter
      * General storage function
      *
      * @param string $data binary data to prepend
-     * @access private
      */
     protected function prepend($data)
     {
@@ -143,7 +172,6 @@ class BIFFwriter
      * General storage function
      *
      * @param string $data binary data to append
-     * @access private
      */
     protected function append($data)
     {
@@ -168,29 +196,25 @@ class BIFFwriter
 
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->BIFF_version == self::VERSION_5) {
+        if ($this->biffVersion == self::VERSION_5) {
             $length = 0x0008;
             $unknown = '';
             $build = 0x096C;
             $year = 0x07C9;
-        } elseif ($this->BIFF_version == self::VERSION_8) {
+        } else {
             $length = 0x0010;
             $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
             $build = 0x0DBB;
             $year = 0x07CC;
-        } else {
-            throw new \Exception("Unknown BIFF version");
         }
 
         $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $this->BIFF_version, $type, $build, $year);
+        $data = pack("vvvv", $this->biffVersion, $type, $build, $year);
         $this->prepend($header . $data . $unknown);
     }
 
     /**
      * Writes Excel EOF record to indicate the end of a BIFF stream.
-     *
-     * @access private
      */
     protected function storeEof()
     {
@@ -210,7 +234,6 @@ class BIFFwriter
      *
      * @param  string $data The original binary data to be written
      * @return string        A very convenient string of continue blocks
-     * @access private
      */
     protected function addContinue($data)
     {
@@ -241,7 +264,6 @@ class BIFFwriter
     /**
      * Sets the temp dir used for storing the OLE file
      *
-     * @access public
      * @param string $dir The dir to be used as temp dir
      * @return true if given dir is valid, false otherwise
      */
