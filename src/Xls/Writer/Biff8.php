@@ -2,7 +2,7 @@
 
 namespace Xls\Writer;
 
-class Biff8
+class Biff8 extends Biff5 implements BiffInterface
 {
     /**
      * BIFF8
@@ -17,5 +17,9 @@ class Biff8
 
     const MAX_ROWS = 65536;
     const MAX_COLS = 256;
+
     const MAX_STR_LENGTH = 255;
+    const MAX_SHEET_NAME_LENGTH = 255;
+
+    const LIMIT = 8228;
 }

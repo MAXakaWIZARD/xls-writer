@@ -19,7 +19,7 @@ class Worksheet extends BIFFwriter
      * Name of the Worksheet
      * @var string
      */
-    public $name;
+    protected $name;
 
     /**
      * Index for the Worksheet
@@ -127,7 +127,7 @@ class Worksheet extends BIFFwriter
      * Bit specifying if the worksheet is selected
      * @var integer
      */
-    public $selected;
+    protected $selected;
 
     /**
      * The paper size (for printing) (DOCUMENT!!!)
@@ -348,18 +348,22 @@ class Worksheet extends BIFFwriter
     public $inputEncoding;
 
     /**
+     * @var int
+     */
+    protected $offset;
+
+    /**
      * Constructor
-     *
+     * @param integer $version
      * @param string $name         The name of the new worksheet
      * @param integer $index        The index of the new worksheet
      * @param mixed &$activeSheet The current activesheet of the workbook we belong to
      * @param mixed &$firstSheet  The first worksheet in the workbook we belong to
      * @param mixed &$urlFormat  The default format for hyperlinks
      * @param mixed &$parser      The formula parser created for the Workbook
-     * @param string $tmp_dir      The path to the directory for temporary files
      */
     public function __construct(
-        $biffVersion,
+        $version,
         $name,
         $index,
         &$activeSheet,
@@ -370,7 +374,7 @@ class Worksheet extends BIFFwriter
         &$urlFormat,
         &$parser
     ) {
-        parent::__construct($biffVersion);
+        parent::__construct($version);
 
         $this->name = $name;
         $this->index = $index;
@@ -382,11 +386,8 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = & $urlFormat;
         $this->parser = & $parser;
 
-        //$this->ext_sheets      = array();
         $this->fileHandle = '';
         $this->usingTmpFile = true;
-        //$this->fileclosed      = 0;
-        //$this->offset          = 0;
         $this->xlsRowmax = Biff5::MAX_ROWS;
         $this->xlsColmax = Biff5::MAX_COLS;
         $this->xlsStrmax = Biff5::MAX_STR_LENGTH;
@@ -664,7 +665,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $maxRecordRanges = floor(($this->limit - 6) / 8);
+        $maxRecordRanges = floor(($this->biff->getLimit() - 6) / 8);
         if ($this->mergedCellsCounter >= $maxRecordRanges) {
             $this->mergedCellsRecord++;
             $this->mergedCellsCounter = 0;
@@ -1223,7 +1224,7 @@ class Worksheet extends BIFFwriter
     {
         if ($this->usingTmpFile) {
             // Add CONTINUE records if necessary
-            if (strlen($data) > $this->limit) {
+            if (strlen($data) > $this->biff->getLimit()) {
                 $data = $this->addContinue($data);
             }
             fwrite($this->fileHandle, $data);
@@ -3094,7 +3095,7 @@ class Worksheet extends BIFFwriter
     /**
      * Insert a 24bit bitmap image in a worksheet.
      *
-*@param integer $row     The row we are going to insert the bitmap into
+     * @param integer $row     The row we are going to insert the bitmap into
      * @param integer $col     The column we are going to insert the bitmap into
      * @param string $bitmap  The bitmap filename
      * @param integer $x       The horizontal position (offset) of the image inside the cell.
@@ -3480,9 +3481,9 @@ class Worksheet extends BIFFwriter
      * @param $col1
      * @param $row2
      * @param $col2
-     * @param $validator
+     * @param Validator $validator
      */
-    public function setValidation($row1, $col1, $row2, $col2, &$validator)
+    public function setValidation($row1, $col1, $row2, $col2, $validator)
     {
         $this->dv[] = $validator->getData() .
             pack("vvvvv", 1, $row1, $row2, $col1, $col2);
@@ -3520,5 +3521,29 @@ class Worksheet extends BIFFwriter
             $header = pack("vv", $record, $length);
             $this->append($header . $dv);
         }
+    }
+
+    /**
+     * @return int
+     */
+    public function getOffset()
+    {
+        return $this->offset;
+    }
+
+    /**
+     * @param int $offset
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSelected()
+    {
+        return (bool)$this->selected;
     }
 }

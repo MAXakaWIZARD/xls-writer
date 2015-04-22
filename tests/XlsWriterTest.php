@@ -32,6 +32,15 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     *
+     */
+    public function testUnsupportedVersion()
+    {
+        $this->setExpectedException('\Exception', 'Unsupported BIFF version');
+        new Writer($this->testFilePath, 0);
+    }
+
+    /**
      * @dataProvider providerGeneral
      * @param array $params
      */

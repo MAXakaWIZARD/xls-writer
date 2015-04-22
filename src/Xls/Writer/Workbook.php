@@ -80,7 +80,7 @@ class Workbook extends BIFFwriter
 
     /**
      * Array containing references to all of this workbook's worksheets
-     * @var array
+     * @var Worksheet[]
      */
     public $worksheets;
 
@@ -92,7 +92,7 @@ class Workbook extends BIFFwriter
 
     /**
      * Array containing references to all of this workbook's formats
-     * @var array
+     * @var Format[]
      */
     public $formats;
 
@@ -139,16 +139,16 @@ class Workbook extends BIFFwriter
      * Class constructor
      *
      * @param string $filename filename for storing the workbook. "-" for writing to stdout.
-     * @param int $biffVersion
+     * @param int $version
      */
     public function __construct(
         $filename,
-        $biffVersion = Biff5::VERSION
+        $version = Biff5::VERSION
     ) {
-        parent::__construct($biffVersion);
+        parent::__construct($version);
 
         $this->filename = $filename;
-        $this->parser = new Parser($this->byteOrder, $this->biffVersion);
+        $this->parser = new Parser($this->byteOrder, $this->version);
         $this->f1904 = 0;
         $this->selected = 0;
         $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
@@ -166,7 +166,7 @@ class Workbook extends BIFFwriter
         $this->countryCode = -1;
         $this->stringSizeinfo = 3;
 
-        $this->tmpFormat = new Format($this->biffVersion);
+        $this->tmpFormat = new Format($this->version);
 
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
@@ -249,33 +249,28 @@ class Workbook extends BIFFwriter
     public function addWorksheet($name = '')
     {
         $index = count($this->worksheets);
-        $sheetname = $this->sheetName;
 
         if ($name == '') {
-            $name = $sheetname . ($index + 1);
+            $name = $this->sheetName . ($index + 1);
         }
 
-        // Check that sheetname is <= 31 chars (Excel limit before BIFF8).
-        if ($this->isBiff5()) {
-            if (strlen($name) > 31) {
-                throw new \Exception("Sheetname $name must be <= 31 chars");
-            }
-        } else {
-            if (function_exists('iconv')) {
-                $name = iconv('UTF-8', 'UTF-16LE', $name);
-            }
+        $maxLen = $this->biff->getMaxSheetNameLength();
+        if (strlen($name) > $maxLen) {
+            throw new \Exception(
+                "Sheetname $name must be <= $maxLen chars"
+            );
         }
 
-        // Check that the worksheet name doesn't already exist: a fatal Excel error.
-        $totalWorksheets = count($this->worksheets);
-        for ($i = 0; $i < $totalWorksheets; $i++) {
-            if ($this->worksheets[$i]->getName() == $name) {
-                throw new \Exception("Worksheet '$name' already exists");
-            }
+        if ($this->isBiff8() && function_exists('iconv')) {
+            $name = iconv('UTF-8', 'UTF-16LE', $name);
+        }
+
+        if (in_array($name, $this->sheetNames, true)) {
+            throw new \Exception("Worksheet '$name' already exists");
         }
 
         $worksheet = new Worksheet(
-            $this->biffVersion,
+            $this->version,
             $name,
             $index,
             $this->activeSheet,
@@ -303,7 +298,7 @@ class Workbook extends BIFFwriter
      */
     public function addFormat($properties = array())
     {
-        $format = new Format($this->biffVersion, $this->xfIndex, $properties);
+        $format = new Format($this->version, $this->xfIndex, $properties);
         $this->xfIndex += 1;
         $this->formats[] = & $format;
 
@@ -317,9 +312,7 @@ class Workbook extends BIFFwriter
      */
     public function addValidator()
     {
-        $validator = new Validator($this->parser);
-
-        return $validator;
+        return new Validator($this->parser);
     }
 
     /**
@@ -441,17 +434,16 @@ class Workbook extends BIFFwriter
 
         // Ensure that at least one worksheet has been selected.
         if ($this->activeSheet == 0) {
-            $this->worksheets[0]->selected = 1;
+            $this->worksheets[0]->select();
         }
 
         // Calculate the number of selected worksheet tabs and call the finalization
         // methods for each worksheet
-        $totalSheets = count($this->worksheets);
-        for ($i = 0; $i < $totalSheets; $i++) {
-            if ($this->worksheets[$i]->selected) {
+        foreach ($this->worksheets as $sheet) {
+            if ($sheet->isSelected()) {
                 $this->selected++;
             }
-            $this->worksheets[$i]->close($this->sheetNames);
+            $sheet->close($this->sheetNames);
         }
 
         // Add Workbook globals
@@ -476,8 +468,11 @@ class Workbook extends BIFFwriter
         $this->calcSheetOffsets();
 
         // Add BOUNDSHEET records
-        for ($i = 0; $i < $totalSheets; $i++) {
-            $this->storeBoundsheet($this->worksheets[$i]->name, $this->worksheets[$i]->offset);
+        foreach ($this->worksheets as $sheet) {
+            $this->storeBoundsheet(
+                $sheet->getName(),
+                $sheet->getOffset()
+            );
         }
 
         if ($this->countryCode != -1) {
@@ -562,13 +557,13 @@ class Workbook extends BIFFwriter
         $totalSheets = count($this->worksheets);
         // add the length of the BOUNDSHEET records
         for ($i = 0; $i < $totalSheets; $i++) {
-            $offset += $boundsheetLength + strlen($this->worksheets[$i]->name);
+            $offset += $boundsheetLength + strlen($this->worksheets[$i]->getName());
         }
         $offset += $EOF;
 
         for ($i = 0; $i < $totalSheets; $i++) {
-            $this->worksheets[$i]->offset = $offset;
-            $offset += $this->worksheets[$i]->datasize;
+            $this->worksheets[$i]->setOffset($offset);
+            $offset += $this->worksheets[$i]->getDataSize();
         }
         $this->biffSize = $offset;
     }
@@ -792,7 +787,7 @@ class Workbook extends BIFFwriter
         $length = 0x0002; // Number of bytes to follow
 
         $header = pack('vv', $record, $length);
-        $data = pack('v', $this->codepage);
+        $data = pack('v', $this->biff->getCodepage());
 
         $this->append($header . $data);
     }

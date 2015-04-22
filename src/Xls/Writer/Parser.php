@@ -74,19 +74,19 @@ class Parser
      * The BIFF version for the workbook
      * @var integer
      */
-    protected $biffVersion;
+    protected $version;
 
     /**
      * The class constructor
      *
      * @param integer $byteOrder The byte order (Little endian or Big endian) of the architecture
      * (optional). 1 => big endian, 0 (default) little endian.
-     * @param $biffVersion
+     * @param $version
      */
-    public function __construct($byteOrder, $biffVersion)
+    public function __construct($byteOrder, $version)
     {
         $this->byteOrder = $byteOrder;
-        $this->biffVersion = $biffVersion;
+        $this->version = $version;
 
         $this->initPtgs();
         $this->initFunctions();
@@ -518,7 +518,7 @@ class Parser
             throw new \Exception("String is too long");
         }
 
-        if ($this->biffVersion == Biff5::VERSION) {
+        if ($this->version == Biff5::VERSION) {
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
         } else {
             $encoding = 0;
@@ -603,7 +603,7 @@ class Parser
         list($extRef, $range) = explode('!', $token);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->biffVersion === Biff5::VERSION) {
+        if ($this->version === Biff5::VERSION) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -682,7 +682,7 @@ class Parser
         list($extRef, $cell) = explode('!', $cell);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->biffVersion === Biff5::VERSION) {
+        if ($this->version === Biff5::VERSION) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -863,7 +863,7 @@ class Parser
         }
 
         // Set the high bits to indicate if row or col are relative.
-        if ($this->biffVersion == Biff5::VERSION) {
+        if ($this->version == Biff5::VERSION) {
             $row |= $colRel << 14;
             $row |= $rowRel << 15;
             $col = pack('C', $col);
@@ -905,7 +905,7 @@ class Parser
         }
 
         // Set the high bits to indicate if rows are relative.
-        if ($this->biffVersion == Biff5::VERSION) {
+        if ($this->version == Biff5::VERSION) {
             $row1 |= $row1Rel << 14; // TODO: probably a bug
             $row2 |= $row2Rel << 15;
             $col1 = pack('C', $col1);

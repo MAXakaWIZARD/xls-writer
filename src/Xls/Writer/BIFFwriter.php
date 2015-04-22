@@ -27,96 +27,76 @@ class BIFFwriter
     /**
      * @var integer
      */
-    public $biffVersion;
+    protected $version;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer
      */
-    public $byteOrder;
+    protected $byteOrder;
 
     /**
      * The string containing the data of the BIFF stream
      * @var string
      */
-    public $data;
+    protected $data = '';
 
     /**
      * The size of the data in bytes. Should be the same as strlen($this->data)
      * @var integer
      */
-    public $datasize;
-
-    /**
-     * The maximun length for a BIFF record. See _addContinue()
-     * @var integer
-     * @see _addContinue()
-     */
-    public $limit;
+    protected $datasize = 0;
 
     /**
      * The temporary dir for storing the OLE file
      * @var string
      */
-    public $tmpDir;
+    protected $tmpDir;
 
     /**
      * The temporary file for storing the OLE file
      * @var string
      */
-    public $tmpFile;
+    protected $tmpFile = '';
 
     /**
-     * The codepage indicates the text encoding used for strings
-     * @var integer
+     * @var BiffInterface
      */
-    public $codepage;
+    protected $biff;
 
     /**
-     * @param int $biffVersion
+     * @param int $version
      *
      * @throws \Exception
      */
-    public function __construct($biffVersion = Biff5::VERSION)
+    public function __construct($version = Biff5::VERSION)
     {
-        $this->data = '';
-        $this->datasize = 0;
-        $this->limit = 2080;
-
         $this->tmpDir = sys_get_temp_dir();
-        $this->tmpFile = '';
 
-        $this->setBiffVersion($biffVersion);
-        $this->setVersionParams();
+        $this->setVersion($version);
         $this->setByteOrder();
     }
 
     /**
-     * Sets the params according to BIFF version.
-     */
-    protected function setVersionParams()
-    {
-        $this->codepage = 0x04E4;
-
-        if ($this->isBiff5()) {
-            $this->limit = 2080;
-        } else {
-            $this->limit = 8228;
-        }
-    }
-
-    /**
+     * set BIFF version
      * @param $version
      *
      * @throws \Exception
      */
-    protected function setBiffVersion($version)
+    protected function setVersion($version)
     {
-        if ($this->isVersionSupported($version)) {
-            $this->biffVersion = $version;
-        } else {
-            throw new \Exception("Unknown BIFF version");
+        switch ($version) {
+            case Biff5::VERSION:
+                $this->biff = new Biff5;
+                break;
+            case Biff8::VERSION:
+                $this->biff = new Biff8;
+                break;
+            default:
+                throw new \Exception("Unsupported BIFF version");
         }
+
+        $this->version = $version;
     }
 
     /**
@@ -134,7 +114,6 @@ class BIFFwriter
         } elseif ($number == strrev($teststr)) {
             $this->byteOrder = self::BYTE_ORDER_BE;
         } else {
-            // Give up. I'll fix this in a later version.
             throw new \Exception(
                 "Required floating point format is not supported on this platform."
             );
@@ -142,31 +121,39 @@ class BIFFwriter
     }
 
     /**
-     * General storage function
+     * @param $data
      *
+     * @return string
+     */
+    protected function addContinueIfNeeded($data)
+    {
+        if (strlen($data) > $this->biff->getLimit()) {
+            $data = $this->addContinue($data);
+        }
+
+        return $data;
+    }
+
+    /**
      * @param string $data binary data to prepend
      */
     protected function prepend($data)
     {
-        if (strlen($data) > $this->limit) {
-            $data = $this->addContinue($data);
-        }
+        $data = $this->addContinueIfNeeded($data);
+
         $this->data = $data . $this->data;
-        $this->datasize += strlen($data);
+        $this->datasize = strlen($this->data);
     }
 
     /**
-     * General storage function
-     *
      * @param string $data binary data to append
      */
     protected function append($data)
     {
-        if (strlen($data) > $this->limit) {
-            $data = $this->addContinue($data);
-        }
+        $data = $this->addContinueIfNeeded($data);
+
         $this->data = $this->data . $data;
-        $this->datasize += strlen($data);
+        $this->datasize = strlen($this->data);
     }
 
     /**
@@ -196,7 +183,7 @@ class BIFFwriter
         }
 
         $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $this->biffVersion, $type, $build, $year);
+        $data = pack("vvvv", $this->version, $type, $build, $year);
         $this->prepend($header . $data . $unknown);
     }
 
@@ -224,7 +211,7 @@ class BIFFwriter
      */
     protected function addContinue($data)
     {
-        $limit = $this->limit;
+        $limit = $this->biff->getLimit();
         $record = 0x003C; // Record identifier
 
         // The first 2080/8224 bytes remain intact. However, we have to change
@@ -249,21 +236,11 @@ class BIFFwriter
     }
 
     /**
-     * @param $version
-     *
-     * @return bool
-     */
-    public static function isVersionSupported($version)
-    {
-        return $version === Biff5::VERSION || $version === Biff8::VERSION;
-    }
-
-    /**
      *
      */
     public function isBiff5()
     {
-        return $this->biffVersion === Biff5::VERSION;
+        return $this->version === Biff5::VERSION;
     }
 
     /**
@@ -271,6 +248,14 @@ class BIFFwriter
      */
     public function isBiff8()
     {
-        return $this->biffVersion === Biff8::VERSION;
+        return $this->version === Biff8::VERSION;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDataSize()
+    {
+        return $this->datasize;
     }
 }
