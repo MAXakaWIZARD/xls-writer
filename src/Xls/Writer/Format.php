@@ -334,7 +334,7 @@ class Format
         }
 
         $record = 0x00E0; // Record identifier
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $length = 0x0010; // Number of bytes to follow
         } else {
             $length = 0x0014;
@@ -342,7 +342,7 @@ class Format
 
         $ifnt = $this->fontIndex; // Index to FONT record
         $ifmt = $this->numFormat; // Index to FORMAT record
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $align = $this->textHorAlign; // Alignment
             $align |= $this->textWrap << 3;
             $align |= $this->textVertAlign << 4;
@@ -445,7 +445,7 @@ class Format
 
         $cch = strlen($this->fontName); // Length of font name
         $record = 0x31; // Record identifier
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $length = 0x0F + $cch; // Record length
         } else {
             $length = 0x10 + $cch;
@@ -467,7 +467,7 @@ class Format
         }
 
         $header = pack("vv", $record, $length);
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $data = pack(
                 "vvvvvCCCCC",
                 $dyHeight,
@@ -979,21 +979,21 @@ class Format
                 $this->rotation = 0;
                 break;
             case 90:
-                if ($this->biffVersion === BIFFwriter::VERSION_5) {
+                if ($this->biffVersion === Biff5::VERSION) {
                     $this->rotation = 3;
                 } else {
                     $this->rotation = 180;
                 }
                 break;
             case 270:
-                if ($this->biffVersion == BIFFwriter::VERSION_5) {
+                if ($this->biffVersion == Biff5::VERSION) {
                     $this->rotation = 2;
                 } else {
                     $this->rotation = 90;
                 }
                 break;
             case -1:
-                if ($this->biffVersion == BIFFwriter::VERSION_5) {
+                if ($this->biffVersion == Biff5::VERSION) {
                     $this->rotation = 1;
                 } else {
                     $this->rotation = 255;

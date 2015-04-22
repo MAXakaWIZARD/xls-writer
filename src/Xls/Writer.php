@@ -2,6 +2,8 @@
 
 namespace Xls;
 
+use Xls\Writer\Biff5;
+
 /**
  * Class for writing Excel Spreadsheets
  *
@@ -34,7 +36,8 @@ class Writer extends Writer\Workbook
      */
     public static function rowcolToCell($row, $col)
     {
-        if ($col > 255) { //maximum column value exceeded
+        if ($col >= Biff5::MAX_COLS) {
+            //maximum column value exceeded
             throw new \Exception("Maximum column value exceeded: $col");
         }
 

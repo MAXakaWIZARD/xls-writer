@@ -387,9 +387,9 @@ class Worksheet extends BIFFwriter
         $this->usingTmpFile = true;
         //$this->fileclosed      = 0;
         //$this->offset          = 0;
-        $this->xlsRowmax = 65536;
-        $this->xlsColmax = 256;
-        $this->xlsStrmax = 255;
+        $this->xlsRowmax = Biff5::MAX_ROWS;
+        $this->xlsColmax = Biff5::MAX_COLS;
+        $this->xlsStrmax = Biff5::MAX_STR_LENGTH;
         $this->dimRowmin = $this->xlsRowmax + 1;
         $this->dimRowmax = 0;
         $this->dimColmin = $this->xlsColmax + 1;
@@ -852,8 +852,7 @@ class Worksheet extends BIFFwriter
      */
     public function setHeader($string, $margin = 0.50)
     {
-        if (strlen($string) >= 255) {
-            //carp 'Header string must be less than 255 characters';
+        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
             return;
         }
         $this->header = $string;
@@ -867,8 +866,7 @@ class Worksheet extends BIFFwriter
      */
     public function setFooter($string, $margin = 0.50)
     {
-        if (strlen($string) >= 255) {
-            //carp 'Footer string must be less than 255 characters';
+        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
             return;
         }
         $this->footer = $string;
@@ -1412,8 +1410,9 @@ class Worksheet extends BIFFwriter
 
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $row, $col, $xf);
+
         $xlDouble = pack("d", $num);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $xlDouble = strrev($xlDouble);
         }
 
@@ -1468,7 +1467,7 @@ class Worksheet extends BIFFwriter
             $this->dimColmax = $col;
         }
 
-        if ($strlen > $this->xlsStrmax) { // LABEL must be < 255 chars
+        if ($strlen > $this->xlsStrmax) {
             $str = substr($str, 0, $this->xlsStrmax);
             $length = 0x0008 + $this->xlsStrmax;
             $strlen = $this->xlsStrmax;
@@ -2577,7 +2576,7 @@ class Worksheet extends BIFFwriter
 
         $numHdr = pack("d", $numHdr);
         $numFtr = pack("d", $numFtr);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $numHdr = strrev($numHdr);
             $numFtr = strrev($numFtr);
         }
@@ -2703,8 +2702,9 @@ class Worksheet extends BIFFwriter
         $margin = $this->marginLeft; // Margin in inches
 
         $header = pack("vv", $record, $length);
+
         $data = pack("d", $margin);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $data = strrev($data);
         }
 
@@ -2724,8 +2724,9 @@ class Worksheet extends BIFFwriter
         $margin = $this->marginRight; // Margin in inches
 
         $header = pack("vv", $record, $length);
+
         $data = pack("d", $margin);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $data = strrev($data);
         }
 
@@ -2745,8 +2746,9 @@ class Worksheet extends BIFFwriter
         $margin = $this->marginTop; // Margin in inches
 
         $header = pack("vv", $record, $length);
+
         $data = pack("d", $margin);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $data = strrev($data);
         }
 
@@ -2766,8 +2768,9 @@ class Worksheet extends BIFFwriter
         $margin = $this->marginBottom; // Margin in inches
 
         $header = pack("vv", $record, $length);
+
         $data = pack("d", $margin);
-        if ($this->byteOrder) { // if it's Big Endian
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
             $data = strrev($data);
         }
 

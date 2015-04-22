@@ -143,7 +143,7 @@ class Workbook extends BIFFwriter
      */
     public function __construct(
         $filename,
-        $biffVersion = BIFFwriter::VERSION_5
+        $biffVersion = Biff5::VERSION
     ) {
         parent::__construct($biffVersion);
 

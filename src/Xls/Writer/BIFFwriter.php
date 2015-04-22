@@ -21,32 +21,13 @@ namespace Xls\Writer;
 
 class BIFFwriter
 {
-    /**
-     * BIFF5
-     *
-     * Microsoft Excel version 5.0 (XL5)
-     * Microsoft Excel 95 (XL7) (also called Microsoft Excel version 7)
-     */
-    const VERSION_5 = 0x0500;
-
-    /**
-     * BIFF8
-     *
-     * Microsoft Excel 97 (XL8)
-     * Microsoft Excel 2000 (XL9)
-     * Microsoft Excel 2002 (XL10)
-     * Microsoft Office Excel 2003 (XL11)
-     * Microsoft Office Excel 2007 (XL12)
-     */
-    const VERSION_8 = 0x0600;
-
     const BYTE_ORDER_LE = 0;
     const BYTE_ORDER_BE = 1;
 
     /**
      * @var integer
      */
-    public $biffVersion = self::VERSION_5;
+    public $biffVersion;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -96,7 +77,7 @@ class BIFFwriter
      *
      * @throws \Exception
      */
-    public function __construct($biffVersion = self::VERSION_5)
+    public function __construct($biffVersion = Biff5::VERSION)
     {
         $this->data = '';
         $this->datasize = 0;
@@ -274,7 +255,7 @@ class BIFFwriter
      */
     public static function isVersionSupported($version)
     {
-        return $version === self::VERSION_5 || $version === self::VERSION_8;
+        return $version === Biff5::VERSION || $version === Biff8::VERSION;
     }
 
     /**
@@ -282,7 +263,7 @@ class BIFFwriter
      */
     public function isBiff5()
     {
-        return $this->biffVersion === BIFFwriter::VERSION_5;
+        return $this->biffVersion === Biff5::VERSION;
     }
 
     /**
@@ -290,6 +271,6 @@ class BIFFwriter
      */
     public function isBiff8()
     {
-        return $this->biffVersion === BIFFwriter::VERSION_8;
+        return $this->biffVersion === Biff8::VERSION;
     }
 }

@@ -489,13 +489,16 @@ class Parser
      */
     protected function convertNumber($num)
     {
-        // Integer in the range 0..2**16-1
         if ((preg_match("/^\d+$/", $num)) && ($num <= 65535)) {
+            // Integer in the range 0..2**16-1
             return pack("Cv", $this->ptg['ptgInt'], $num);
-        } else { // A float
-            if ($this->byteOrder) { // if it's Big Endian
+        } else {
+            // A float
+            if ($this->byteOrder) {
+                // if it's Big Endian
                 $num = strrev($num);
             }
+
             return pack("Cd", $this->ptg['ptgNum'], $num);
         }
     }
@@ -511,11 +514,11 @@ class Parser
     {
         // chop away beggining and ending quotes
         $string = substr($string, 1, strlen($string) - 2);
-        if (strlen($string) > 255) {
+        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
             throw new \Exception("String is too long");
         }
 
-        if ($this->biffVersion == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == Biff5::VERSION) {
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
         } else {
             $encoding = 0;
@@ -530,7 +533,7 @@ class Parser
      * @param string $token    The name of the function for convertion to ptg value.
      * @param integer $numArgs The number of arguments the function receives.
      *
-*@return string The packed ptg for the function
+     * @return string The packed ptg for the function
      */
     protected function convertFunction($token, $numArgs)
     {
@@ -600,7 +603,7 @@ class Parser
         list($extRef, $range) = explode('!', $token);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -679,7 +682,7 @@ class Parser
         list($extRef, $cell) = explode('!', $cell);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->biffVersion === BIFFwriter::VERSION_5) {
+        if ($this->biffVersion === Biff5::VERSION) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -851,16 +854,16 @@ class Parser
         $cell = strtoupper($cell);
         list($row, $col, $rowRel, $colRel) = $this->cellToRowcol($cell);
 
-        if ($col >= 256) {
-            throw new \Exception("Column in: $cell greater than 255");
+        if ($col >= Biff5::MAX_COLS) {
+            throw new \Exception("Column in: $cell greater than " . Biff5::MAX_COLS);
         }
 
-        if ($row >= 16384) {
-            throw new \Exception("Row in: $cell greater than 16384");
+        if ($row >= Biff5::MAX_ROWS) {
+            throw new \Exception("Row in: $cell greater than " . Biff5::MAX_ROWS);
         }
 
         // Set the high bits to indicate if row or col are relative.
-        if ($this->biffVersion == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == Biff5::VERSION) {
             $row |= $colRel << 14;
             $row |= $rowRel << 15;
             $col = pack('C', $col);
@@ -895,14 +898,14 @@ class Parser
         $row2--;
         // Trick poor innocent Excel
         $col1 = 0;
-        $col2 = 16383; // Maximum possible value for Excel 5
+        $col2 = Biff5::MAX_COLS - 1;
 
-        if (($row1 >= 16384) || ($row2 >= 16384)) {
-            throw new \Exception("Row in: $range greater than 16384");
+        if ($row1 >= Biff5::MAX_ROWS || $row2 >= Biff5::MAX_ROWS) {
+            throw new \Exception("Row in: $range greater than " . Biff5::MAX_ROWS);
         }
 
         // Set the high bits to indicate if rows are relative.
-        if ($this->biffVersion == BIFFwriter::VERSION_5) {
+        if ($this->biffVersion == Biff5::VERSION) {
             $row1 |= $row1Rel << 14; // TODO: probably a bug
             $row2 |= $row2Rel << 15;
             $col1 = pack('C', $col1);

@@ -94,11 +94,12 @@ class Root extends OLE\PPS
                 throw new \Exception("Can't open $filename. It may be in use or protected.");
             }
         }
+
         // Make an array of PPS's (for Save)
         $aList = array();
         self::savePpsSetPnt($aList, array($this));
         // calculate values for header
-        list($iSBDcnt, $iBBcnt, $iPPScnt) = $this->calcSize($aList); //, $rhInfo);
+        list($iSBDcnt, $iBBcnt, $iPPScnt) = $this->calcSize($aList);
         // Save Header
         $this->saveHeader($iSBDcnt, $iBBcnt, $iPPScnt);
 
@@ -128,34 +129,35 @@ class Root extends OLE\PPS
     /**
      * Calculate some numbers
      *
-     * @param OLE\PPS[] $raList Reference to an array of PPS's
+     * @param OLE\PPS[] $list Reference to an array of PPS's
+     *
      * @return array The array of numbers
      */
-    protected function calcSize(&$raList)
+    protected function calcSize($list)
     {
         $iSBcnt = 0;
         $iBBcnt = 0;
-        $raListCount = count($raList);
-        for ($i = 0; $i < $raListCount; $i++) {
-            if ($raList[$i]->Type == OLE::PPS_TYPE_FILE) {
-                $raList[$i]->Size = $raList[$i]->dataLen();
-                if ($raList[$i]->Size < OLE::DATA_SIZE_SMALL) {
-                    $iSBcnt += floor($raList[$i]->Size / $this->smallBlockSize)
-                        + (($raList[$i]->Size % $this->smallBlockSize) ? 1 : 0);
+        foreach ($list as $item) {
+            if ($item->Type == OLE::PPS_TYPE_FILE) {
+                $item->Size = $item->dataLen();
+                if ($item->Size < OLE::DATA_SIZE_SMALL) {
+                    $iSBcnt += floor($item->Size / $this->smallBlockSize)
+                        + (($item->Size % $this->smallBlockSize) ? 1 : 0);
                 } else {
-                    $iBBcnt += (floor($raList[$i]->Size / $this->bigBlockSize) +
-                        (($raList[$i]->Size % $this->bigBlockSize) ? 1 : 0));
+                    $iBBcnt += (floor($item->Size / $this->bigBlockSize) +
+                        (($item->Size % $this->bigBlockSize) ? 1 : 0));
                 }
             }
         }
+
         $iSmallLen = $iSBcnt * $this->smallBlockSize;
         $iSlCnt = floor($this->bigBlockSize / OLE::LONG_INT_SIZE);
         $iSBDcnt = floor($iSBcnt / $iSlCnt) + (($iSBcnt % $iSlCnt) ? 1 : 0);
-        $iBBcnt += (floor($iSmallLen / $this->bigBlockSize) +
-            (($iSmallLen % $this->bigBlockSize) ? 1 : 0));
-        $iCnt = count($raList);
+        $iBBcnt += floor($iSmallLen / $this->bigBlockSize) +
+            (($iSmallLen % $this->bigBlockSize) ? 1 : 0);
+        $iCnt = count($list);
         $iBdCnt = $this->bigBlockSize / OLE::PPS_SIZE;
-        $iPPScnt = (floor($iCnt / $iBdCnt) + (($iCnt % $iBdCnt) ? 1 : 0));
+        $iPPScnt = floor($iCnt / $iBdCnt) + (($iCnt % $iBdCnt) ? 1 : 0);
 
         return array($iSBDcnt, $iBBcnt, $iPPScnt);
     }
