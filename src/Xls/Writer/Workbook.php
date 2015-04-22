@@ -2,6 +2,8 @@
 
 namespace Xls\Writer;
 
+use Xls\OLE\PPS;
+
 /**
  * Class for generating Excel Spreadsheets
 */
@@ -52,7 +54,7 @@ class Workbook extends BIFFwriter
 
     /**
      * Flag for preventing close from being called twice.
-     * @var integer
+     * @var boolean
      * @see close()
      */
     public $fileClosed;
@@ -150,7 +152,7 @@ class Workbook extends BIFFwriter
         $this->f1904 = 0;
         $this->selected = 0;
         $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
-        $this->fileClosed = 0;
+        $this->fileClosed = false;
         $this->biffSize = 0;
         $this->sheetName = 'Sheet';
 
@@ -198,18 +200,18 @@ class Workbook extends BIFFwriter
      * This method should always be the last one to be called on every workbook
      *
      * @throws \Exception
-     * @return mixed true on success.
+     * @return boolean true on success.
      */
     public function close()
     {
-        if ($this->fileClosed) { // Prevent close() from being called twice.
+        if ($this->fileClosed) {
+            // Prevent close() from being called twice.
             return true;
         }
-        $res = $this->storeWorkbook();
-        if (!$res) {
-            throw new \Exception($res->getMessage());
-        }
-        $this->fileClosed = 1;
+
+        $this->storeWorkbook();
+        $this->fileClosed = true;
+
         return true;
     }
 
@@ -429,7 +431,7 @@ class Workbook extends BIFFwriter
      * storage.
      *
      * @throws \Exception
-     * @return mixed true on success.
+     * @return boolean true on success.
      */
     protected function storeWorkbook()
     {
@@ -494,10 +496,7 @@ class Workbook extends BIFFwriter
         $this->storeEof();
 
         // Store the workbook in an OLE container
-        $res = $this->storeOLEFile();
-        if (!$res) {
-            throw new \Exception($res->getMessage());
-        }
+        $this->storeOLEFile();
 
         return true;
     }
@@ -506,39 +505,33 @@ class Workbook extends BIFFwriter
      * Store the workbook in an OLE container
      *
      * @throws \Exception
-     * @return mixed true on success.
+     * @return boolean true on success.
      */
     protected function storeOLEFile()
     {
         if ($this->isBiff8()) {
-            $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
+            $ole = new PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
         } else {
-            $OLE = new \Xls\OLE\PPS\File(\Xls\OLE::asc2Ucs('Book'));
+            $ole = new PPS\File(\Xls\OLE::asc2Ucs('Book'));
         }
 
-        $res = $OLE->init();
-        if (!$res) {
-            throw new \Exception("OLE Error: " . $res->getMessage());
-        }
-        $OLE->append($this->data);
+        $ole->init();
+        $ole->append($this->data);
 
         $totalSheets = count($this->worksheets);
         for ($i = 0; $i < $totalSheets; $i++) {
             while ($tmp = $this->worksheets[$i]->getData()) {
-                $OLE->append($tmp);
+                $ole->append($tmp);
             }
         }
 
-        $root = new \Xls\OLE\PPS\Root(
+        $root = new PPS\Root(
             $this->getCreationTimestamp(),
             $this->getCreationTimestamp(),
-            array($OLE)
+            array($ole)
         );
 
-        $res = $root->save($this->filename);
-        if (!$res) {
-            throw new \Exception("OLE Error: " . $res->getMessage());
-        }
+        $root->save($this->filename);
 
         return true;
     }

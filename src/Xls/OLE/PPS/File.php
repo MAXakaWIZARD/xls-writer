@@ -31,7 +31,7 @@ class File extends OLE\PPS
     /**
      * Initialization method. Has to be called right after OLE_PPS_File().
      * @throws \Exception
-     * @return mixed true on success.
+     * @return boolean true on success.
      */
     public function init()
     {

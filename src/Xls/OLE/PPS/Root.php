@@ -39,7 +39,7 @@ class Root extends OLE\PPS
      *
      * @param integer $time1st A timestamp
      * @param integer $time2nd A timestamp
-     * @param array $raChild
+     * @param File[] $raChild
      */
     public function __construct(
         $time1st = null,
@@ -67,7 +67,7 @@ class Root extends OLE\PPS
      *
      * @param string $filename The name of the file where to save the OLE container
      * @throws \Exception
-     * @return mixed true on success
+     * @return boolean true on success
      */
     public function save($filename)
     {

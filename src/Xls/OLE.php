@@ -96,7 +96,7 @@ class OLE
      * @param string $file
      * @throws \Exception
      *
-     * @return mixed true on success
+     * @return boolean true on success
      */
     public function read($file)
     {
@@ -273,7 +273,7 @@ class OLE
      * creates an OLE\PPS object for each one.
      *
      * @param integer $blockId the block id of the first block
-     * @return mixed true on success
+     * @return boolean true on success
      */
     protected function readPpsWks($blockId)
     {
@@ -525,7 +525,7 @@ class OLE
      * @param integer $string A binary string with the encoded date
      * @throws \Exception
      *
-     * @return string The timestamp corresponding to the string
+     * @return double The timestamp corresponding to the string
      */
     public static function ole2LocalDate($string)
     {

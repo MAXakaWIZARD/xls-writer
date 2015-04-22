@@ -80,7 +80,7 @@ class Parser
      * The class constructor
      *
      * @param integer $byteOrder The byte order (Little endian or Big endian) of the architecture
-    * (optional). 1 => big endian, 0 (default) little endian.
+     * (optional). 1 => big endian, 0 (default) little endian.
      * @param $biffVersion
      */
     public function __construct($byteOrder, $biffVersion)

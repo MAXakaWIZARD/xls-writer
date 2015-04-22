@@ -211,7 +211,7 @@ class PPS
      * PPS. I don't think it'll work with Dir PPS's.
      *
      * @param array &$raList Reference to the array of PPS's for the whole OLE container
-     * @param $toSave
+     * @param array $toSave
      * @param $depth
      * @return integer          The index for this PPS
      */
@@ -230,7 +230,7 @@ class PPS
 
             return $cnt;
         } else {
-            $iPos = (int) floor(count($toSave) / 2);
+            $iPos = (int)floor(count($toSave) / 2);
             $aPrev = array_slice($toSave, 0, $iPos);
             $aNext = array_slice($toSave, $iPos + 1);
 
