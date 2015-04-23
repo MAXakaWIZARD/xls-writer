@@ -1,9 +1,10 @@
 <?php
-namespace Xls\Writer\Tests;
+namespace Xls\Tests;
 
 use Xls\Writer;
-use Xls\Writer\Parser;
-use Xls\Writer\BIFFwriter;
+use Xls\Biff5;
+use Xls\Parser;
+use Xls\BIFFwriter;
 
 /**
  *
@@ -20,7 +21,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->parser = new Parser(BIFFwriter::BYTE_ORDER_LE, Writer\Biff5::VERSION);
+        $this->parser = new Parser(BIFFwriter::BYTE_ORDER_LE, Biff5::VERSION);
     }
 
     /**

@@ -2,7 +2,8 @@
 
 namespace Xls\OLE\PPS;
 
-use Xls\OLE;
+use Xls\OLE\PPS as OlePPS;
+use Xls\OLE\OLE;
 
 /**
  * Class for creating File PPS's for OLE containers
@@ -11,7 +12,7 @@ use Xls\OLE;
  * @category Structures
  * @package  OLE
  */
-class File extends OLE\PPS
+class File extends OlePPS
 {
     /**
      * The constructor

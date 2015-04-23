@@ -2,7 +2,8 @@
 
 namespace Xls\OLE\PPS;
 
-use Xls\OLE;
+use Xls\OLE\OLE;
+use Xls\OLE\PPS;
 
 /**
  * Class for creating Root PPS's for OLE containers
@@ -11,7 +12,7 @@ use Xls\OLE;
  * @category Structures
  * @package  OLE
  */
-class Root extends OLE\PPS
+class Root extends PPS
 {
     /**
      * Flag to enable new logic
@@ -129,7 +130,7 @@ class Root extends OLE\PPS
     /**
      * Calculate some numbers
      *
-     * @param OLE\PPS[] $list Reference to an array of PPS's
+     * @param PPS[] $list Reference to an array of PPS's
      *
      * @return array The array of numbers
      */
@@ -185,7 +186,7 @@ class Root extends OLE\PPS
      */
     public function saveHeader($iSBDcnt, $iBBcnt, $iPPScnt)
     {
-        $FILE = $this->fileHandlerRoot;
+        $file = $this->fileHandlerRoot;
 
         if ($this->newFunc) {
             $this->createHeader($iSBDcnt, $iBBcnt, $iPPScnt);
@@ -217,7 +218,7 @@ class Root extends OLE\PPS
 
         // Save Header
         fwrite(
-            $FILE,
+            $file,
             "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
             . "\x00\x00\x00\x00"
             . "\x00\x00\x00\x00"
@@ -242,22 +243,22 @@ class Root extends OLE\PPS
         // Extra BDList Start, Count
         if ($iBdCnt < $i1stBdL) {
             fwrite(
-                $FILE,
+                $file,
                 pack("V", -2) . // Extra BDList Start
                 pack("V", 0) // Extra BDList Count
             );
         } else {
-            fwrite($FILE, pack("V", $iAll + $iBdCnt) . pack("V", $iBdExL));
+            fwrite($file, pack("V", $iAll + $iBdCnt) . pack("V", $iBdExL));
         }
 
         // BDList
         for ($i = 0; $i < $i1stBdL && $i < $iBdCnt; $i++) {
-            fwrite($FILE, pack("V", $iAll + $i));
+            fwrite($file, pack("V", $iAll + $i));
         }
 
         if ($i < $i1stBdL) {
             for ($j = 0; $j < ($i1stBdL - $i); $j++) {
-                fwrite($FILE, (pack("V", -1)));
+                fwrite($file, (pack("V", -1)));
             }
         }
     }
@@ -266,7 +267,7 @@ class Root extends OLE\PPS
      * Saving big data (PPS's with data bigger than OLE_DATA_SIZE_SMALL)
      *
      * @param integer $iStBlk
-     * @param OLE\PPS[] &$raList Reference to array of PPS's
+     * @param PPS[] &$raList Reference to array of PPS's
      */
     public function saveBigData($iStBlk, &$raList)
     {
@@ -311,7 +312,7 @@ class Root extends OLE\PPS
     /**
      * get small data (PPS's with data smaller than OLE_DATA_SIZE_SMALL)
      *
-     * @param OLE\PPS[] &$raList Reference to array of PPS's
+     * @param PPS[] &$raList Reference to array of PPS's
      * @return string
      */
     protected function makeSmallData(&$raList)
@@ -372,7 +373,7 @@ class Root extends OLE\PPS
     /**
      * Saves all the PPS's WKs
      *
-     * @param OLE\PPS[] $raList Reference to an array with all PPS's
+     * @param PPS[] $raList Reference to an array with all PPS's
      */
     protected function savePps(&$raList)
     {
@@ -698,7 +699,7 @@ class Root extends OLE\PPS
      *
      * @param integer $numPointers - number of pointers
      *
-*@return int
+     * @return int
      */
     public function getNumberOfPointerBlocks($numPointers)
     {

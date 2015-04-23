@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 interface BiffInterface
 {
@@ -19,4 +19,15 @@ interface BiffInterface
      * @return int
      */
     public function getMaxSheetNameLength();
+
+    /**
+     * @return string
+     */
+    public function getWorkbookName();
+
+    /**
+     * Returns length for a BOUNDSHEET record
+     * @return int
+     */
+    public function getBoundsheetLength();
 }

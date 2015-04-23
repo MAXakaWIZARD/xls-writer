@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls;
+namespace Xls\OLE;
 
 /**
  * OLE package base class.

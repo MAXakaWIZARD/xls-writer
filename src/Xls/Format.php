@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 /**
  * Class for generating Excel XF records (formats)
@@ -432,82 +432,17 @@ class Format
      *
      * @return string The FONT record
      */
-    public function getFont()
+    public function getFontRecord()
     {
-        $dyHeight = $this->size * 20; // Height of font (1/20 of a point)
-        $icv = $this->color; // Index to color palette
-        $bls = $this->bold; // Bold style
-        $sss = $this->fontScript; // Superscript/subscript
-        $uls = $this->underline; // Underline
-        $bFamily = $this->fontFamily; // Font family
-        $bCharSet = $this->fontCharset; // Character set
-        $encoding = 0;
-
-        $cch = strlen($this->fontName); // Length of font name
-        $record = 0x31; // Record identifier
-        if ($this->version === Biff5::VERSION) {
-            $length = 0x0F + $cch; // Record length
-        } else {
-            $length = 0x10 + $cch;
-        }
-
-        $reserved = 0x00; // Reserved
-        $grbit = 0x00; // Font attributes
-        if ($this->italic) {
-            $grbit |= 0x02;
-        }
-        if ($this->fontStrikeout) {
-            $grbit |= 0x08;
-        }
-        if ($this->fontOutline) {
-            $grbit |= 0x10;
-        }
-        if ($this->fontShadow) {
-            $grbit |= 0x20;
-        }
-
-        $header = pack("vv", $record, $length);
-        if ($this->version === Biff5::VERSION) {
-            $data = pack(
-                "vvvvvCCCCC",
-                $dyHeight,
-                $grbit,
-                $icv,
-                $bls,
-                $sss,
-                $uls,
-                $bFamily,
-                $bCharSet,
-                $reserved,
-                $cch
-            );
-        } else {
-            $data = pack(
-                "vvvvvCCCCCC",
-                $dyHeight,
-                $grbit,
-                $icv,
-                $bls,
-                $sss,
-                $uls,
-                $bFamily,
-                $bCharSet,
-                $reserved,
-                $cch,
-                $encoding
-            );
-        }
-
-        return ($header . $data . $this->fontName);
+        $record = new Record\Font();
+        return $record->getData($this);
     }
 
     /**
      * Returns a unique hash key for a font.
-     * Used by Workbook::storeAllFonts()
-     *
      * The elements that form the key are arranged to increase the probability of
      * generating a unique key. Elements that hold a large range of numbers
-     * (eg. _color) are placed between two binary elements such as _italic
+     * (eg. color) are placed between two binary elements such as italic
      *
      * @return string A key for this font
      */
@@ -1083,5 +1018,13 @@ class Format
     public function setFontFamily($fontFamily)
     {
         $this->fontName = $fontFamily;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVersion()
+    {
+        return $this->version;
     }
 }

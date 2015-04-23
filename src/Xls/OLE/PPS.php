@@ -2,8 +2,6 @@
 
 namespace Xls\OLE;
 
-use Xls\OLE;
-
 /**
  * Class for creating PPS's for OLE containers
  *

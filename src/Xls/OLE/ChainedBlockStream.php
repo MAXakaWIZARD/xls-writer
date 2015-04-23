@@ -2,7 +2,7 @@
 
 namespace Xls\OLE;
 
-use Xls\OLE;
+use Xls\OLE\OLE;
 
 /**
  * Stream wrapper for reading data stored in an OLE file. Implements methods

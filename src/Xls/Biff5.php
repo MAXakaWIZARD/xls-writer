@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 class Biff5 implements BiffInterface
 {
@@ -18,7 +18,10 @@ class Biff5 implements BiffInterface
     const MAX_STR_LENGTH = 255;
     const MAX_SHEET_NAME_LENGTH = 31;
 
-    const LIMIT = 2080;
+    const LIMIT = 2084;
+    const BOUNDSHEET_LENGTH = 11;
+
+    const WORKBOOK_NAME = 'Book';
 
     /**
      * The codepage indicates the text encoding used for strings
@@ -47,5 +50,21 @@ class Biff5 implements BiffInterface
     public function getMaxSheetNameLength()
     {
         return static::MAX_SHEET_NAME_LENGTH;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getWorkbookName()
+    {
+        return static::WORKBOOK_NAME;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getBoundsheetLength()
+    {
+        return static::BOUNDSHEET_LENGTH;
     }
 }

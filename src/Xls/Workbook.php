@@ -1,7 +1,8 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
+use Xls\OLE\OLE;
 use Xls\OLE\PPS;
 
 /**
@@ -447,18 +448,18 @@ class Workbook extends BIFFwriter
         }
 
         // Add Workbook globals
-        $this->storeBof(0x0005);
+        $this->storeBof(self::BOF_TYPE_WORKBOOK);
         $this->storeCodepage();
+
         if ($this->isBiff8()) {
             $this->storeWindow1();
-        }
-        if ($this->isBiff5()) {
-            $this->storeExterns(); // For print area and repeat rows
-        }
-        $this->storeNames(); // For print area and repeat rows
-        if ($this->isBiff5()) {
+            $this->storeNames();
+        } else {
+            $this->storeExterns();
+            $this->storeNames();
             $this->storeWindow1();
         }
+
         $this->storeDatemode();
         $this->storeAllFonts();
         $this->storeAllNumFormats();
@@ -467,12 +468,8 @@ class Workbook extends BIFFwriter
         $this->storePalette();
         $this->calcSheetOffsets();
 
-        // Add BOUNDSHEET records
         foreach ($this->worksheets as $sheet) {
-            $this->storeBoundsheet(
-                $sheet->getName(),
-                $sheet->getOffset()
-            );
+            $this->storeBoundsheet($sheet->getName(), $sheet->getOffset());
         }
 
         if ($this->countryCode != -1) {
@@ -480,9 +477,10 @@ class Workbook extends BIFFwriter
         }
 
         if ($this->isBiff8()) {
-            //$this->storeSupbookInternal();
             /* TODO: store external SUPBOOK records and XCT and CRN records
-            in case of external references for BIFF8 */
+            * in case of external references for BIFF8
+            */
+            //$this->storeSupbookInternal();
             //$this->storeExternsheetBiff8();
             $this->storeSharedStringsTable();
         }
@@ -504,18 +502,13 @@ class Workbook extends BIFFwriter
      */
     protected function storeOLEFile()
     {
-        if ($this->isBiff8()) {
-            $ole = new PPS\File(\Xls\OLE::asc2Ucs('Workbook'));
-        } else {
-            $ole = new PPS\File(\Xls\OLE::asc2Ucs('Book'));
-        }
+        $ole = new PPS\File(OLE::asc2Ucs($this->biff->getWorkbookName()));
 
         $ole->init();
         $ole->append($this->data);
 
-        $totalSheets = count($this->worksheets);
-        for ($i = 0; $i < $totalSheets; $i++) {
-            while ($tmp = $this->worksheets[$i]->getData()) {
+        foreach ($this->worksheets as $sheet) {
+            while ($tmp = $sheet->getData()) {
                 $ole->append($tmp);
             }
         }
@@ -536,11 +529,7 @@ class Workbook extends BIFFwriter
      */
     protected function calcSheetOffsets()
     {
-        if ($this->isBiff8()) {
-            $boundsheetLength = 12; // fixed length for a BOUNDSHEET record
-        } else {
-            $boundsheetLength = 11;
-        }
+        $boundsheetLength = $this->biff->getBoundsheetLength();
         $EOF = 4;
         $offset = $this->datasize;
 
@@ -554,17 +543,18 @@ class Workbook extends BIFFwriter
             // add the lenght of SUPBOOK, EXTERNSHEET and NAME records
             //$offset += 8; // TODO: calculate real value when storing the records
         }
-        $totalSheets = count($this->worksheets);
+
         // add the length of the BOUNDSHEET records
-        for ($i = 0; $i < $totalSheets; $i++) {
-            $offset += $boundsheetLength + strlen($this->worksheets[$i]->getName());
+        foreach ($this->worksheets as $sheet) {
+            $offset += $boundsheetLength + strlen($sheet->getName());
         }
         $offset += $EOF;
 
-        for ($i = 0; $i < $totalSheets; $i++) {
-            $this->worksheets[$i]->setOffset($offset);
-            $offset += $this->worksheets[$i]->getDataSize();
+        foreach ($this->worksheets as $sheet) {
+            $sheet->setOffset($offset);
+            $offset += $sheet->getDataSize();
         }
+
         $this->biffSize = $offset;
     }
 
@@ -574,38 +564,32 @@ class Workbook extends BIFFwriter
     protected function storeAllFonts()
     {
         // tmp_format is added by the constructor. We use this to write the default XF's
-        $format = $this->tmpFormat;
-        $font = $format->getFont();
+        $font = $this->tmpFormat->getFontRecord();
 
         // Note: Fonts are 0-indexed. According to the SDK there is no index 4,
         // so the following fonts are 0, 1, 2, 3, 5
-        //
         for ($i = 1; $i <= 5; $i++) {
             $this->append($font);
         }
 
         // Iterate through the XF objects and write a FONT record if it isn't the
         // same as the default FONT and if it hasn't already been used.
-        //
         $fonts = array();
         $index = 6; // The first user defined FONT
-
-        $key = $format->getFontKey(); // The default font from _tmp_format
+        $key = $this->tmpFormat->getFontKey(); // The default font from _tmp_format
         $fonts[$key] = 0; // Index of the default font
 
-        $totalFormats = count($this->formats);
-        for ($i = 0; $i < $totalFormats; $i++) {
-            $key = $this->formats[$i]->getFontKey();
+        foreach ($this->formats as $format) {
+            $key = $format->getFontKey();
             if (isset($fonts[$key])) {
                 // FONT has already been used
-                $this->formats[$i]->fontIndex = $fonts[$key];
+                $format->fontIndex = $fonts[$key];
             } else {
                 // Add a new FONT record
                 $fonts[$key] = $index;
-                $this->formats[$i]->fontIndex = $index;
+                $format->fontIndex = $index;
                 $index++;
-                $font = $this->formats[$i]->getFont();
-                $this->append($font);
+                $this->append($format->getFontRecord());
             }
         }
     }
@@ -622,9 +606,8 @@ class Workbook extends BIFFwriter
 
         // Iterate through the XF objects and write a FORMAT record if it isn't a
         // built-in format type and if the FORMAT string hasn't already been used.
-        $totalFormats = count($this->formats);
-        for ($i = 0; $i < $totalFormats; $i++) {
-            $numFormat = $this->formats[$i]->numFormat;
+        foreach ($this->formats as $format) {
+            $numFormat = $format->numFormat;
 
             // Check if $num_format is an index to a built-in format.
             // Also check for a string of zeros, which is a valid format string
@@ -638,11 +621,11 @@ class Workbook extends BIFFwriter
 
             if (isset($hashNumFormats[$numFormat])) {
                 // FORMAT has already been used
-                $this->formats[$i]->numFormat = $hashNumFormats[$numFormat];
+                $format->numFormat = $hashNumFormats[$numFormat];
             } else {
                 // Add a new FORMAT
                 $hashNumFormats[$numFormat] = $index;
-                $this->formats[$i]->numFormat = $index;
+                $format->numFormat = $index;
                 array_push($numFormats, $numFormat);
                 $index++;
             }
@@ -663,20 +646,17 @@ class Workbook extends BIFFwriter
     {
         // _tmp_format is added by the constructor. We use this to write the default XF's
         // The default font index is 0
-        //
-        $format = $this->tmpFormat;
         for ($i = 0; $i <= 14; $i++) {
-            $xf = $format->getXf('style'); // Style XF
+            $xf = $this->tmpFormat->getXf('style'); // Style XF
             $this->append($xf);
         }
 
-        $xf = $format->getXf('cell'); // Cell XF
+        $xf = $this->tmpFormat->getXf('cell'); // Cell XF
         $this->append($xf);
 
         // User defined XFs
-        $totalFormats = count($this->formats);
-        for ($i = 0; $i < $totalFormats; $i++) {
-            $xf = $this->formats[$i]->getXf('cell');
+        foreach ($this->formats as $format) {
+            $xf = $format->getXf('cell');
             $this->append($xf);
         }
     }
@@ -725,12 +705,11 @@ class Workbook extends BIFFwriter
         }
 
         // Create the print title NAME records
-        $totalSheets = count($this->worksheets);
-        for ($i = 0; $i < $totalSheets; $i++) {
-            $rowmin = $this->worksheets[$i]->titleRowMin;
-            $rowmax = $this->worksheets[$i]->titleRowMax;
-            $colmin = $this->worksheets[$i]->titleColMin;
-            $colmax = $this->worksheets[$i]->titleColMax;
+        foreach ($this->worksheets as $sheet) {
+            $rowmin = $sheet->titleRowMin;
+            $rowmax = $sheet->titleRowMax;
+            $colmin = $sheet->titleColMin;
+            $colmax = $sheet->titleColMax;
 
             // Determine if row + col, row, col or nothing has been defined
             // and write the appropriate record
@@ -739,7 +718,7 @@ class Workbook extends BIFFwriter
                 // Row and column titles have been defined.
                 // Row title has been defined.
                 $this->storeNameLong(
-                    $this->worksheets[$i]->index,
+                    $sheet->index,
                     0x07, // NAME type
                     $rowmin,
                     $rowmax,
@@ -749,7 +728,7 @@ class Workbook extends BIFFwriter
             } elseif (isset($rowmin)) {
                 // Row title has been defined.
                 $this->storeNameShort(
-                    $this->worksheets[$i]->index,
+                    $sheet->index,
                     0x07, // NAME type
                     $rowmin,
                     $rowmax,
@@ -759,7 +738,7 @@ class Workbook extends BIFFwriter
             } elseif (isset($colmin)) {
                 // Column title has been defined.
                 $this->storeNameShort(
-                    $this->worksheets[$i]->index,
+                    $sheet->index,
                     0x07, // NAME type
                     0x0000,
                     0x3fff,
@@ -772,24 +751,13 @@ class Workbook extends BIFFwriter
         }
     }
 
-    /******************************************************************************
-     *
-     * BIFF RECORDS
-     *
-     */
-
     /**
      * Stores the CODEPAGE biff record.
      */
     protected function storeCodepage()
     {
-        $record = 0x0042; // Record identifier
-        $length = 0x0002; // Number of bytes to follow
-
-        $header = pack('vv', $record, $length);
-        $data = pack('v', $this->biff->getCodepage());
-
-        $this->append($header . $data);
+        $record = new Record\Codepage();
+        $this->append($record->getData($this->biff->getCodepage()));
     }
 
     /**
@@ -891,59 +859,24 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Write Excel BIFF STYLE records.
+     * Write STYLE records.
      */
     protected function storeStyle()
     {
-        $record = 0x0293; // Record identifier
-        $length = 0x0004; // Bytes to follow
-
-        $ixfe = 0x8000; // Index to style XF
-        $BuiltIn = 0x00; // Built-in style
-        $iLevel = 0xff; // Outline style level
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vCC", $ixfe, $BuiltIn, $iLevel);
-        $this->append($header . $data);
+        $record = new Record\Style();
+        $this->append($record->getData());
     }
 
     /**
-     * Writes Excel FORMAT record for non "built-in" numerical formats.
+     * Writes FORMAT record for non "built-in" numerical formats.
      *
      * @param string $format Custom format string
-     * @param integer $ifmt   Format index code
+     * @param integer $formatIndex   Format index code
      */
-    protected function storeNumFormat($format, $ifmt)
+    protected function storeNumFormat($format, $formatIndex)
     {
-        $record = 0x041E; // Record identifier
-
-        if ($this->isBiff8()) {
-            $length = 5 + strlen($format); // Number of bytes to follow
-            $encoding = 0x0;
-        } else {
-            $length = 3 + strlen($format); // Number of bytes to follow
-        }
-
-        if ($this->isBiff8() && function_exists('iconv')) { // Encode format String
-            if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
-                $format = iconv(mb_detect_encoding($format, 'auto'), 'UTF-16LE', $format);
-            }
-            $encoding = 1;
-            $cch = function_exists('mb_strlen') ? mb_strlen($format, 'UTF-16LE') : (strlen($format) / 2);
-        } else {
-            $encoding = 0;
-            $cch = strlen($format); // Length of format string
-        }
-        $length = strlen($format);
-
-        if ($this->isBiff8()) {
-            $header = pack("vv", $record, 5 + $length);
-            $data = pack("vvC", $ifmt, $cch, $encoding);
-        } else {
-            $header = pack("vv", $record, 3 + $length);
-            $data = pack("vC", $ifmt, $cch);
-        }
-        $this->append($header . $data . $format);
+        $record = new Record\Format();
+        $this->append($record->getData($this->version, $format, $formatIndex));
     }
 
     /**
@@ -951,60 +884,32 @@ class Workbook extends BIFFwriter
      */
     protected function storeDatemode()
     {
-        $record = 0x0022; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $f1904 = $this->f1904; // Flag for 1904 date system
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $f1904);
-        $this->append($header . $data);
+        $record = new Record\Datemode();
+        $this->append($record->getData($this->f1904));
     }
 
 
     /**
      * Write BIFF record EXTERNCOUNT to indicate the number of external sheet
      * references in the workbook.
-     *
-     * Excel only stores references to external sheets that are used in NAME.
-     * The workbook NAME record is required to define the print area and the repeat
-     * rows and columns.
-     *
-     * A similar method is used in Worksheet.php for a slightly different purpose.
-     *
-     * @param integer $cxals Number of external references
+     * @param integer $externalRefsCount Number of external references
      */
-    protected function storeExterncount($cxals)
+    protected function storeExterncount($externalRefsCount)
     {
-        $record = 0x0016; // Record identifier
-        $length = 0x0002; // Number of bytes to follow
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $cxals);
-        $this->append($header . $data);
+        $record = new Record\Externcount();
+        $this->append($record->getData($externalRefsCount));
     }
 
 
     /**
-     * Writes the Excel BIFF EXTERNSHEET record. These references are used by
-     * formulas. NAME record is required to define the print area and the repeat
-     * rows and columns.
+     * Writes the Excel BIFF EXTERNSHEET record.
      *
-     * A similar method is used in Worksheet.php for a slightly different purpose.
-     *
-     * @param string $sheetname Worksheet name
+     * @param string $sheetName Worksheet name
      */
-    protected function storeExternsheet($sheetname)
+    protected function storeExternsheet($sheetName)
     {
-        $record = 0x0017; // Record identifier
-        $length = 0x02 + strlen($sheetname); // Number of bytes to follow
-
-        $cch = strlen($sheetname); // Length of sheet name
-        $rgch = 0x03; // Filename encoding
-
-        $header = pack("vv", $record, $length);
-        $data = pack("CC", $cch, $rgch);
-        $this->append($header . $data . $sheetname);
+        $record = new Record\Externsheet();
+        $this->append($record->getData($sheetName));
     }
 
 
@@ -1021,61 +926,13 @@ class Workbook extends BIFFwriter
      */
     protected function storeNameShort($index, $type, $rowmin, $rowmax, $colmin, $colmax)
     {
-        $record = 0x0018; // Record identifier
-        $length = 0x0024; // Number of bytes to follow
-
-        $grbit = 0x0020; // Option flags
-        $chKey = 0x00; // Keyboard shortcut
-        $cch = 0x01; // Length of text name
-        $cce = 0x0015; // Length of text definition
-        $ixals = $index + 1; // Sheet index
-        $itab = $ixals; // Equal to ixals
-        $cchCustMenu = 0x00; // Length of cust menu text
-        $cchDescription = 0x00; // Length of description text
-        $cchHelptopic = 0x00; // Length of help topic text
-        $cchStatustext = 0x00; // Length of status bar text
-        $rgch = $type; // Built-in name type
-
-        $unknown03 = 0x3b;
-        $unknown04 = 0xffff - $index;
-        $unknown05 = 0x0000;
-        $unknown06 = 0x0000;
-        $unknown07 = 0x1087;
-        $unknown08 = 0x8005;
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $grbit);
-        $data .= pack("C", $chKey);
-        $data .= pack("C", $cch);
-        $data .= pack("v", $cce);
-        $data .= pack("v", $ixals);
-        $data .= pack("v", $itab);
-        $data .= pack("C", $cchCustMenu);
-        $data .= pack("C", $cchDescription);
-        $data .= pack("C", $cchHelptopic);
-        $data .= pack("C", $cchStatustext);
-        $data .= pack("C", $rgch);
-        $data .= pack("C", $unknown03);
-        $data .= pack("v", $unknown04);
-        $data .= pack("v", $unknown05);
-        $data .= pack("v", $unknown06);
-        $data .= pack("v", $unknown07);
-        $data .= pack("v", $unknown08);
-        $data .= pack("v", $index);
-        $data .= pack("v", $index);
-        $data .= pack("v", $rowmin);
-        $data .= pack("v", $rowmax);
-        $data .= pack("C", $colmin);
-        $data .= pack("C", $colmax);
-        $this->append($header . $data);
+        $record = new Record\NameShort();
+        $this->append($record->getData($index, $type, $rowmin, $rowmax, $colmin, $colmax));
     }
-
 
     /**
      * Store the NAME record in the long format that is used for storing the repeat
-     * rows and columns when both are specified. This shares a lot of code with
-     * _storeNameShort() but we use a separate method to keep the code clean.
-     * Code abstraction for reuse can be carried too far, and I should know. ;-)
+     * rows and columns when both are specified.
      *
      * @param integer $index Sheet index
      * @param integer $type  Built-in name type
@@ -1086,72 +943,8 @@ class Workbook extends BIFFwriter
      */
     protected function storeNameLong($index, $type, $rowmin, $rowmax, $colmin, $colmax)
     {
-        $record = 0x0018; // Record identifier
-        $length = 0x003d; // Number of bytes to follow
-        $grbit = 0x0020; // Option flags
-        $chKey = 0x00; // Keyboard shortcut
-        $cch = 0x01; // Length of text name
-        $cce = 0x002e; // Length of text definition
-        $ixals = $index + 1; // Sheet index
-        $itab = $ixals; // Equal to ixals
-        $cchCustMenu = 0x00; // Length of cust menu text
-        $cchDescription = 0x00; // Length of description text
-        $cchHelptopic = 0x00; // Length of help topic text
-        $cchStatustext = 0x00; // Length of status bar text
-        $rgch = $type; // Built-in name type
-
-        $unknown01 = 0x29;
-        $unknown02 = 0x002b;
-        $unknown03 = 0x3b;
-        $unknown04 = 0xffff - $index;
-        $unknown05 = 0x0000;
-        $unknown06 = 0x0000;
-        $unknown07 = 0x1087;
-        $unknown08 = 0x8008;
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $grbit);
-        $data .= pack("C", $chKey);
-        $data .= pack("C", $cch);
-        $data .= pack("v", $cce);
-        $data .= pack("v", $ixals);
-        $data .= pack("v", $itab);
-        $data .= pack("C", $cchCustMenu);
-        $data .= pack("C", $cchDescription);
-        $data .= pack("C", $cchHelptopic);
-        $data .= pack("C", $cchStatustext);
-        $data .= pack("C", $rgch);
-        $data .= pack("C", $unknown01);
-        $data .= pack("v", $unknown02);
-        // Column definition
-        $data .= pack("C", $unknown03);
-        $data .= pack("v", $unknown04);
-        $data .= pack("v", $unknown05);
-        $data .= pack("v", $unknown06);
-        $data .= pack("v", $unknown07);
-        $data .= pack("v", $unknown08);
-        $data .= pack("v", $index);
-        $data .= pack("v", $index);
-        $data .= pack("v", 0x0000);
-        $data .= pack("v", 0x3fff);
-        $data .= pack("C", $colmin);
-        $data .= pack("C", $colmax);
-        // Row definition
-        $data .= pack("C", $unknown03);
-        $data .= pack("v", $unknown04);
-        $data .= pack("v", $unknown05);
-        $data .= pack("v", $unknown06);
-        $data .= pack("v", $unknown07);
-        $data .= pack("v", $unknown08);
-        $data .= pack("v", $index);
-        $data .= pack("v", $index);
-        $data .= pack("v", $rowmin);
-        $data .= pack("v", $rowmax);
-        $data .= pack("C", 0x00);
-        $data .= pack("C", 0xff);
-        // End of data
-        $data .= pack("C", 0x10);
-        $this->append($header . $data);
+        $record = new Record\NameLong();
+        $this->append($record->getData($index, $type, $rowmin, $rowmax, $colmin, $colmax));
     }
 
     /**
@@ -1159,13 +952,8 @@ class Workbook extends BIFFwriter
      */
     protected function storeCountry()
     {
-        $record = 0x008C; // Record identifier
-        $length = 4; // Number of bytes to follow
-
-        $header = pack('vv', $record, $length);
-        /* using the same country code always for simplicity */
-        $data = pack('vv', $this->countryCode, $this->countryCode);
-        $this->append($header . $data);
+        $record = new Record\Country();
+        $this->append($record->getData($this->countryCode));
     }
 
     /**
@@ -1173,22 +961,8 @@ class Workbook extends BIFFwriter
      */
     protected function storePalette()
     {
-        $aref = $this->palette;
-
-        $record = 0x0092; // Record identifier
-        $length = 2 + 4 * count($aref); // Number of bytes to follow
-        $ccv = count($aref); // Number of RGB values to follow
-        $data = ''; // The RGB data
-
-        // Pack the RGB data
-        foreach ($aref as $color) {
-            foreach ($color as $byte) {
-                $data .= pack("C", $byte);
-            }
-        }
-
-        $header = pack("vvv", $record, $length, $ccv);
-        $this->append($header . $data);
+        $record = new Record\Palette();
+        $this->append($record->getData($this->palette));
     }
 
     /**
@@ -1335,7 +1109,6 @@ class Workbook extends BIFFwriter
 
     /**
      * Write all of the workbooks strings into an indexed array.
-     * See the comments in _calculate_shared_string_sizes() for more information.
      *
      * The Excel documentation says that the SST record should be followed by an
      * EXTSST record. The EXTSST record is a hash table that is used to optimise
@@ -1367,7 +1140,6 @@ class Workbook extends BIFFwriter
             // No strings
             $length = 8;
         }
-
 
         // Write the SST block header information
         $header = pack("vv", $record, $length);

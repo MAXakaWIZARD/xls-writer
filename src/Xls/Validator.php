@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 /**
  * Baseclass for generating Excel DV records (validations)

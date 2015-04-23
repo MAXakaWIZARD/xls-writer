@@ -2,13 +2,11 @@
 
 namespace Xls;
 
-use Xls\Writer\Biff5;
-
 /**
  * Class for writing Excel Spreadsheets
  *
  */
-class Writer extends Writer\Workbook
+class Writer extends Workbook
 {
     /**
      * Send HTTP headers for the Excel file.
@@ -22,36 +20,5 @@ class Writer extends Writer\Workbook
         header("Expires: 0");
         header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
         header("Pragma: public");
-    }
-
-    /**
-     * Utility function for writing formulas
-     * Converts a cell's coordinates to the A1 format.
-     *
-     * @param integer $row Row for the cell to convert (0-indexed).
-     * @param integer $col Column for the cell to convert (0-indexed).
-     *
-     * @throws \Exception
-     * @return string The cell identifier in A1 format
-     */
-    public static function rowcolToCell($row, $col)
-    {
-        if ($col >= Biff5::MAX_COLS) {
-            //maximum column value exceeded
-            throw new \Exception("Maximum column value exceeded: $col");
-        }
-
-        $int = (int)($col / 26);
-        $frac = $col % 26;
-        $chr1 = '';
-
-        if ($int > 0) {
-            $chr1 = chr(ord('A') + $int - 1);
-        }
-
-        $chr2 = chr(ord('A') + $frac);
-        $row++;
-
-        return $chr1 . $chr2 . $row;
     }
 }

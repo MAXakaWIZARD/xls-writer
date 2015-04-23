@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 class Token
 {

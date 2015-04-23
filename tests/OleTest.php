@@ -1,9 +1,8 @@
 <?php
-namespace Xls\Writer\Tests;
+namespace Xls\Tests;
 
 use Xls\Writer;
-use Xls\OLE;
-use Xls\Writer\Format;
+use Xls\OLE\OLE;
 
 /**
  *

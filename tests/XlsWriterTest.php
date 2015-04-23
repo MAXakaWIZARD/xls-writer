@@ -1,9 +1,12 @@
 <?php
-namespace Xls\Writer\Tests;
+namespace Xls\Tests;
 
 use Xls\Writer;
-use Xls\Writer\Format;
-use Xls\Writer\BIFFwriter;
+use Xls\Biff5;
+use Xls\Biff8;
+use Xls\Format;
+use Xls\Cell;
+use Xls\BIFFwriter;
 
 /**
  *
@@ -77,13 +80,13 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         return array(
             array(
                 array(
-                    'format' => Writer\Biff5::VERSION,
+                    'format' => Biff5::VERSION,
                     'file' => 'general.xls'
                 )
             ),
             array(
                 array(
-                    'format' => Writer\Biff8::VERSION,
+                    'format' => Biff8::VERSION,
                     'file' => 'general_biff8.xls'
                 )
             )
@@ -174,13 +177,13 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         return array(
             array(
                 array(
-                    'format' => Writer\Biff5::VERSION,
+                    'format' => Biff5::VERSION,
                     'file' => 'rich.xls'
                 )
             ),
             array(
                 array(
-                    'format' => Writer\Biff8::VERSION,
+                    'format' => Biff8::VERSION,
                     'file' => 'rich_biff8.xls'
                 )
             )
@@ -214,11 +217,11 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testRowColToCell()
     {
-        $this->assertSame('A1', Writer::rowcolToCell(0, 0));
-        $this->assertSame('B2', Writer::rowcolToCell(1, 1));
-        $this->assertSame('K256', Writer::rowcolToCell(255, 10));
-        $this->assertSame('IV256', Writer::rowcolToCell(255, 255));
-        $this->assertSame('AB1', Writer::rowcolToCell(0, 27));
+        $this->assertSame('A1', Cell::getAddress(0, 0));
+        $this->assertSame('B2', Cell::getAddress(1, 1));
+        $this->assertSame('K256', Cell::getAddress(255, 10));
+        $this->assertSame('IV256', Cell::getAddress(255, 255));
+        $this->assertSame('AB1', Cell::getAddress(0, 27));
     }
 
     /**
@@ -227,6 +230,6 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
     public function testRowColToCellInvalid()
     {
         $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
-        Writer::rowcolToCell(0, 256);
+        Cell::getAddress(0, 256);
     }
 }

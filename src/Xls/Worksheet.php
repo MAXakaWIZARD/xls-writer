@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 /**
  * Class for generating Excel Spreadsheets
@@ -581,7 +581,7 @@ class Worksheet extends BIFFwriter
         }
 
         // Prepend the BOF record
-        $this->storeBof(0x0010);
+        $this->storeBof(self::BOF_TYPE_WORKSHEET);
 
         /*
         * End of prepend. Read upwards from here.
@@ -1223,10 +1223,7 @@ class Worksheet extends BIFFwriter
     protected function append($data)
     {
         if ($this->usingTmpFile) {
-            // Add CONTINUE records if necessary
-            if (strlen($data) > $this->biff->getLimit()) {
-                $data = $this->addContinue($data);
-            }
+            $data = $this->addContinueIfNeeded($data);
             fwrite($this->fileHandle, $data);
             $this->datasize += strlen($data);
         } else {

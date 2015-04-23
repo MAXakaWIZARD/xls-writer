@@ -1,6 +1,6 @@
 <?php
 
-namespace Xls\Writer;
+namespace Xls;
 
 class Biff8 extends Biff5 implements BiffInterface
 {
@@ -22,4 +22,7 @@ class Biff8 extends Biff5 implements BiffInterface
     const MAX_SHEET_NAME_LENGTH = 255;
 
     const LIMIT = 8228;
+    const BOUNDSHEET_LENGTH = 12;
+
+    const WORKBOOK_NAME = 'Workbook';
 }
