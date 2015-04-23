@@ -25,4 +25,19 @@ class Biff8 extends Biff5 implements BiffInterface
     const BOUNDSHEET_LENGTH = 12;
 
     const WORKBOOK_NAME = 'Workbook';
+
+    /**
+     * @return int
+     */
+    public static function getContinueLimit()
+    {
+        /* Iterate through the strings to calculate the CONTINUE block sizes.
+           For simplicity we use the same size for the SST and CONTINUE records:
+           8228 : Maximum Excel97 block size
+             -4 : Length of block header
+             -8 : Length of additional SST header information
+             -8 : Arbitrary number to keep within addContinue() limit = 8208
+        */
+        return static::LIMIT - 4 - 8 - 8;
+    }
 }

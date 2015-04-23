@@ -193,28 +193,6 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
     /**
      *
      */
-    public function testInvalidColorIndex()
-    {
-        $workbook = new Writer($this->testFilePath);
-
-        $this->setExpectedException('\Exception', 'Color index 65 outside range: 8 <= index <= 64');
-        $workbook->setCustomColor(65, 204, 204, 204);
-    }
-
-    /**
-     *
-     */
-    public function testInvalidColor()
-    {
-        $workbook = new Writer($this->testFilePath);
-
-        $this->setExpectedException('\Exception', 'Color component outside range: 0 <= color <= 255');
-        $workbook->setCustomColor(12, 265, 265, 265);
-    }
-
-    /**
-     *
-     */
     public function testRowColToCell()
     {
         $this->assertSame('A1', Cell::getAddress(0, 0));

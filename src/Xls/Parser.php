@@ -719,15 +719,12 @@ class Parser
     }
 
     /**
-     * Convert the sheet name part of an external reference, for example "Sheet1" or
-     * "Sheet1:Sheet2", to a packed structure.
+     * @param $extRef
      *
-     * @param string $extRef The name of the external reference
-     *
+     * @return array
      * @throws \Exception
-     * @return string The reference index in packed() format
      */
-    protected function packExtRef($extRef)
+    protected function getRangeSheets($extRef)
     {
         $extRef = $this->removeTrailingQuotes($extRef);
 
@@ -739,6 +736,7 @@ class Parser
             if ($sheet1 == -1) {
                 throw new \Exception("Unknown sheet name $sheetName1 in formula");
             }
+
             $sheet2 = $this->getSheetIndex($sheetName2);
             if ($sheet2 == -1) {
                 throw new \Exception("Unknown sheet name $sheetName2 in formula");
@@ -755,6 +753,22 @@ class Parser
             }
             $sheet2 = $sheet1;
         }
+
+        return array($sheet1, $sheet2);
+    }
+
+    /**
+     * Convert the sheet name part of an external reference, for example "Sheet1" or
+     * "Sheet1:Sheet2", to a packed structure.
+     *
+     * @param string $extRef The name of the external reference
+     *
+     * @throws \Exception
+     * @return string The reference index in packed() format
+     */
+    protected function packExtRef($extRef)
+    {
+        list($sheet1, $sheet2) = $this->getRangeSheets($extRef);
 
         // References are stored relative to 0xFFFF.
         $offset = -1 - $sheet1;
@@ -774,32 +788,7 @@ class Parser
      */
     protected function getRefIndex($extRef)
     {
-        $extRef = $this->removeTrailingQuotes($extRef);
-
-        // Check if there is a sheet range eg., Sheet1:Sheet2.
-        if (preg_match("/:/", $extRef)) {
-            list($sheetName1, $sheetName2) = explode(':', $extRef);
-
-            $sheet1 = $this->getSheetIndex($sheetName1);
-            if ($sheet1 == -1) {
-                throw new \Exception("Unknown sheet name $sheetName1 in formula");
-            }
-            $sheet2 = $this->getSheetIndex($sheetName2);
-            if ($sheet2 == -1) {
-                throw new \Exception("Unknown sheet name $sheetName2 in formula");
-            }
-
-            // Reverse max and min sheet numbers if necessary
-            if ($sheet1 > $sheet2) {
-                list($sheet1, $sheet2) = array($sheet2, $sheet1);
-            }
-        } else { // Single sheet name only.
-            $sheet1 = $this->getSheetIndex($extRef);
-            if ($sheet1 == -1) {
-                throw new \Exception("Unknown sheet name $extRef in formula");
-            }
-            $sheet2 = $sheet1;
-        }
+        list($sheet1, $sheet2) = $this->getRangeSheets($extRef);
 
         // assume all references belong to this document
         $supbookIndex = 0x00;

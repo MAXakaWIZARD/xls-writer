@@ -2911,7 +2911,6 @@ class Worksheet extends BIFFwriter
         $this->prepend($header . $data);
     }
 
-
     /**
      * Write the WSBOOL BIFF record, mainly for fit-to-page. Used in conjunction
      * with the SETUP record.
@@ -2924,14 +2923,6 @@ class Worksheet extends BIFFwriter
         $length = 0x0002; // Bytes to follow
         $grbit = 0x0000;
 
-        // The only option that is of interest is the flag for fit to page. So we
-        // set all the options in one go.
-        //
-        /*if ($this->fit_page) {
-            $grbit = 0x05c1;
-        } else {
-            $grbit = 0x04c1;
-        }*/
         // Set the option flags
         $grbit |= 0x0001; // Auto page breaks visible
         if ($this->outlineStyle) {
@@ -3044,8 +3035,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Set the Biff PROTECT record to indicate that the worksheet is protected.
-     *
-     *
      */
     protected function storeProtect()
     {
@@ -3168,7 +3157,7 @@ class Worksheet extends BIFFwriter
      * @note  the SDK incorrectly states that the height should be expressed as a
      *        percentage of 1024.
      *
-*@param integer $colStart Col containing upper left corner of object
+     * @param integer $colStart Col containing upper left corner of object
      * @param integer $rowStart Row containing top left corner of object
      * @param integer $x1        Distance to left side of object
      * @param integer $y1        Distance to top of object
@@ -3370,8 +3359,8 @@ class Worksheet extends BIFFwriter
      * This is described in BITMAPCOREHEADER and BITMAPCOREINFO structures in the
      * MSDN library.
      *
-     *
      * @param string $bitmap The bitmap to process
+     * @throws \Exception
      * @return array Array with data and properties of the bitmap
      */
     protected function processBitmap($bitmap)
@@ -3437,7 +3426,6 @@ class Worksheet extends BIFFwriter
         $compression = unpack("Vcomp", substr($data, 0, 4));
         $data = substr($data, 4);
 
-        //$compression = 0;
         if ($compression['comp'] != 0) {
             throw new \Exception("$bitmap: compression not supported in bitmap image.\n");
         }

@@ -563,11 +563,6 @@ class Root extends PPS
             $data .= pack("V", -2);
         }
 
-        /*
-          $this->dump($data, 0, strlen($data));
-          die;
-        */
-
         fwrite($this->fileHandlerRoot, $data);
     }
 

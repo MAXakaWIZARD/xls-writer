@@ -81,24 +81,16 @@ class ChainedBlockStream
 
         $blockId = $this->params['blockId'];
         $this->data = '';
-        if (isset($this->params['size'])
-            && $this->params['size'] < $this->ole->bigBlockThreshold
-            && $blockId != $this->ole->root->StartBlock
-        ) {
-            // Block id refers to small blocks
-            $rootPos = $this->ole->getBlockOffset($this->ole->root->StartBlock);
-            while ($blockId != -2) {
-                $pos = $rootPos + $blockId * $this->ole->bigBlockSize;
+
+        $isSmallBlock = $this->isSmallBlock($blockId);
+        $rootPos = ($isSmallBlock) ? $this->ole->getBlockOffset($this->ole->root->StartBlock) : 512;
+        while ($blockId != -2) {
+            $pos = $this->ole->getBlockOffset($blockId, $rootPos);
+            fseek($this->ole->fileHandle, $pos);
+            $this->data .= fread($this->ole->fileHandle, $this->ole->bigBlockSize);
+            if ($isSmallBlock) {
                 $blockId = $this->ole->sbat[$blockId];
-                fseek($this->ole->fileHandle, $pos);
-                $this->data .= fread($this->ole->fileHandle, $this->ole->bigBlockSize);
-            }
-        } else {
-            // Block id refers to big blocks
-            while ($blockId != -2) {
-                $pos = $this->ole->getBlockOffset($blockId);
-                fseek($this->ole->fileHandle, $pos);
-                $this->data .= fread($this->ole->fileHandle, $this->ole->bigBlockSize);
+            } else {
                 $blockId = $this->ole->bbat[$blockId];
             }
         }
@@ -112,6 +104,18 @@ class ChainedBlockStream
         }
 
         return true;
+    }
+
+    /**
+     * @param $blockId
+     *
+     * @return bool
+     */
+    protected function isSmallBlock($blockId)
+    {
+        return isset($this->params['size'])
+            && $this->params['size'] < $this->ole->bigBlockThreshold
+            && $blockId != $this->ole->root->StartBlock;
     }
 
     /**

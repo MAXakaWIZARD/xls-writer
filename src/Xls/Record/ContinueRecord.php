@@ -2,8 +2,6 @@
 
 namespace Xls\Record;
 
-use Xls\Biff5;
-
 class ContinueRecord extends AbstractRecord
 {
     const NAME = 'CONTINUE';

@@ -72,6 +72,11 @@ class OLE
     public $smallBlockSize;
 
     /**
+     * @var bool
+     */
+    protected $streamRegistered = false;
+
+    /**
      * Creates a new OLE object
      */
     public function __construct()
@@ -174,8 +179,7 @@ class OLE
         $shortBlockCount = $sbbatBlockCount * $this->bigBlockSize / 4;
         $sbatFh = $this->getStream($sbatFirstBlockId);
         if (!$sbatFh) {
-            // Avoid an infinite loop if ChainedBlockStream.php somehow is
-            // missing
+            // Avoid an infinite loop if ChainedBlockStream.php somehow is missing
             return false;
         }
         for ($blockId = 0; $blockId < $shortBlockCount; $blockId++) {
@@ -190,11 +194,12 @@ class OLE
 
     /**
      * @param int $blockId block id
+     * @param int $rootOffset
      * @return int byte offset from beginning of file
      */
-    public function getBlockOffset($blockId)
+    public function getBlockOffset($blockId, $rootOffset = 512)
     {
-        return 512 + $blockId * $this->bigBlockSize;
+        return $rootOffset + $blockId * $this->bigBlockSize;
     }
 
     /**
@@ -205,13 +210,12 @@ class OLE
      */
     public function getStream($blockIdOrPps)
     {
-        static $isRegistered = false;
-        if (!$isRegistered) {
+        if (!$this->streamRegistered) {
             stream_wrapper_register(
                 'ole-chainedblockstream',
                 'Xls\OLE\ChainedBlockStream'
             );
-            $isRegistered = true;
+            $this->streamRegistered = true;
         }
 
         // Store current instance in global array, so that it can be accessed

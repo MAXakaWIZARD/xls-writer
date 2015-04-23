@@ -25,4 +25,22 @@ class Externsheet extends AbstractRecord
 
         return $this->getHeader($cch) . $data . $sheetName;
     }
+
+    /**
+     * @param $refs
+     *
+     * @return string
+     */
+    public function getDataForReferences($refs)
+    {
+        $refCount = count($refs);
+        $extraLength = 6 * $refCount;
+
+        $data = pack('v', $refCount);
+        foreach ($refs as $ref) {
+            $data .= $ref;
+        }
+
+        return $this->getHeader($extraLength) . $data;
+    }
 }
