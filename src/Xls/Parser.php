@@ -706,6 +706,19 @@ class Parser
     }
 
     /**
+     * @param $str
+     *
+     * @return mixed
+     */
+    protected function removeTrailingQuotes($str)
+    {
+        $str = preg_replace("/^'/", '', $str); // Remove leading  ' if any.
+        $str = preg_replace("/'$/", '', $str); // Remove trailing ' if any.
+
+        return $str;
+    }
+
+    /**
      * Convert the sheet name part of an external reference, for example "Sheet1" or
      * "Sheet1:Sheet2", to a packed structure.
      *
@@ -716,8 +729,7 @@ class Parser
      */
     protected function packExtRef($extRef)
     {
-        $extRef = preg_replace("/^'/", '', $extRef); // Remove leading  ' if any.
-        $extRef = preg_replace("/'$/", '', $extRef); // Remove trailing ' if any.
+        $extRef = $this->removeTrailingQuotes($extRef);
 
         // Check if there is a sheet range eg., Sheet1:Sheet2.
         if (preg_match("/:/", $extRef)) {
@@ -762,8 +774,7 @@ class Parser
      */
     protected function getRefIndex($extRef)
     {
-        $extRef = preg_replace("/^'/", '', $extRef); // Remove leading  ' if any.
-        $extRef = preg_replace("/'$/", '', $extRef); // Remove trailing ' if any.
+        $extRef = $this->removeTrailingQuotes($extRef);
 
         // Check if there is a sheet range eg., Sheet1:Sheet2.
         if (preg_match("/:/", $extRef)) {

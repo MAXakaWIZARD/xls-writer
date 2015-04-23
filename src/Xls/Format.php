@@ -531,54 +531,8 @@ class Format
      */
     public function setAlign($location)
     {
-        if (preg_match("/\d/", $location)) {
-            return; // Ignore numbers
-        }
-
-        $location = strtolower($location);
-
-        if ($location == 'left') {
-            $this->textHorAlign = 1;
-        }
-        if ($location == 'centre') {
-            $this->textHorAlign = 2;
-        }
-        if ($location == 'center') {
-            $this->textHorAlign = 2;
-        }
-        if ($location == 'right') {
-            $this->textHorAlign = 3;
-        }
-        if ($location == 'fill') {
-            $this->textHorAlign = 4;
-        }
-        if ($location == 'justify') {
-            $this->textHorAlign = 5;
-        }
-        if ($location == 'merge') {
-            $this->textHorAlign = 6;
-        }
-        if ($location == 'equal_space') { // For T.K.
-            $this->textHorAlign = 7;
-        }
-        if ($location == 'top') {
-            $this->textVertAlign = 0;
-        }
-        if ($location == 'vcentre') {
-            $this->textVertAlign = 1;
-        }
-        if ($location == 'vcenter') {
-            $this->textVertAlign = 1;
-        }
-        if ($location == 'bottom') {
-            $this->textVertAlign = 2;
-        }
-        if ($location == 'vjustify') {
-            $this->textVertAlign = 3;
-        }
-        if ($location == 'vequal_space') { // For T.K.
-            $this->textVertAlign = 4;
-        }
+        $this->setHAlign($location);
+        $this->setVAlign($location);
     }
 
     /**
@@ -594,29 +548,29 @@ class Format
 
         $location = strtolower($location);
 
-        if ($location == 'left') {
-            $this->textHorAlign = 1;
-        }
-        if ($location == 'centre') {
-            $this->textHorAlign = 2;
-        }
-        if ($location == 'center') {
-            $this->textHorAlign = 2;
-        }
-        if ($location == 'right') {
-            $this->textHorAlign = 3;
-        }
-        if ($location == 'fill') {
-            $this->textHorAlign = 4;
-        }
-        if ($location == 'justify') {
-            $this->textHorAlign = 5;
-        }
-        if ($location == 'merge') {
-            $this->textHorAlign = 6;
-        }
-        if ($location == 'equal_space') { // For T.K.
-            $this->textHorAlign = 7;
+        switch ($location) {
+            case 'left':
+                $this->textHorAlign = 1;
+                break;
+            case 'centre':
+            case 'center':
+                $this->textHorAlign = 2;
+                break;
+            case 'right':
+                $this->textHorAlign = 3;
+                break;
+            case 'fill':
+                $this->textHorAlign = 4;
+                break;
+            case 'justify':
+                $this->textHorAlign = 5;
+                break;
+            case 'merge':
+                $this->textHorAlign = 6;
+                break;
+            case 'equal_space':
+                $this->textHorAlign = 7;
+                break;
         }
     }
 
@@ -633,23 +587,23 @@ class Format
 
         $location = strtolower($location);
 
-        if ($location == 'top') {
-            $this->textVertAlign = 0;
-        }
-        if ($location == 'vcentre') {
-            $this->textVertAlign = 1;
-        }
-        if ($location == 'vcenter') {
-            $this->textVertAlign = 1;
-        }
-        if ($location == 'bottom') {
-            $this->textVertAlign = 2;
-        }
-        if ($location == 'vjustify') {
-            $this->textVertAlign = 3;
-        }
-        if ($location == 'vequal_space') { // For T.K.
-            $this->textVertAlign = 4;
+        switch ($location) {
+            case 'top':
+                $this->textVertAlign = 0;
+                break;
+            case 'vcentre':
+            case 'vcenter':
+                $this->textVertAlign = 1;
+                break;
+            case 'bottom':
+                $this->textVertAlign = 2;
+                break;
+            case 'vjustify':
+                $this->textVertAlign = 3;
+                break;
+            case 'vequal_space':
+                $this->textVertAlign = 4;
+                break;
         }
     }
 
@@ -668,26 +622,21 @@ class Format
      * 0 (400) is normal. 1 (700) is bold.
      *
      * @param integer $weight Weight for the text, 0 maps to 400 (normal text),
-    1 maps to 700 (bold text). Valid range is: 100-1000.
-    It's Optional, default is 1 (bold).
+     * 1 maps to 700 (bold text). Valid range is: 100-1000.
+     * It's Optional, default is 1 (bold).
      */
     public function setBold($weight = 1)
     {
         if ($weight == 1) {
-            $weight = 0x2BC; // Bold text
+            $this->bold = 0x2BC; // Bold text
+        } elseif ($weight == 0) {
+            $this->bold = 0x190; // Normal text
+        } elseif ($weight < 0x064) {
+            $this->bold = 0x190; // Lower bound
+        } elseif ($weight > 0x3E8) {
+            $this->bold = 0x190; // Upper bound
         }
-        if ($weight == 0) {
-            $weight = 0x190; // Normal text
-        }
-        if ($weight < 0x064) {
-            $weight = 0x190; // Lower bound
-        }
-        if ($weight > 0x3E8) {
-            $weight = 0x190; // Upper bound
-        }
-        $this->bold = $weight;
     }
-
 
     /************************************
      * FUNCTIONS FOR SETTING CELLS BORDERS

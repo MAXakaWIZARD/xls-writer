@@ -289,14 +289,14 @@ class OLE
 
             switch ($type) {
                 case self::PPS_TYPE_ROOT:
-                    $pps = new OLE\PPS\Root();
+                    $pps = new PPS\Root();
                     $this->root = $pps;
                     break;
                 case self::PPS_TYPE_DIR:
-                    $pps = new OLE\PPS();
+                    $pps = new PPS();
                     break;
                 case self::PPS_TYPE_FILE:
-                    $pps = new OLE\PPS\File($name);
+                    $pps = new PPS\File($name);
                     break;
                 default:
                     $pps = null;
