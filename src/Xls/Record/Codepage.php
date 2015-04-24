@@ -9,7 +9,7 @@ class Codepage extends AbstractRecord
     const LENGTH = 0x02;
 
     /**
-     * Write the CODEPAGE biff record
+     * Generate the CODEPAGE biff record
      * @param $codepage
      *
      * @return string

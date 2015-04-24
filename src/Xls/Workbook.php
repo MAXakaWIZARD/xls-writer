@@ -623,7 +623,6 @@ class Workbook extends BIFFwriter
             // Check if $num_format is an index to a built-in format.
             // Also check for a string of zeros, which is a valid format string
             // but would evaluate to zero.
-            //
             if (!preg_match("/^0+\d/", $numFormat)) {
                 if (preg_match("/^\d+$/", $numFormat)) { // built-in format
                     continue;
@@ -658,11 +657,11 @@ class Workbook extends BIFFwriter
         // tmpFormat is added by the constructor. We use this to write the default XF's
         // The default font index is 0
         for ($i = 0; $i <= 14; $i++) {
-            $xf = $this->tmpFormat->getXf('style'); // Style XF
+            $xf = $this->tmpFormat->getXf('style');
             $this->append($xf);
         }
 
-        $xf = $this->tmpFormat->getXf('cell'); // Cell XF
+        $xf = $this->tmpFormat->getXf('cell');
         $this->append($xf);
 
         // User defined XFs
@@ -694,11 +693,10 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Write the NAME record to define the print area and the repeat rows and cols.
+     * Create the print area NAME records
      */
-    protected function storeNames()
+    protected function storePrintAreaNames()
     {
-        // Create the print area NAME records
         foreach ($this->worksheets as $sheet) {
             // Write a Name record if the print area has been defined
             if (isset($sheet->printRowMin)) {
@@ -712,8 +710,13 @@ class Workbook extends BIFFwriter
                 );
             }
         }
+    }
 
-        // Create the print title NAME records
+    /**
+     * Create the print title NAME records
+     */
+    protected function storePrintTitleNames()
+    {
         foreach ($this->worksheets as $sheet) {
             $rowmin = $sheet->titleRowMin;
             $rowmax = $sheet->titleRowMax;
@@ -722,7 +725,6 @@ class Workbook extends BIFFwriter
 
             // Determine if row + col, row, col or nothing has been defined
             // and write the appropriate record
-            //
             if (isset($rowmin) && isset($colmin)) {
                 // Row and column titles have been defined.
                 // Row title has been defined.
@@ -734,30 +736,34 @@ class Workbook extends BIFFwriter
                     $colmin,
                     $colmax
                 );
-            } elseif (isset($rowmin)) {
-                // Row title has been defined.
+            } elseif (isset($rowmin) || isset($colmin)) {
+                if (!isset($colmin)) {
+                    $colmin = 0x00;
+                    $colmax = 0xff;
+                } elseif (!isset($rowmin)) {
+                    $rowmin = 0x00;
+                    $rowmax = 0x3fff;
+                }
+
                 $this->storeNameShort(
                     $sheet->index,
                     0x07, // NAME type
                     $rowmin,
                     $rowmax,
-                    0x00,
-                    0xff
-                );
-            } elseif (isset($colmin)) {
-                // Column title has been defined.
-                $this->storeNameShort(
-                    $sheet->index,
-                    0x07, // NAME type
-                    0x0000,
-                    0x3fff,
                     $colmin,
                     $colmax
                 );
-            } else {
-                // Print title hasn't been defined.
             }
         }
+    }
+
+    /**
+     * Write the NAME record to define the print area and the repeat rows and cols.
+     */
+    protected function storeNames()
+    {
+        $this->storePrintAreaNames();
+        $this->storePrintTitleNames();
     }
 
     /**

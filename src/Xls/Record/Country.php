@@ -9,7 +9,7 @@ class Country extends AbstractRecord
     const LENGTH = 0x04;
 
     /**
-     * Write the COUNTRY record for localization
+     * Generate the COUNTRY record for localization
      * @param $countryCode
      *
      * @return string

@@ -27,6 +27,27 @@ class Externsheet extends AbstractRecord
     }
 
     /**
+     * @param $sheetName
+     * @param $currentSheetName
+     *
+     * @return string
+     */
+    public function getDataForCurrentSheet($sheetName, $currentSheetName)
+    {
+        if ($currentSheetName != $sheetName) {
+            return $this->getData($sheetName);
+        }
+
+        $sheetName = '';
+        $cch = 1; // The following byte
+        $rgch = 0x02; // Self reference
+
+        $data = pack("CC", $cch, $rgch);
+
+        return $this->getHeader() . $data . $sheetName;
+    }
+
+    /**
      * @param $refs
      *
      * @return string

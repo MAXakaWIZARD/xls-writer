@@ -1705,12 +1705,10 @@ class Worksheet extends BIFFwriter
         // Clearly we are not in a position to calculate this a priori. Instead
         // we set $num to zero and set the option flags in $grbit to ensure
         // automatic calculation of the formula when the file is opened.
-        //
         $xf = $this->xf($format); // The cell format
         $num = 0x00; // Current value of formula
         $grbit = 0x03; // Option flags
         $unknown = 0x0000; // Must be zero
-
 
         // Check that row and col are valid and store max and min values
         if (!$this->checkRowCol($row, $col)) {
@@ -1777,7 +1775,7 @@ class Worksheet extends BIFFwriter
     public function writeUrl($row, $col, $url, $string = '', $format = null)
     {
         // Add start row and col to arg list
-        return ($this->writeUrlRange($row, $col, $row, $col, $url, $string, $format));
+        return $this->writeUrlRange($row, $col, $row, $col, $url, $string, $format);
     }
 
     /**
@@ -2038,7 +2036,6 @@ class Worksheet extends BIFFwriter
             $linkType |= 0x08;
         }
 
-
         // Pack the link type
         $linkType = pack("V", $linkType);
 
@@ -2090,7 +2087,6 @@ class Worksheet extends BIFFwriter
 
         return ($strError);
     }
-
 
     /**
      * This method is used to set the height and format for a row.
@@ -2406,23 +2402,13 @@ class Worksheet extends BIFFwriter
 
     /**
      * Write BIFF record EXTERNCOUNT to indicate the number of external sheet
-     * references in a worksheet.
-     *
-     * Excel only stores references to external sheets that are used in formulas.
-     * For simplicity we store references to all the sheets in the workbook
-     * regardless of whether they are used or not. This reduces the overall
-     * complexity and eliminates the need for a two way dialogue between the formula
-     * parser the worksheet objects.
-     * @param integer $count The number of external sheet references in this worksheet
+     * references in the workbook.
+     * @param integer $externalRefsCount Number of external references
      */
-    protected function storeExterncount($count)
+    protected function storeExterncount($externalRefsCount)
     {
-        $record = 0x0016; // Record identifier
-        $length = 0x0002; // Number of bytes to follow
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $count);
-        $this->prepend($header . $data);
+        $record = new Record\Externcount();
+        $this->prepend($record->getData($externalRefsCount));
     }
 
     /**
@@ -2430,29 +2416,13 @@ class Worksheet extends BIFFwriter
      * formulas. A formula references a sheet name via an index. Since we store a
      * reference to all of the external worksheets the EXTERNSHEET index is the same
      * as the worksheet index.
-     * @param string $sheetname The name of a external worksheet
+     *
+     * @param string $sheetName The name of a external worksheet
      */
-    protected function storeExternsheet($sheetname)
+    protected function storeExternsheet($sheetName)
     {
-        $record = 0x0017; // Record identifier
-
-        // References to the current sheet are encoded differently to references to
-        // external sheets.
-        //
-        if ($this->name == $sheetname) {
-            $sheetname = '';
-            $length = 0x02; // The following 2 bytes
-            $cch = 1; // The following byte
-            $rgch = 0x02; // Self reference
-        } else {
-            $length = 0x02 + strlen($sheetname);
-            $cch = strlen($sheetname);
-            $rgch = 0x03; // Reference to a sheet in the current workbook
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack("CC", $cch, $rgch);
-        $this->prepend($header . $data . $sheetname);
+        $record = new Record\Externsheet();
+        $this->prepend($record->getDataForCurrentSheet($sheetName, $this->name));
     }
 
     /**
@@ -2508,10 +2478,8 @@ class Worksheet extends BIFFwriter
             $x = 113.879 * $x + 390;
         }
 
-
         // Determine which pane should be active. There is also the undocumented
         // option to override this should it be necessary: may be removed later.
-        //
         if (!isset($pnnAct)) {
             if ($x != 0 && $y != 0) {
                 $pnnAct = 0; // Bottom right
@@ -2598,8 +2566,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the header caption BIFF record.
-     *
-     *
      */
     protected function storeHeader()
     {
@@ -2626,8 +2592,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the footer caption BIFF record.
-     *
-     *
      */
     protected function storeFooter()
     {
@@ -2654,8 +2618,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the horizontal centering HCENTER BIFF record.
-     *
-     *
      */
     protected function storeHcenter()
     {
@@ -2672,8 +2634,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the vertical centering VCENTER BIFF record.
-     *
-     *
      */
     protected function storeVcenter()
     {
@@ -2689,8 +2649,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the LEFTMARGIN BIFF record.
-     *
-     *
      */
     protected function storeMarginLeft()
     {
@@ -2711,8 +2669,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the RIGHTMARGIN BIFF record.
-     *
-     *
      */
     protected function storeMarginRight()
     {
@@ -2733,8 +2689,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the TOPMARGIN BIFF record.
-     *
-     *
      */
     protected function storeMarginTop()
     {
@@ -2755,8 +2709,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the BOTTOMMARGIN BIFF record.
-     *
-     *
      */
     protected function storeMarginBottom()
     {
@@ -2787,7 +2739,7 @@ class Worksheet extends BIFFwriter
     public function mergeCells($firstRow, $firstCol, $lastRow, $lastCol)
     {
         $record = 0x00E5; // Record identifier
-        $length = 0x000A; // Bytes to follow
+        $length = 0x0A; // Bytes to follow
         $cref = 1; // Number of refs
 
         // Swap last row/col for first row/col as necessary
@@ -2814,8 +2766,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Write the PRINTHEADERS BIFF record.
-     *
-     *
      */
     protected function storePrintHeaders()
     {
@@ -2832,8 +2782,6 @@ class Worksheet extends BIFFwriter
     /**
      * Write the PRINTGRIDLINES BIFF record. Must be used in conjunction with the
      * GRIDSET record.
-     *
-     *
      */
     protected function storePrintGridlines()
     {
@@ -2850,8 +2798,6 @@ class Worksheet extends BIFFwriter
     /**
      * Write the GRIDSET BIFF record. Must be used in conjunction with the
      * PRINTGRIDLINES record.
-     *
-     *
      */
     protected function storeGridset()
     {
@@ -2869,46 +2815,11 @@ class Worksheet extends BIFFwriter
      * Write the GUTS BIFF record. This is used to configure the gutter margins
      * where Excel outline symbols are displayed. The visibility of the gutters is
      * controlled by a flag in WSBOOL.
-     *
-     * @see _storeWsbool()
-     *
      */
     protected function storeGuts()
     {
-        $record = 0x0080; // Record identifier
-        $length = 0x0008; // Bytes to follow
-
-        $dxRwGut = 0x0000; // Size of row gutter
-        $dxColGut = 0x0000; // Size of col gutter
-
-        $rowLevel = $this->outlineRowLevel;
-        $colLevel = 0;
-
-        // Calculate the maximum column outline level. The equivalent calculation
-        // for the row outline level is carried out in setRow().
-        $colcount = count($this->colInfo);
-        for ($i = 0; $i < $colcount; $i++) {
-            // Skip cols without outline level info.
-            if (count($this->colInfo[$i]) >= 6) {
-                $colLevel = max($this->colInfo[$i][5], $colLevel);
-            }
-        }
-
-        // Set the limits for the outline levels (0 <= x <= 7).
-        $colLevel = max(0, min($colLevel, 7));
-
-        // The displayed level is one greater than the max outline levels
-        if ($rowLevel) {
-            $rowLevel++;
-        }
-        if ($colLevel) {
-            $colLevel++;
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $dxRwGut, $dxColGut, $rowLevel, $colLevel);
-
-        $this->prepend($header . $data);
+        $record = new Record\Guts();
+        $this->prepend($record->getData($this->colInfo, $this->outlineRowLevel));
     }
 
     /**
@@ -3043,21 +2954,12 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = 0x0012; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fLock = $this->protect; // Worksheet is protected
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fLock);
-
-        $this->prepend($header . $data);
+        $record = new Record\Password();
+        $this->prepend($record->getData($this->protect));
     }
 
     /**
      * Write the worksheet PASSWORD record.
-     *
-     *
      */
     protected function storePassword()
     {
@@ -3066,15 +2968,8 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = 0x0013; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $wPassword = $this->password; // Encoded password
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $wPassword);
-
-        $this->prepend($header . $data);
+        $record = new Record\Password();
+        $this->prepend($record->getData($this->password));
     }
 
 
@@ -3101,15 +2996,8 @@ class Worksheet extends BIFFwriter
         // Calculate the vertices of the image and write the OBJ record
         $this->positionImage($col, $row, $x, $y, $width, $height);
 
-        // Write the IMDATA record to store the bitmap data
-        $record = 0x007f;
-        $length = 8 + $size;
-        $cf = 0x09;
-        $env = 0x01;
-        $lcb = $size;
-
-        $header = pack("vvvvV", $record, $length, $cf, $env, $lcb);
-        $this->append($header . $data);
+        $record = new Record\Imdata();
+        $this->append($record->getData($size, $data));
     }
 
     /**
@@ -3270,14 +3158,13 @@ class Worksheet extends BIFFwriter
                 return (floor(4 / 3 * $this->rowSizes[$row]));
             }
         } else {
-            return (17);
+            return 17;
         }
     }
 
     /**
      * Store the OBJ record that precedes an IMDATA record. This could be generalise
      * to support other Excel objects.
-     *
      *
      * @param integer $colL Column containing upper left corner of object
      * @param integer $dxL  Distance from left side of cell
@@ -3290,68 +3177,8 @@ class Worksheet extends BIFFwriter
      */
     protected function storeObjPicture($colL, $dxL, $rwT, $dyT, $colR, $dxR, $rwB, $dyB)
     {
-        $record = 0x005d; // Record identifier
-        $length = 0x003c; // Bytes to follow
-
-        $cObj = 0x0001; // Count of objects in file (set to 1)
-        $OT = 0x0008; // Object type. 8 = Picture
-        $id = 0x0001; // Object ID
-        $grbit = 0x0614; // Option flags
-
-        $cbMacro = 0x0000; // Length of FMLA structure
-        $Reserved1 = 0x0000; // Reserved
-        $Reserved2 = 0x0000; // Reserved
-
-        $icvBack = 0x09; // Background colour
-        $icvFore = 0x09; // Foreground colour
-        $fls = 0x00; // Fill pattern
-        $fAuto = 0x00; // Automatic fill
-        $icv = 0x08; // Line colour
-        $lns = 0xff; // Line style
-        $lnw = 0x01; // Line weight
-        $fAutoB = 0x00; // Automatic border
-        $frs = 0x0000; // Frame style
-        $cf = 0x0009; // Image format, 9 = bitmap
-        $Reserved3 = 0x0000; // Reserved
-        $cbPictFmla = 0x0000; // Length of FMLA structure
-        $Reserved4 = 0x0000; // Reserved
-        $grbit2 = 0x0001; // Option flags
-        $Reserved5 = 0x0000; // Reserved
-
-
-        $header = pack("vv", $record, $length);
-        $data = pack("V", $cObj);
-        $data .= pack("v", $OT);
-        $data .= pack("v", $id);
-        $data .= pack("v", $grbit);
-        $data .= pack("v", $colL);
-        $data .= pack("v", $dxL);
-        $data .= pack("v", $rwT);
-        $data .= pack("v", $dyT);
-        $data .= pack("v", $colR);
-        $data .= pack("v", $dxR);
-        $data .= pack("v", $rwB);
-        $data .= pack("v", $dyB);
-        $data .= pack("v", $cbMacro);
-        $data .= pack("V", $Reserved1);
-        $data .= pack("v", $Reserved2);
-        $data .= pack("C", $icvBack);
-        $data .= pack("C", $icvFore);
-        $data .= pack("C", $fls);
-        $data .= pack("C", $fAuto);
-        $data .= pack("C", $icv);
-        $data .= pack("C", $lns);
-        $data .= pack("C", $lnw);
-        $data .= pack("C", $fAutoB);
-        $data .= pack("v", $frs);
-        $data .= pack("V", $cf);
-        $data .= pack("v", $Reserved3);
-        $data .= pack("v", $cbPictFmla);
-        $data .= pack("v", $Reserved4);
-        $data .= pack("v", $grbit2);
-        $data .= pack("V", $Reserved5);
-
-        $this->append($header . $data);
+        $record = new Record\Obj();
+        $this->append($record->getData($colL, $dxL, $rwT, $dyT, $colR, $dxR, $rwB, $dyB));
     }
 
     /**
@@ -3443,8 +3270,6 @@ class Worksheet extends BIFFwriter
     /**
      * Store the window zoom factor. This should be a reduced fraction but for
      * simplicity we will store all fractions with a numerator of 100.
-     *
-     *
      */
     protected function storeZoom()
     {
@@ -3453,12 +3278,8 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = 0x00A0; // Record identifier
-        $length = 0x0004; // Bytes to follow
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vv", $this->zoom, 100);
-        $this->append($header . $data);
+        $record = new Record\Zoom();
+        $this->append($record->getData($this->zoom));
     }
 
     /**
@@ -3476,35 +3297,15 @@ class Worksheet extends BIFFwriter
 
     /**
      * Store the DVAL and DV records.
-     *
-     *
      */
     protected function storeDataValidity()
     {
-        $record = 0x01b2; // Record identifier
-        $length = 0x0012; // Bytes to follow
+        $record = new Record\Dval();
+        $this->append($record->getData($this->dv));
 
-        $grbit = 0x0002; // Prompt box at cell, no cached validity data at DV records
-        $horPos = 0x00000000; // Horizontal position of prompt box, if fixed position
-        $verPos = 0x00000000; // Vertical position of prompt box, if fixed position
-        $objId = 0xffffffff; // Object identifier of drop down arrow object, or -1 if not visible
-
-        $header = pack('vv', $record, $length);
-        $data = pack(
-            'vVVVV',
-            $grbit,
-            $horPos,
-            $verPos,
-            $objId,
-            count($this->dv)
-        );
-        $this->append($header . $data);
-
-        $record = 0x01be; // Record identifier
+        $record = new Record\Dv();
         foreach ($this->dv as $dv) {
-            $length = strlen($dv); // Bytes to follow
-            $header = pack("vv", $record, $length);
-            $this->append($header . $dv);
+            $this->append($record->getData($dv));
         }
     }
 
