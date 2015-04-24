@@ -2,10 +2,12 @@
 
 [![Build Status](https://api.travis-ci.org/MAXakaWIZARD/xls-writer.png?branch=master)](https://travis-ci.org/MAXakaWIZARD/xls-writer) 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/MAXakaWIZARD/xls-writer/?branch=master)
+[![Code Climate](https://codeclimate.com/github/MAXakaWIZARD/xls-writer/badges/gpa.svg)](https://codeclimate.com/github/MAXakaWIZARD/xls-writer)
 [![Coverage Status](https://coveralls.io/repos/MAXakaWIZARD/xls-writer/badge.svg?branch=master)](https://coveralls.io/r/MAXakaWIZARD/xls-writer?branch=master)
 [![SensioLabs Insight](https://img.shields.io/sensiolabs/i/9a9e7784-24a2-4b29-8b64-65f45306c34d.svg)](https://insight.sensiolabs.com/projects/9a9e7784-24a2-4b29-8b64-65f45306c34d)
 
-[![GitHub tag](https://img.shields.io/github/tag/MAXakaWIZARD/xls-writer.svg?label=latest)](https://packagist.org/packages/maxakawizard/xls-writer) 
+[![Latest Stable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/stable)](https://packagist.org/packages/maxakawizard/xls-writer)
+[![Latest Unstable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/unstable)](https://packagist.org/packages/maxakawizard/xls-writer)
 [![Packagist](https://img.shields.io/packagist/dt/maxakawizard/xls-writer.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
 [![Packagist](https://img.shields.io/packagist/dm/maxakawizard/xls-writer.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
 [![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.3-8892BF.svg)](https://php.net/)
