@@ -460,8 +460,8 @@ class Workbook extends BIFFwriter
         }
 
         // Add Workbook globals
-        $this->storeBof(self::BOF_TYPE_WORKBOOK);
-        $this->storeCodepage();
+        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
+        $this->appendRecord('Codepage', array($this->biff->getCodepage()));
 
         if ($this->isBiff8()) {
             $this->storeWindow1();
@@ -477,11 +477,11 @@ class Workbook extends BIFFwriter
         $this->storeAllNumFormats();
         $this->storeAllXfs();
         $this->storeAllStyles();
-        $this->storePalette();
+        $this->appendRecord('Palette', array($this->palette));
         $this->calcSheetOffsets();
 
         foreach ($this->worksheets as $sheet) {
-            $this->storeBoundsheet($sheet->getName(), $sheet->getOffset());
+            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
         }
 
         if ($this->countryCode != -1) {
@@ -492,13 +492,12 @@ class Workbook extends BIFFwriter
             /* TODO: store external SUPBOOK records and XCT and CRN records
             * in case of external references for BIFF8
             */
-            //$this->storeSupbookInternal();
+            //$this->appendRecord('Supbook', $this->worksheets);
             //$this->storeExternsheetBiff8();
             $this->storeSharedStringsTable();
         }
 
-        // End Workbook globals
-        $this->storeEof();
+        $this->appendRecord('Eof');
 
         // Store the workbook in an OLE container
         $this->storeOLEFile();
@@ -644,7 +643,7 @@ class Workbook extends BIFFwriter
         // Write the new FORMAT records starting from 0xA4
         $index = 164;
         foreach ($numFormats as $numFormat) {
-            $this->storeNumFormat($numFormat, $index);
+            $this->appendRecord('Format', array($numFormat, $index));
             $index++;
         }
     }
@@ -676,7 +675,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeAllStyles()
     {
-        $this->storeStyle();
+        $this->appendRecord('Style');
     }
 
     /**
@@ -685,10 +684,10 @@ class Workbook extends BIFFwriter
      */
     protected function storeExterns()
     {
-        $this->storeExterncount(count($this->worksheets));
+        $this->appendRecord('Externcount', array(count($this->worksheets)));
 
-        foreach ($this->sheetNames as $sheetname) {
-            $this->storeExternsheet($sheetname);
+        foreach ($this->sheetNames as $sheetName) {
+            $this->appendRecord('Externsheet', array($sheetName));
         }
     }
 
@@ -700,14 +699,14 @@ class Workbook extends BIFFwriter
         foreach ($this->worksheets as $sheet) {
             // Write a Name record if the print area has been defined
             if (isset($sheet->printRowMin)) {
-                $this->storeNameShort(
+                $this->appendRecord('NameShort', array(
                     $sheet->index,
                     0x06, // NAME type
                     $sheet->printRowMin,
                     $sheet->printRowMax,
                     $sheet->printColMin,
                     $sheet->printColMax
-                );
+                ));
             }
         }
     }
@@ -728,14 +727,14 @@ class Workbook extends BIFFwriter
             if (isset($rowmin) && isset($colmin)) {
                 // Row and column titles have been defined.
                 // Row title has been defined.
-                $this->storeNameLong(
+                $this->appendRecord('NameLong', array(
                     $sheet->index,
                     0x07, // NAME type
                     $rowmin,
                     $rowmax,
                     $colmin,
                     $colmax
-                );
+                ));
             } elseif (isset($rowmin) || isset($colmin)) {
                 if (!isset($colmin)) {
                     $colmin = 0x00;
@@ -745,14 +744,14 @@ class Workbook extends BIFFwriter
                     $rowmax = 0x3fff;
                 }
 
-                $this->storeNameShort(
+                $this->appendRecord('NameShort', array(
                     $sheet->index,
                     0x07, // NAME type
                     $rowmin,
                     $rowmax,
                     $colmin,
                     $colmax
-                );
+                ));
             }
         }
     }
@@ -767,47 +766,18 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Stores the CODEPAGE biff record.
-     */
-    protected function storeCodepage()
-    {
-        $record = new Record\Codepage();
-        $this->append($record->getData($this->biff->getCodepage()));
-    }
-
-    /**
      * Write Excel BIFF WINDOW1 record.
      */
     protected function storeWindow1()
     {
-        $record = new Record\Window1();
-        $data = $record->getData(
-            $this->selected,
-            $this->firstSheet,
-            $this->activeSheet
+        $this->appendRecord(
+            'Window1',
+            array(
+                $this->selected,
+                $this->firstSheet,
+                $this->activeSheet
+            )
         );
-        $this->append($data);
-    }
-
-    /**
-     * Writes Excel BIFF BOUNDSHEET record.
-     *
-     * @param string $sheetName Worksheet name
-     * @param integer $offset    Location of worksheet BOF
-     */
-    protected function storeBoundsheet($sheetName, $offset)
-    {
-        $record = new Record\Boundsheet();
-        $this->append($record->getData($this->version, $sheetName, $offset));
-    }
-
-    /**
-     * Write Internal SUPBOOK record
-     */
-    protected function storeSupbookInternal()
-    {
-        $record = new Record\Supbook();
-        $this->append($record->getData($this->worksheets));
     }
 
     /**
@@ -821,92 +791,11 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Write STYLE records.
-     */
-    protected function storeStyle()
-    {
-        $record = new Record\Style();
-        $this->append($record->getData());
-    }
-
-    /**
-     * Writes FORMAT record for non "built-in" numerical formats.
-     *
-     * @param string $format Custom format string
-     * @param integer $formatIndex   Format index code
-     */
-    protected function storeNumFormat($format, $formatIndex)
-    {
-        $record = new Record\Format();
-        $this->append($record->getData($this->version, $format, $formatIndex));
-    }
-
-    /**
      * Write DATEMODE record to indicate the date system in use (1904 or 1900).
      */
     protected function storeDatemode()
     {
-        $record = new Record\Datemode();
-        $this->append($record->getData($this->f1904));
-    }
-
-
-    /**
-     * Write BIFF record EXTERNCOUNT to indicate the number of external sheet
-     * references in the workbook.
-     * @param integer $externalRefsCount Number of external references
-     */
-    protected function storeExterncount($externalRefsCount)
-    {
-        $record = new Record\Externcount();
-        $this->append($record->getData($externalRefsCount));
-    }
-
-
-    /**
-     * Writes the Excel BIFF EXTERNSHEET record.
-     *
-     * @param string $sheetName Worksheet name
-     */
-    protected function storeExternsheet($sheetName)
-    {
-        $record = new Record\Externsheet();
-        $this->append($record->getData($sheetName));
-    }
-
-
-    /**
-     * Store the NAME record in the short format that is used for storing the print
-     * area, repeat rows only and repeat columns only.
-     *
-     * @param integer $index  Sheet index
-     * @param integer $type   Built-in name type
-     * @param integer $rowmin Start row
-     * @param integer $rowmax End row
-     * @param integer $colmin Start colum
-     * @param integer $colmax End column
-     */
-    protected function storeNameShort($index, $type, $rowmin, $rowmax, $colmin, $colmax)
-    {
-        $record = new Record\NameShort();
-        $this->append($record->getData($index, $type, $rowmin, $rowmax, $colmin, $colmax));
-    }
-
-    /**
-     * Store the NAME record in the long format that is used for storing the repeat
-     * rows and columns when both are specified.
-     *
-     * @param integer $index Sheet index
-     * @param integer $type  Built-in name type
-     * @param integer $rowmin Start row
-     * @param integer $rowmax End row
-     * @param integer $colmin Start colum
-     * @param integer $colmax End column
-     */
-    protected function storeNameLong($index, $type, $rowmin, $rowmax, $colmin, $colmax)
-    {
-        $record = new Record\NameLong();
-        $this->append($record->getData($index, $type, $rowmin, $rowmax, $colmin, $colmax));
+        $this->appendRecord('Datemode', array($this->f1904));
     }
 
     /**
@@ -914,17 +803,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeCountry()
     {
-        $record = new Record\Country();
-        $this->append($record->getData($this->countryCode));
-    }
-
-    /**
-     * Stores the PALETTE biff record.
-     */
-    protected function storePalette()
-    {
-        $record = new Record\Palette();
-        $this->append($record->getData($this->palette));
+        $this->appendRecord('Country', array($this->countryCode));
     }
 
     /**
@@ -1071,13 +950,14 @@ class Workbook extends BIFFwriter
      */
     protected function storeSharedStringsTable()
     {
-        $record = new Record\SharedStringsTable();
-        $data = $record->getData(
-            $this->blockSizes,
-            $this->strTotal,
-            $this->strUnique
+        $this->appendRecord(
+            'SharedStringsTable',
+            array(
+                $this->blockSizes,
+                $this->strTotal,
+                $this->strUnique
+            )
         );
-        $this->append($data);
 
         $tmpBlockSizes = $this->blockSizes;
 

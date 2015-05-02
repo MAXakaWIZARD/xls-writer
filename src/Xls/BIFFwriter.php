@@ -160,25 +160,25 @@ class BIFFwriter
     }
 
     /**
-     * Writes Excel BOF record to indicate the beginning of a stream or
-     * sub-stream in the BIFF file.
+     * @param string $type
+     * @param array $params
      *
-     * @param integer $type Type of BIFF file to write: 0x0005 Workbook,
-     *                       0x0010 Worksheet.
+     * @return mixed
      */
-    protected function storeBof($type)
+    protected function appendRecord($type, array $params = array())
     {
-        $record = new Record\Bof();
-        $this->prepend($record->getData($this->version, $type));
+        $this->append($this->getRecord($type, $params));
     }
 
     /**
-     * Writes EOF record to indicate the end of a BIFF stream.
+     * @param string $type
+     * @param array $params
+     *
+     * @return mixed
      */
-    protected function storeEof()
+    protected function prependRecord($type, array $params = array())
     {
-        $record = new Record\Eof;
-        $this->append($record->getData());
+        $this->prepend($this->getRecord($type, $params));
     }
 
     /**
@@ -190,8 +190,7 @@ class BIFFwriter
      */
     protected function addContinue($data)
     {
-        $record = new Record\ContinueRecord();
-        return $record->getData($data, $this->biff->getLimit());
+        return $this->getRecord('ContinueRecord', array($data, $this->biff->getLimit()));
     }
 
     /**
@@ -216,5 +215,19 @@ class BIFFwriter
     public function getDataSize()
     {
         return $this->datasize;
+    }
+
+    /**
+     * @param string $type
+     * @param array $params
+     *
+     * @return mixed
+     */
+    protected function getRecord($type, array $params = array())
+    {
+        $className = "\\Xls\\Record\\$type";
+        $record = new $className($this->version, $this->byteOrder);
+
+        return call_user_func_array(array($record, 'getData'), $params);
     }
 }

@@ -524,16 +524,13 @@ class Worksheet extends BIFFwriter
         $this->storeMarginLeft();
 
         // Prepend the page vertical centering
-        $this->storeVcenter();
+        $this->prependRecord('Vcenter', array($this->vcenter));
 
         // Prepend the page horizontal centering
-        $this->storeHcenter();
+        $this->prependRecord('Hcenter', array($this->hcenter));
 
-        // Prepend the page footer
-        $this->storeFooter();
-
-        // Prepend the page header
-        $this->storeHeader();
+        $this->prependRecord('Footer', array($this->footer));
+        $this->prependRecord('Header', array($this->header));
 
         // Prepend the vertical page breaks
         $this->storeVbreak();
@@ -568,7 +565,7 @@ class Worksheet extends BIFFwriter
 
         // Prepend the EXTERNCOUNT of external references.
         if ($this->isBiff5()) {
-            $this->storeExterncount($numSheets);
+            $this->prependRecord('Externcount', array($numSheets));
         }
 
         // Prepend the COLINFO records if they exist
@@ -580,8 +577,7 @@ class Worksheet extends BIFFwriter
             $this->storeDefcol();
         }
 
-        // Prepend the BOF record
-        $this->storeBof(self::BOF_TYPE_WORKSHEET);
+        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
 
         /*
         * End of prepend. Read upwards from here.
@@ -600,7 +596,7 @@ class Worksheet extends BIFFwriter
             $this->storeDataValidity();
         }
 
-        $this->storeEof();
+        $this->appendRecord('Eof');
 
         if ($this->tmpFile != '') {
             @unlink($this->tmpFile);
@@ -2401,17 +2397,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Write BIFF record EXTERNCOUNT to indicate the number of external sheet
-     * references in the workbook.
-     * @param integer $externalRefsCount Number of external references
-     */
-    protected function storeExterncount($externalRefsCount)
-    {
-        $record = new Record\Externcount();
-        $this->prepend($record->getData($externalRefsCount));
-    }
-
-    /**
      * Writes the Excel BIFF EXTERNSHEET record. These references are used by
      * formulas. A formula references a sheet name via an index. Since we store a
      * reference to all of the external worksheets the EXTERNSHEET index is the same
@@ -2562,89 +2547,6 @@ class Worksheet extends BIFFwriter
         $data2 = $numHdr . $numFtr;
         $data3 = pack("v", $iCopies);
         $this->prepend($header . $data1 . $data2 . $data3);
-    }
-
-    /**
-     * Store the header caption BIFF record.
-     */
-    protected function storeHeader()
-    {
-        $record = 0x0014; // Record identifier
-
-        $str = $this->header; // header string
-        $cch = strlen($str); // Length of header string
-        if ($this->isBiff8()) {
-            $encoding = 0x0;
-            $length = 3 + $cch; // Bytes to follow
-        } else {
-            $length = 1 + $cch; // Bytes to follow
-        }
-
-        $header = pack("vv", $record, $length);
-        if ($this->isBiff8()) {
-            $data = pack("vC", $cch, $encoding);
-        } else {
-            $data = pack("C", $cch);
-        }
-
-        $this->prepend($header . $data . $str);
-    }
-
-    /**
-     * Store the footer caption BIFF record.
-     */
-    protected function storeFooter()
-    {
-        $record = 0x0015; // Record identifier
-
-        $str = $this->footer; // Footer string
-        $cch = strlen($str); // Length of footer string
-        if ($this->isBiff8()) {
-            $encoding = 0x0;
-            $length = 3 + $cch; // Bytes to follow
-        } else {
-            $length = 1 + $cch;
-        }
-
-        $header = pack("vv", $record, $length);
-        if ($this->isBiff8()) {
-            $data = pack("vC", $cch, $encoding);
-        } else {
-            $data = pack("C", $cch);
-        }
-
-        $this->prepend($header . $data . $str);
-    }
-
-    /**
-     * Store the horizontal centering HCENTER BIFF record.
-     */
-    protected function storeHcenter()
-    {
-        $record = 0x0083; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fHCenter = $this->hcenter; // Horizontal centering
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fHCenter);
-
-        $this->prepend($header . $data);
-    }
-
-    /**
-     * Store the vertical centering VCENTER BIFF record.
-     */
-    protected function storeVcenter()
-    {
-        $record = 0x0084; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fVCenter = $this->vcenter; // Horizontal centering
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fVCenter);
-        $this->prepend($header . $data);
     }
 
     /**
@@ -2818,8 +2720,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGuts()
     {
-        $record = new Record\Guts();
-        $this->prepend($record->getData($this->colInfo, $this->outlineRowLevel));
+        $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
     }
 
     /**
@@ -2954,8 +2855,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = new Record\Password();
-        $this->prepend($record->getData($this->protect));
+        $this->prependRecord('Protect', array($this->protect));
     }
 
     /**
@@ -2968,8 +2868,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = new Record\Password();
-        $this->prepend($record->getData($this->password));
+        $this->prependRecord('Password', array($this->password));
     }
 
 
@@ -2996,8 +2895,7 @@ class Worksheet extends BIFFwriter
         // Calculate the vertices of the image and write the OBJ record
         $this->positionImage($col, $row, $x, $y, $width, $height);
 
-        $record = new Record\Imdata();
-        $this->append($record->getData($size, $data));
+        $this->appendRecord('Imdata', array($size, $data));
     }
 
     /**
@@ -3103,7 +3001,7 @@ class Worksheet extends BIFFwriter
         $x2 = $width / $this->sizeCol($colEnd) * 1024; // Distance to right side of object
         $y2 = $height / $this->sizeRow($rowEnd) * 256; // Distance to bottom of object
 
-        $this->storeObjPicture(
+        $this->appendRecord('Obj', array(
             $colStart,
             $x1,
             $rowStart,
@@ -3112,7 +3010,7 @@ class Worksheet extends BIFFwriter
             $x2,
             $rowEnd,
             $y2
-        );
+        ));
     }
 
     /**
@@ -3160,25 +3058,6 @@ class Worksheet extends BIFFwriter
         } else {
             return 17;
         }
-    }
-
-    /**
-     * Store the OBJ record that precedes an IMDATA record. This could be generalise
-     * to support other Excel objects.
-     *
-     * @param integer $colL Column containing upper left corner of object
-     * @param integer $dxL  Distance from left side of cell
-     * @param integer $rwT  Row containing top left corner of object
-     * @param integer $dyT  Distance from top of cell
-     * @param integer $colR Column containing lower right corner of object
-     * @param integer $dxR  Distance from right of cell
-     * @param integer $rwB  Row containing bottom right corner of object
-     * @param integer $dyB  Distance from bottom of cell
-     */
-    protected function storeObjPicture($colL, $dxL, $rwT, $dyT, $colR, $dxR, $rwB, $dyB)
-    {
-        $record = new Record\Obj();
-        $this->append($record->getData($colL, $dxL, $rwT, $dyT, $colR, $dxR, $rwB, $dyB));
     }
 
     /**
@@ -3278,8 +3157,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = new Record\Zoom();
-        $this->append($record->getData($this->zoom));
+        $this->appendRecord('Zoom', array($this->zoom));
     }
 
     /**
@@ -3300,12 +3178,10 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDataValidity()
     {
-        $record = new Record\Dval();
-        $this->append($record->getData($this->dv));
+        $this->appendRecord('Dval', array($this->dv));
 
-        $record = new Record\Dv();
         foreach ($this->dv as $dv) {
-            $this->append($record->getData($dv));
+            $this->appendRecord('Dv', array($dv));
         }
     }
 

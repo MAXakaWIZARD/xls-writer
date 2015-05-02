@@ -13,16 +13,15 @@ class Boundsheet extends AbstractRecord
     /**
      * Generate BOUNDSHEET record.
      *
-     * @param integer $version BIFF version
      * @param string $sheetName Worksheet name
      * @param integer $offset    Location of worksheet BOF
      * @return string
      */
-    public function getData($version, $sheetName, $offset)
+    public function getData($sheetName, $offset)
     {
         $grbit = 0x0000;
 
-        if ($version === Biff8::VERSION) {
+        if ($this->version === Biff8::VERSION) {
             $length = 0x08 + strlen($sheetName);
             $cch = mb_strlen($sheetName, 'UTF-16LE');
             $data = pack("VvCC", $offset, $grbit, $cch, 0x1);

@@ -13,21 +13,20 @@ class Format extends AbstractRecord
     /**
      * Generate FORMAT record for non "built-in" numerical formats.
      *
-     * @param int $version BIFF version
      * @param string $format Custom format string
      * @param integer $formatIndex   Format index code
      * @return string
      */
-    public function getData($version, $format, $formatIndex)
+    public function getData($format, $formatIndex)
     {
         $formatLen = strlen($format);
-        if ($version === Biff8::VERSION) {
+        if ($this->version === Biff8::VERSION) {
             $length = 5 + $formatLen;
         } else {
             $length = 3 + $formatLen;
         }
 
-        if ($version === Biff8::VERSION
+        if ($this->version === Biff8::VERSION
             && function_exists('iconv')
         ) {
             // Encode format String
@@ -41,7 +40,7 @@ class Format extends AbstractRecord
             $cch = $formatLen;
         }
 
-        if ($version === Biff8::VERSION) {
+        if ($this->version === Biff8::VERSION) {
             $data = pack("vvC", $formatIndex, $cch, $encoding);
         } else {
             $data = pack("vC", $formatIndex, $cch);
