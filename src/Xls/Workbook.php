@@ -19,9 +19,9 @@ class Workbook extends BIFFwriter
 
     /**
      * Formula parser
-     * @var object Parser
+     * @var FormulaParser
      */
-    public $parser;
+    public $formulaParser;
 
     /**
      * Flag for 1904 date system (0 => base date is 1900, 1 => base date is 1904)
@@ -149,7 +149,7 @@ class Workbook extends BIFFwriter
         parent::__construct($version);
 
         $this->filename = $filename;
-        $this->parser = new Parser($this->byteOrder, $this->version);
+        $this->formulaParser = new FormulaParser($this->byteOrder, $this->version);
         $this->f1904 = 0;
         $this->selected = 0;
         $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
@@ -280,14 +280,14 @@ class Workbook extends BIFFwriter
             $this->strUnique,
             $this->strTable,
             $this->urlFormat,
-            $this->parser
+            $this->formulaParser
         );
 
         $this->worksheets[$index] = $worksheet;
         $this->sheetNames[$index] = $name;
 
         // Register worksheet name with parser
-        $this->parser->setExtSheet($name, $index);
+        $this->formulaParser->setExtSheet($name, $index);
 
         return $worksheet;
     }
@@ -325,7 +325,7 @@ class Workbook extends BIFFwriter
      */
     public function addValidator()
     {
-        return new Validator($this->parser);
+        return new Validator($this->formulaParser);
     }
 
     /**
@@ -787,7 +787,7 @@ class Workbook extends BIFFwriter
     protected function storeExternsheetBiff8()
     {
         $record = new Record\Externsheet();
-        $this->append($record->getDataForReferences($this->parser->getReferences()));
+        $this->append($record->getDataForReferences($this->formulaParser->getReferences()));
     }
 
     /**

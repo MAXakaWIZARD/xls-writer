@@ -29,15 +29,15 @@ class Worksheet extends BIFFwriter
 
     /**
      * Reference to the (default) Format object for URLs
-     * @var object Format
+     * @var Format
      */
     public $urlFormat;
 
     /**
      * Reference to the parser used for parsing formulas
-     * @var object Format
+     * @var FormulaParser
      */
-    public $parser;
+    protected $formulaParser;
 
     /**
      * Filehandle to the temporary file for storing data
@@ -354,13 +354,14 @@ class Worksheet extends BIFFwriter
 
     /**
      * Constructor
-     * @param integer $version
+     *
+*@param integer $version
      * @param string $name         The name of the new worksheet
      * @param integer $index        The index of the new worksheet
      * @param mixed &$activeSheet The current activesheet of the workbook we belong to
      * @param mixed &$firstSheet  The first worksheet in the workbook we belong to
      * @param mixed &$urlFormat  The default format for hyperlinks
-     * @param mixed &$parser      The formula parser created for the Workbook
+     * @param FormulaParser $formulaParser      The formula parser created for the Workbook
      */
     public function __construct(
         $version,
@@ -372,7 +373,7 @@ class Worksheet extends BIFFwriter
         &$strUnique,
         &$strTable,
         &$urlFormat,
-        &$parser
+        $formulaParser
     ) {
         parent::__construct($version);
 
@@ -384,7 +385,7 @@ class Worksheet extends BIFFwriter
         $this->strUnique = & $strUnique;
         $this->strTable = & $strTable;
         $this->urlFormat = & $urlFormat;
-        $this->parser = & $parser;
+        $this->formulaParser = $formulaParser;
 
         $this->fileHandle = '';
         $this->usingTmpFile = true;
@@ -1681,8 +1682,8 @@ class Worksheet extends BIFFwriter
 
     /**
      * Write a formula to the specified row and column (zero indexed).
-     * The textual representation of the formula is passed to the parser in
-     * Parser.php which returns a packed binary string.
+     * The textual representation of the formula is passed to the formula parser
+     * which returns a packed binary string.
      *
      * Returns  0 : normal termination
      *         -1 : formula errors (bad formula)
@@ -1723,9 +1724,9 @@ class Worksheet extends BIFFwriter
         }
 
         // Parse the formula using the parser in Parser.php
-        $this->parser->parse($formula);
+        $this->formulaParser->parse($formula);
 
-        $formula = $this->parser->toReversePolish();
+        $formula = $this->formulaParser->toReversePolish();
 
         $formlen = strlen($formula); // Length of the binary string
         $length = 0x16 + $formlen; // Length of the record data

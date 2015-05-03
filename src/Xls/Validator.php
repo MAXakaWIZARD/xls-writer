@@ -37,16 +37,17 @@ class Validator
 
     /**
      * The parser from the workbook. Used to parse validation formulas also
-     * @var Parser
+     *
+     * @var FormulaParser
      */
-    protected $parser;
+    protected $formulaParser;
 
     /**
-     * @param Parser $parser
+     * @param FormulaParser $formulaParser
      */
-    public function __construct(Parser $parser)
+    public function __construct(FormulaParser $formulaParser)
     {
-        $this->parser = $parser;
+        $this->formulaParser = $formulaParser;
         $this->type = 0x01;
         $this->style = 0x00;
         $this->fixedList = false;
@@ -126,10 +127,9 @@ class Validator
      */
     public function setFormula1($formula)
     {
-        // Parse the formula using the parser in Parser.php
-        $this->parser->parse($formula);
+        $this->formulaParser->parse($formula);
 
-        $this->formula1 = $this->parser->toReversePolish();
+        $this->formula1 = $this->formulaParser->toReversePolish();
 
         return true;
     }
@@ -141,10 +141,9 @@ class Validator
      */
     public function setFormula2($formula)
     {
-        // Parse the formula using the parser in Parser.php
-        $this->parser->parse($formula);
+        $this->formulaParser->parse($formula);
 
-        $this->formula2 = $this->parser->toReversePolish();
+        $this->formula2 = $this->formulaParser->toReversePolish();
 
         return true;
     }

@@ -10,7 +10,7 @@ namespace Xls;
  * @package  Spreadsheet_Excel_Writer
  */
 
-class Parser
+class FormulaParser
 {
     /**
      * @var array
