@@ -37,7 +37,7 @@ abstract class AbstractRecord
      * @param int $extraParam
      * @return string
      */
-    protected function getHeader($extraLength = 0, $extraParam = null)
+    public function getHeader($extraLength = 0, $extraParam = null)
     {
         $length = static::LENGTH + $extraLength;
 

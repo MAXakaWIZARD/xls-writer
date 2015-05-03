@@ -2,6 +2,8 @@
 
 namespace Xls;
 
+use Xls\Record\AbstractRecord;
+
 /**
  * Class for writing Excel BIFF records.
  *
@@ -100,6 +102,14 @@ class BIFFwriter
         }
 
         $this->version = $version;
+    }
+
+    /**
+     * @return int
+     */
+    public function getVersion()
+    {
+        return $this->version;
     }
 
     /**
@@ -225,9 +235,19 @@ class BIFFwriter
      */
     protected function getRecord($type, array $params = array())
     {
-        $className = "\\Xls\\Record\\$type";
-        $record = new $className($this->version, $this->byteOrder);
+        $record = $this->createRecord($type);
 
         return call_user_func_array(array($record, 'getData'), $params);
+    }
+
+    /**
+     * @param $type
+     *
+     * @return AbstractRecord
+     */
+    protected function createRecord($type)
+    {
+        $className = "\\Xls\\Record\\$type";
+        return new $className($this->version, $this->byteOrder);
     }
 }

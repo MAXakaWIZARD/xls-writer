@@ -45,6 +45,32 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     /**
      *
      */
+    public function testActiveAndFirstSheet()
+    {
+        $firstSheet = $this->workbook->addWorksheet('Sheet1');
+        $this->assertSame(0, $this->workbook->getActiveSheet());
+        $this->assertSame(0, $this->workbook->getFirstSheet());
+        $this->assertTrue($firstSheet->isSelected());
+
+        $secondSheet = $this->workbook->addWorksheet('Sheet2');
+        $secondSheet->activate();
+        $this->assertSame(1, $this->workbook->getActiveSheet());
+        $this->assertTrue($secondSheet->isSelected());
+        $this->assertFalse($firstSheet->isSelected());
+        $secondSheet->setFirstSheet();
+        $this->assertSame(1, $this->workbook->getFirstSheet());
+
+        $firstSheet->activate();
+        $this->assertSame(0, $this->workbook->getActiveSheet());
+        $this->assertTrue($firstSheet->isSelected());
+        $this->assertFalse($secondSheet->isSelected());
+        $firstSheet->setFirstSheet();
+        $this->assertSame(0, $this->workbook->getFirstSheet());
+    }
+
+    /**
+     *
+     */
     public function testLongSheetName()
     {
         $longName = str_repeat('a', 32);

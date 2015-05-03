@@ -304,22 +304,14 @@ class Worksheet extends BIFFwriter
     public $fitHeight;
 
     /**
-     * Reference to the total number of strings in the workbook
-     * @var integer
+     * @var SharedStringsTable
      */
-    public $strTotal;
+    protected $sst;
 
     /**
-     * Reference to the number of unique strings in the workbook
-     * @var integer
+     * @var Workbook
      */
-    public $strUnique;
-
-    /**
-     * Reference to the array containing all the unique strings in the workbook
-     * @var array
-     */
-    public $strTable;
+    protected $workbook;
 
     /**
      * Number of merged cell ranges in actual record
@@ -355,39 +347,30 @@ class Worksheet extends BIFFwriter
     /**
      * Constructor
      *
-*@param integer $version
      * @param string $name         The name of the new worksheet
      * @param integer $index        The index of the new worksheet
-     * @param mixed &$activeSheet The current activesheet of the workbook we belong to
-     * @param mixed &$firstSheet  The first worksheet in the workbook we belong to
-     * @param mixed &$urlFormat  The default format for hyperlinks
-     * @param FormulaParser $formulaParser      The formula parser created for the Workbook
+     * @param Workbook $workbook Parent workbook
+     * @param SharedStringsTable $sst Workbook's shared strings table
+     * @param Format $urlFormat  The default format for hyperlinks
+     * @param FormulaParser $formulaParser The formula parser created for the Workbook
      */
     public function __construct(
-        $version,
         $name,
         $index,
-        &$activeSheet,
-        &$firstSheet,
-        &$strTotal,
-        &$strUnique,
-        &$strTable,
-        &$urlFormat,
+        $workbook,
+        $sst,
+        $urlFormat,
         $formulaParser
     ) {
-        parent::__construct($version);
+        parent::__construct($workbook->getVersion());
 
         $this->name = $name;
         $this->index = $index;
-        $this->activesheet = & $activeSheet;
-        $this->firstsheet = & $firstSheet;
-        $this->strTotal = & $strTotal;
-        $this->strUnique = & $strUnique;
-        $this->strTable = & $strTable;
-        $this->urlFormat = & $urlFormat;
+        $this->workbook = $workbook;
+        $this->sst = $sst;
+        $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->fileHandle = '';
         $this->usingTmpFile = true;
         $this->xlsRowmax = Biff5::MAX_ROWS;
         $this->xlsColmax = Biff5::MAX_COLS;
@@ -685,6 +668,14 @@ class Worksheet extends BIFFwriter
     }
 
     /**
+     *
+     */
+    public function unselect()
+    {
+        $this->selected = 0;
+    }
+
+    /**
      * Set this worksheet as the active worksheet,
      * i.e. the worksheet that is displayed when the workbook is opened.
      * Also set it as selected.
@@ -692,8 +683,7 @@ class Worksheet extends BIFFwriter
      */
     public function activate()
     {
-        $this->selected = 1;
-        $this->activesheet = $this->index;
+        $this->workbook->setActiveSheet($this->index);
     }
 
     /**
@@ -704,7 +694,7 @@ class Worksheet extends BIFFwriter
      */
     public function setFirstSheet()
     {
-        $this->firstsheet = $this->index;
+        $this->workbook->setFirstSheet($this->index);
     }
 
     /**
@@ -1529,14 +1519,10 @@ class Worksheet extends BIFFwriter
 
         $str = pack('vC', $strlen, $encoding) . $str;
 
-        /* check if string is already present */
-        if (!isset($this->strTable[$str])) {
-            $this->strTable[$str] = $this->strUnique++;
-        }
-        $this->strTotal++;
+        $this->sst->add($str);
 
         $header = pack('vv', $record, $length);
-        $data = pack('vvvV', $row, $col, $xf, $this->strTable[$str]);
+        $data = pack('vvvV', $row, $col, $xf, $this->sst->getStrIdx($str));
         $this->append($header . $data);
 
         return $strError;
