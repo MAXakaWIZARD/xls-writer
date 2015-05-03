@@ -1307,7 +1307,7 @@ class Worksheet extends BIFFwriter
         $password ^= strlen($plaintext);
         $password ^= 0xCE4B;
 
-        return ($password);
+        return $password;
     }
 
     /**
@@ -2851,7 +2851,7 @@ class Worksheet extends BIFFwriter
     protected function storePassword()
     {
         // Exit unless sheet protection and password have been specified
-        if (($this->protect == 0) || (!isset($this->password))) {
+        if ($this->protect == 0 || !isset($this->password)) {
             return;
         }
 

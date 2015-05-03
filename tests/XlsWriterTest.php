@@ -210,4 +210,48 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
         Cell::getAddress(0, 256);
     }
+
+    /**
+     * @dataProvider providerProtected
+     * @param $params
+     *
+     * @throws \Exception
+     */
+    public function testProtected($params)
+    {
+        $workbook = new Writer($this->testFilePath, $params['format']);
+
+        //needed for test files comparison
+        $workbook->setCreationTimestamp(1429042916);
+
+        $worksheet = $workbook->addWorksheet();
+        $worksheet->write(0, 0, 'Test');
+        $worksheet->protect('1234');
+
+        $workbook->close();
+
+        $this->assertFileExists($this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
+    }
+
+    /**
+     * @return array
+     */
+    public function providerProtected()
+    {
+        return array(
+            array(
+                array(
+                    'format' => Biff5::VERSION,
+                    'file' => 'protected.xls'
+                )
+            ),
+            array(
+                array(
+                    'format' => Biff8::VERSION,
+                    'file' => 'protected_biff8.xls'
+                )
+            )
+        );
+    }
 }
