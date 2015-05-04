@@ -12,12 +12,6 @@ namespace Xls\OLE;
 class PpsRoot extends PPS
 {
     /**
-     * Flag to enable new logic
-     * @var bool
-     */
-    protected $newFunc = true;
-
-    /**
      * @var
      */
     protected $smallBlockSize;
@@ -95,7 +89,7 @@ class PpsRoot extends PPS
 
         $this->saveBigData($iSBDcnt, $aList);
         $this->savePps($aList);
-        $this->saveBbd($iSBDcnt, $iBBcnt, $iPPScnt);
+        $this->saveBigBlockChain($iSBDcnt, $iBBcnt, $iPPScnt);
 
         fclose($this->rootFilePointer);
 
@@ -159,87 +153,6 @@ class PpsRoot extends PPS
         $iWk = log($i2) / log(2);
 
         return ($iWk > floor($iWk)) ? floor($iWk) + 1 : $iWk;
-    }
-
-    /**
-     * Save OLE header
-     *
-     * @param integer $iSBDcnt
-     * @param integer $iBBcnt
-     * @param integer $iPPScnt
-     */
-    public function saveHeader($iSBDcnt, $iBBcnt, $iPPScnt)
-    {
-        if ($this->newFunc) {
-            $this->createHeader($iSBDcnt, $iBBcnt, $iPPScnt);
-            return;
-        }
-
-        // Calculate Basic Setting
-        $iBlCnt = $this->getPointersPerBlock($this->bigBlockSize);
-        $i1stBdL = $this->getPointersPerBlock($this->bigBlockSize - 0x4C);
-
-        $iBdExL = 0;
-        $iAll = $iBBcnt + $iPPScnt + $iSBDcnt;
-        $iAllW = $iAll;
-        $iBdCntW = $this->getBlocksCount($iAllW, $iBlCnt);
-        $iBdCnt = $this->getBlocksCount($iAll + $iBdCntW, $iBlCnt);
-
-        // Calculate BD count
-        if ($iBdCnt > $i1stBdL) {
-            while (true) {
-                $iBdExL++;
-                $iAllW++;
-                $iBdCntW = $this->getBlocksCount($iAllW, $iBlCnt);
-                $iBdCnt = $this->getBlocksCount($iAll + $iBdCntW, $iBlCnt);
-                if ($iBdCnt <= ($iBdExL * $iBlCnt + $i1stBdL)) {
-                    break;
-                }
-            }
-        }
-
-        // Save Header
-        $this->write(
-            "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . pack("v", 0x3b)
-            . pack("v", 0x03)
-            . pack("v", -2)
-            . pack("v", 9)
-            . pack("v", 6)
-            . pack("v", 0)
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . pack("V", $iBdCnt)
-            . pack("V", $iBBcnt + $iSBDcnt) //ROOT START
-            . pack("V", 0)
-            . pack("V", 0x1000)
-            . pack("V", $iSBDcnt ? 0 : -2) //Small Block Depot
-            . pack("V", $iSBDcnt)
-        );
-
-        // Extra BDList Start, Count
-        if ($iBdCnt < $i1stBdL) {
-            $this->writeUlong(-2); // Extra BDList Start
-            $this->writeUlong(0); // Extra BDList Count
-        } else {
-            $this->writeUlong($iAll + $iBdCnt);
-            $this->writeUlong($iBdExL);
-        }
-
-        // BDList
-        for ($i = 0; $i < $i1stBdL && $i < $iBdCnt; $i++) {
-            $this->writeUlong($iAll + $i);
-        }
-
-        if ($i < $i1stBdL) {
-            for ($j = 0; $j < ($i1stBdL - $i); $j++) {
-                $this->writeUlong(-1);
-            }
-        }
     }
 
     /**
@@ -371,101 +284,6 @@ class PpsRoot extends PPS
     }
 
     /**
-     * Saving Big Block Depot
-     *
-     * @param integer $iSbdSize
-     * @param integer $iBsize
-     * @param integer $iPpsCnt
-     */
-    protected function saveBbd($iSbdSize, $iBsize, $iPpsCnt)
-    {
-        if ($this->newFunc) {
-            $this->createBigBlockChain($iSbdSize, $iBsize, $iPpsCnt);
-            return;
-        }
-
-        // Calculate Basic Setting
-        $iBbCnt = $this->getPointersPerBlock($this->bigBlockSize);
-        $i1stBdL = $this->getPointersPerBlock($this->bigBlockSize - 0x4C);
-
-        $iBdExL = 0;
-        $iAll = $iBsize + $iPpsCnt + $iSbdSize;
-        $iAllW = $iAll;
-        $iBdCntW = $this->getBlocksCount($iAllW, $iBbCnt);
-        $iBdCnt = $this->getBlocksCount($iAllW + $iBdCntW, $iBbCnt);
-        // Calculate BD count
-        if ($iBdCnt > $i1stBdL) {
-            while (1) {
-                $iBdExL++;
-                $iAllW++;
-                $iBdCntW = $this->getBlocksCount($iAllW, $iBbCnt);
-                $iBdCnt = $this->getBlocksCount($iAllW + $iBdCntW, $iBbCnt);
-                if ($iBdCnt <= ($iBdExL * $iBbCnt + $i1stBdL)) {
-                    break;
-                }
-            }
-        }
-
-        // Making BD
-        // Set for SBD
-        if ($iSbdSize > 0) {
-            for ($i = 0; $i < ($iSbdSize - 1); $i++) {
-                $this->writeUlong($i + 1);
-            }
-            $this->writeUlong(-2);
-        }
-
-        // Set for B
-        for ($i = 0; $i < ($iBsize - 1); $i++) {
-            $this->writeUlong($i + $iSbdSize + 1);
-        }
-        $this->writeUlong(-2);
-
-        // Set for PPS
-        for ($i = 0; $i < ($iPpsCnt - 1); $i++) {
-            $this->writeUlong($i + $iSbdSize + $iBsize + 1);
-        }
-        $this->writeUlong(-2);
-
-        // Set for BBD itself ( 0xFFFFFFFD : BBD)
-        for ($i = 0; $i < $iBdCnt; $i++) {
-            $this->writeUlong(0xFFFFFFFD);
-        }
-
-        // Set for ExtraBDList
-        for ($i = 0; $i < $iBdExL; $i++) {
-            $this->writeUlong(0xFFFFFFFC);
-        }
-
-        // Adjust for Block
-        if (($iAllW + $iBdCnt) % $iBbCnt) {
-            for ($i = 0; $i < ($iBbCnt - (($iAllW + $iBdCnt) % $iBbCnt)); $i++) {
-                $this->writeUlong(-1);
-            }
-        }
-
-        // Extra BDList
-        if ($iBdCnt > $i1stBdL) {
-            $iN = 0;
-            $iNb = 0;
-            for ($i = $i1stBdL; $i < $iBdCnt; $i++, $iN++) {
-                if ($iN >= ($iBbCnt - 1)) {
-                    $iN = 0;
-                    $iNb++;
-                    $this->writeUlong($iAll + $iBdCnt + $iNb);
-                }
-                $this->writeUlong($iBsize + $iSbdSize + $iPpsCnt + $i);
-            }
-            if (($iBdCnt - $i1stBdL) % ($iBbCnt - 1)) {
-                for ($i = 0; $i < (($iBbCnt - 1) - (($iBdCnt - $i1stBdL) % ($iBbCnt - 1))); $i++) {
-                    $this->writeUlong(-1);
-                }
-            }
-            $this->writeUlong(-2);
-        }
-    }
-
-    /**
      * @param $value
      */
     protected function writeUlong($value)
@@ -482,13 +300,13 @@ class PpsRoot extends PPS
     }
 
     /**
-     * New method to store Bigblock chain
+     * Saving Big Block Depot
      *
      * @param integer $numSbBlocks - number of Smallblock depot blocks
      * @param integer $numBbBlocks - number of Bigblock depot blocks
      * @param integer $numPpsBlocks - number of PropertySetStorage blocks
      */
-    protected function createBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks)
+    protected function saveBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
         $info = $this->calcBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
         $headerEntriesCount = $info["header_blockchain_list_entries"];
@@ -565,13 +383,13 @@ class PpsRoot extends PPS
     }
 
     /**
-     * New method to store Header
+     * Save OLE header
      *
      * @param integer $numSbBlocks - number of Smallblock depot blocks
      * @param integer $numBbBlocks - number of Bigblock depot blocks
      * @param integer $numPpsBlocks - number of PropertySetStorage blocks
      */
-    public function createHeader($numSbBlocks, $numBbBlocks, $numPpsBlocks)
+    public function saveHeader($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
         $info = $this->calcBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
         $headerEntriesCount = $info["header_blockchain_list_entries"];
