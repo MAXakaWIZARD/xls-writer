@@ -344,6 +344,19 @@ class Worksheet extends BIFFwriter
      */
     protected $offset;
 
+    protected $printGridLines;
+    protected $screenGridLines;
+    protected $printHeaders;
+    protected $hbreaks;
+    protected $vbreaks;
+    protected $protect;
+    protected $password;
+    protected $colSizes;
+    protected $rowSizes;
+    protected $zoom;
+    protected $printScale;
+    protected $dv;
+
     /**
      * Constructor
      *
