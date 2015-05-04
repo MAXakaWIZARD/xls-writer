@@ -230,16 +230,7 @@ class Workbook extends BIFFwriter
             $name = 'Sheet' . ($index + 1);
         }
 
-        $maxLen = $this->biff->getMaxSheetNameLength();
-        if (strlen($name) > $maxLen) {
-            throw new \Exception(
-                "Sheet name must be shorter than $maxLen chars"
-            );
-        }
-
-        if ($this->isBiff8() && function_exists('iconv')) {
-            $name = iconv('UTF-8', 'UTF-16LE', $name);
-        }
+        $name = $this->processSheetName($name);
 
         if ($this->hasSheet($name)) {
             throw new \Exception("Worksheet '$name' already exists");
@@ -265,6 +256,28 @@ class Workbook extends BIFFwriter
         $this->formulaParser->setExtSheet($name, $index);
 
         return $worksheet;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return string
+     * @throws \Exception
+     */
+    protected function processSheetName($name)
+    {
+        $maxLen = $this->biff->getMaxSheetNameLength();
+        if (strlen($name) > $maxLen) {
+            throw new \Exception(
+                "Sheet name must be shorter than $maxLen chars"
+            );
+        }
+
+        if ($this->isBiff8() && function_exists('iconv')) {
+            $name = iconv('UTF-8', 'UTF-16LE', $name);
+        }
+
+        return $name;
     }
 
     /**
