@@ -571,7 +571,7 @@ class Worksheet extends BIFFwriter
             for ($i = 0; $i < $colcount; $i++) {
                 $this->storeColinfo($this->colInfo[$i]);
             }
-            $this->storeDefcol();
+            $this->prependRecord('Defcolwith');
         }
 
         $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
@@ -1820,7 +1820,6 @@ class Worksheet extends BIFFwriter
     protected function writeUrlWeb($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
         $record = 0x01B8; // Record identifier
-        $length = 0x00000; // Bytes to follow
 
         if (!$format) {
             $format = $this->urlFormat;
@@ -1888,7 +1887,6 @@ class Worksheet extends BIFFwriter
     protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
         $record = 0x01B8; // Record identifier
-        $length = 0x00000; // Bytes to follow
 
         if (!$format) {
             $format = $this->urlFormat;
@@ -1968,7 +1966,6 @@ class Worksheet extends BIFFwriter
         }
 
         $record = 0x01B8; // Record identifier
-        $length = 0x00000; // Bytes to follow
 
         if (!$format) {
             $format = $this->urlFormat;
@@ -2245,26 +2242,12 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Write BIFF record DEFCOLWIDTH if COLINFO records are in use.
-     */
-    protected function storeDefcol()
-    {
-        $record = 0x0055; // Record identifier
-        $length = 0x0002; // Number of bytes to follow
-        $colwidth = 0x0008; // Default column width
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $colwidth);
-        $this->prepend($header . $data);
-    }
-
-    /**
      * Write BIFF record COLINFO to define column widths
      *
      * Note: The SDK says the record length is 0x0B but Excel writes a 0x0C
      * length record.
      *
-*@param array $colArray This is the only parameter received and is composed of the following:
+     * @param array $colArray This is the only parameter received and is composed of the following:
      *                0 => First formatted column,
      *                1 => Last formatted column,
      *                2 => Col width (8.43 is Excel default),
@@ -2327,12 +2310,14 @@ class Worksheet extends BIFFwriter
 
     /**
      * Write BIFF record SELECTION.
-     * @param array $array array containing ($rwFirst,$colFirst,$rwLast,$colLast)
+     *
+     * @param array $selection array containing ($rwFirst,$colFirst,$rwLast,$colLast)
+     *
      * @see setSelection()
      */
-    protected function storeSelection($array)
+    protected function storeSelection($selection)
     {
-        list($rwFirst, $colFirst, $rwLast, $colLast) = $array;
+        list($rwFirst, $colFirst, $rwLast, $colLast) = $selection;
         $record = 0x001D; // Record identifier
         $length = 0x000F; // Number of bytes to follow
 
