@@ -586,7 +586,7 @@ class Worksheet extends BIFFwriter
         if (!empty($this->panes)) {
             $this->storePanes($this->panes);
         }
-        $this->storeSelection($this->selection);
+        $this->appendRecord('Selection', array($this->selection, $this->activePane));
         $this->storeMergedCells();
 
         if ($this->isBiff8()) {
@@ -2306,57 +2306,6 @@ class Worksheet extends BIFFwriter
             $reserved
         );
         $this->prepend($header . $data);
-    }
-
-    /**
-     * Write BIFF record SELECTION.
-     *
-     * @param array $selection array containing ($rwFirst,$colFirst,$rwLast,$colLast)
-     *
-     * @see setSelection()
-     */
-    protected function storeSelection($selection)
-    {
-        list($rwFirst, $colFirst, $rwLast, $colLast) = $selection;
-        $record = 0x001D; // Record identifier
-        $length = 0x000F; // Number of bytes to follow
-
-        $pnn = $this->activePane; // Pane position
-        $rwAct = $rwFirst; // Active row
-        $colAct = $colFirst; // Active column
-        $irefAct = 0; // Active cell ref
-        $cref = 1; // Number of refs
-
-        if (!isset($rwLast)) {
-            $rwLast = $rwFirst; // Last  row in reference
-        }
-        if (!isset($colLast)) {
-            $colLast = $colFirst; // Last  col in reference
-        }
-
-        // Swap last row/col for first row/col as necessary
-        if ($rwFirst > $rwLast) {
-            list($rwFirst, $rwLast) = array($rwLast, $rwFirst);
-        }
-
-        if ($colFirst > $colLast) {
-            list($colFirst, $colLast) = array($colLast, $colFirst);
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack(
-            "CvvvvvvCC",
-            $pnn,
-            $rwAct,
-            $colAct,
-            $irefAct,
-            $cref,
-            $rwFirst,
-            $rwLast,
-            $colFirst,
-            $colLast
-        );
-        $this->append($header . $data);
     }
 
     /**
