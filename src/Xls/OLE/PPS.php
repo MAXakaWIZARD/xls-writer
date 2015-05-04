@@ -15,79 +15,67 @@ class PPS
      * The PPS index
      * @var integer
      */
-    public $No;
+    protected $index;
 
     /**
      * The PPS name (in Unicode)
      * @var string
      */
-    public $Name;
+    protected $name;
 
     /**
      * The PPS type. Dir, Root or File
      * @var integer
      */
-    public $Type;
+    protected $type;
 
     /**
      * The index of the previous PPS
      * @var integer
      */
-    public $PrevPps;
+    protected $prevPps;
 
     /**
      * The index of the next PPS
      * @var integer
      */
-    public $NextPps;
+    protected $nextPps;
 
     /**
      * The index of it's first child if this is a Dir or Root PPS
      * @var integer
      */
-    public $DirPps;
+    protected $dirPps;
 
     /**
      * A timestamp
      * @var integer
      */
-    public $Time1st;
+    protected $time1st;
 
     /**
      * A timestamp
      * @var integer
      */
-    public $Time2nd;
+    protected $time2nd;
 
     /**
      * Starting block (small or big) for this PPS's data  inside the container
      * @var integer
      */
-    public $StartBlock;
-
-    /**
-     * The size of the PPS's data (in bytes)
-     * @var integer
-     */
-    public $Size;
+    protected $startBlock;
 
     /**
      * The PPS's data (only used if it's not using a temporary file)
      * @var string
      */
-    public $data;
+    protected $data;
 
     /**
      * Array of child PPS's (only used by Root and Dir PPS's)
      * @var array
      */
-    public $children = array();
-
-    /**
-     * Pointer to OLE container
-     * @var \Xls\OLE
-     */
-    public $ole;
+    protected $children = array();
 
     /**
      * The temporary dir for storing the OLE file
@@ -103,12 +91,12 @@ class PPS
     /**
      * @var resource
      */
-    protected $ppsFile;
+    protected $filePointer;
 
     /**
      * The constructor
      *
-     * @param integer $No   The PPS index
+     * @param integer $index   The PPS index
      * @param string $name The PPS name
      * @param integer $type The PPS type. Dir, Root or File
      * @param integer $prev The index of the previous PPS
@@ -120,7 +108,7 @@ class PPS
      * @param array $children Array containing children PPS for this PPS
      */
     public function __construct(
-        $No = null,
+        $index = null,
         $name = null,
         $type = null,
         $prev = null,
@@ -131,24 +119,44 @@ class PPS
         $data = '',
         $children = array()
     ) {
-        $this->No = $No;
-        $this->Name = $name;
-        $this->Type = $type;
-        $this->PrevPps = $prev;
-        $this->NextPps = $next;
-        $this->DirPps = $dir;
-        $this->Time1st = $time1st;
-        $this->Time2nd = $time2nd;
-        $this->data = $data;
+        $this->index = $index;
+        $this->name = $name;
+        $this->type = $type;
+        $this->prevPps = $prev;
+        $this->nextPps = $next;
+        $this->dirPps = $dir;
+        $this->time1st = $time1st;
+        $this->time2nd = $time2nd;
+
         $this->children = $children;
 
-        if ($data != '') {
-            $this->Size = strlen($data);
-        } else {
-            $this->Size = 0;
-        }
+        $this->data = $data;
 
         $this->tmpDir = sys_get_temp_dir();
+    }
+
+    /**
+     *
+     */
+    public function __destruct()
+    {
+        $this->removeTmpFile();
+    }
+
+    /**
+     * @return bool
+     */
+    protected function hasData()
+    {
+        return isset($this->data);
+    }
+
+    /**
+     * @return string
+     */
+    public function getData()
+    {
+        return $this->data;
     }
 
     /**
@@ -156,14 +164,11 @@ class PPS
      *
      * @return integer The amount of data (in bytes)
      */
-    protected function dataLen()
+    protected function getSize()
     {
-        if (!isset($this->data)) {
-            return 0;
-        }
-        if (is_resource($this->ppsFile)) {
-            fseek($this->ppsFile, 0);
-            $stats = fstat($this->ppsFile);
+        if (is_resource($this->filePointer)) {
+            fseek($this->filePointer, 0);
+            $stats = fstat($this->filePointer);
             return $stats[7];
         } else {
             return strlen($this->data);
@@ -177,28 +182,26 @@ class PPS
      */
     public function getPpsWk()
     {
-        $ret = $this->Name;
-        for ($i = 0; $i < (64 - strlen($this->Name)); $i++) {
+        $ret = $this->name;
+        for ($i = 0; $i < (64 - strlen($this->name)); $i++) {
             $ret .= "\x00";
         }
-        $ret .= pack("v", strlen($this->Name) + 2) // 66
-            . pack("c", $this->Type) // 67
+
+        $ret .= pack("v", strlen($this->name) + 2) // 66
+            . pack("c", $this->type) // 67
             . pack("c", 0x00) //UK                // 68
-            . pack("V", $this->PrevPps) //Prev    // 72
-            . pack("V", $this->NextPps) //Next    // 76
-            . pack("V", $this->DirPps) //Dir     // 80
+            . pack("V", $this->prevPps) //Prev    // 72
+            . pack("V", $this->nextPps) //Next    // 76
+            . pack("V", $this->dirPps) //Dir     // 80
             . "\x00\x09\x02\x00" // 84
             . "\x00\x00\x00\x00" // 88
             . "\xc0\x00\x00\x00" // 92
             . "\x00\x00\x00\x46" // 96 // Seems to be ok only for Root
             . "\x00\x00\x00\x00" // 100
-            . OLE::localDate2OLE($this->Time1st) // 108
-            . OLE::localDate2OLE($this->Time2nd) // 116
-            . pack(
-                "V",
-                isset($this->StartBlock) ? $this->StartBlock : 0
-            ) // 120
-            . pack("V", $this->Size) // 124
+            . OLE::localDate2OLE($this->time1st) // 108
+            . OLE::localDate2OLE($this->time2nd) // 116
+            . pack("V", $this->getStartBlock()) // 120
+            . pack("V", $this->getSize()) // 124
             . pack("V", 0); // 128
 
         return $ret;
@@ -208,23 +211,24 @@ class PPS
      * Updates index and pointers to previous, next and children PPS's for this
      * PPS. I don't think it'll work with Dir PPS's.
      *
-     * @param array &$raList Reference to the array of PPS's for the whole OLE container
+     * @param PPS[] &$list Reference to the array of PPS's for the whole OLE container
      * @param array $toSave
      * @param $depth
+     *
      * @return integer          The index for this PPS
      */
-    public static function savePpsSetPnt(&$raList, $toSave, $depth = 0)
+    public static function savePpsSetPnt(&$list, $toSave, $depth = 0)
     {
         if (!is_array($toSave) || (count($toSave) == 0)) {
             return 0xFFFFFFFF;
         } elseif (count($toSave) == 1) {
-            $cnt = count($raList);
+            $cnt = count($list);
             // If the first entry, it's the root... Don't clone it!
-            $raList[$cnt] = ($depth == 0) ? $toSave[0] : clone $toSave[0];
-            $raList[$cnt]->No = $cnt;
-            $raList[$cnt]->PrevPps = 0xFFFFFFFF;
-            $raList[$cnt]->NextPps = 0xFFFFFFFF;
-            $raList[$cnt]->DirPps = self::savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
+            $list[$cnt] = ($depth == 0) ? $toSave[0] : clone $toSave[0];
+            $list[$cnt]->setIndex($cnt);
+            $list[$cnt]->setPrevPps(0xFFFFFFFF);
+            $list[$cnt]->setNextPps(0xFFFFFFFF);
+            $list[$cnt]->setDirPps(self::savePpsSetPnt($list, $list[$cnt]->getChildren(), $depth++));
 
             return $cnt;
         } else {
@@ -232,13 +236,13 @@ class PPS
             $aPrev = array_slice($toSave, 0, $iPos);
             $aNext = array_slice($toSave, $iPos + 1);
 
-            $cnt = count($raList);
+            $cnt = count($list);
             // If the first entry, it's the root... Don't clone it!
-            $raList[$cnt] = ($depth == 0) ? $toSave[$iPos] : clone $toSave[$iPos];
-            $raList[$cnt]->No = $cnt;
-            $raList[$cnt]->PrevPps = self::savePpsSetPnt($raList, $aPrev, $depth++);
-            $raList[$cnt]->NextPps = self::savePpsSetPnt($raList, $aNext, $depth++);
-            $raList[$cnt]->DirPps = self::savePpsSetPnt($raList, @$raList[$cnt]->children, $depth++);
+            $list[$cnt] = ($depth == 0) ? $toSave[$iPos] : clone $toSave[$iPos];
+            $list[$cnt]->setIndex($cnt);
+            $list[$cnt]->setPrevPps(self::savePpsSetPnt($list, $aPrev, $depth++));
+            $list[$cnt]->setNextPps(self::savePpsSetPnt($list, $aNext, $depth++));
+            $list[$cnt]->setDirPps(self::savePpsSetPnt($list, $list[$cnt]->getChildren(), $depth++));
 
             return $cnt;
         }
@@ -249,9 +253,9 @@ class PPS
      */
     public function removeTmpFile()
     {
-        if (is_resource($this->ppsFile)) {
-            fclose($this->ppsFile);
-            $this->ppsFile = null;
+        if (is_resource($this->filePointer)) {
+            fclose($this->filePointer);
+            $this->filePointer = null;
         }
         @unlink($this->tmpFilename);
     }
@@ -259,8 +263,104 @@ class PPS
     /**
      * @return resource
      */
-    public function getPpsFile()
+    public function getFilePointer()
     {
-        return $this->ppsFile;
+        return $this->filePointer;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFile()
+    {
+        return $this->type == OLE::PPS_TYPE_FILE;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDir()
+    {
+        return $this->type == OLE::PPS_TYPE_DIR;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoot()
+    {
+        return $this->type == OLE::PPS_TYPE_ROOT;
+    }
+
+    /**
+     * @param int $startBlock
+     */
+    public function setStartBlock($startBlock)
+    {
+        $this->startBlock = $startBlock;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStartBlock()
+    {
+        return isset($this->startBlock) ? $this->startBlock : 0;
+    }
+
+    /**
+     * @return array
+     */
+    public function getChildren()
+    {
+        return $this->children;
+    }
+
+    /**
+     * @param int $index
+     */
+    public function setIndex($index)
+    {
+        $this->index = $index;
+    }
+
+    /**
+     * @param int $prevPps
+     */
+    public function setPrevPps($prevPps)
+    {
+        $this->prevPps = $prevPps;
+    }
+
+    /**
+     * @param int $nextPps
+     */
+    public function setNextPps($nextPps)
+    {
+        $this->nextPps = $nextPps;
+    }
+
+    /**
+     * @param int $dirPps
+     */
+    public function setDirPps($dirPps)
+    {
+        $this->dirPps = $dirPps;
+    }
+
+    /**
+     * @param $stream
+     *
+     * @return string
+     */
+    protected function getStreamContent($stream)
+    {
+        $content = '';
+        fseek($stream, 0);
+        while ($buffer = fread($stream, 4096)) {
+            $content .= $buffer;
+        }
+
+        return $content;
     }
 }

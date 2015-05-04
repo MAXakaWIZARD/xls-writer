@@ -3,7 +3,8 @@
 namespace Xls;
 
 use Xls\OLE\OLE;
-use Xls\OLE\PPS;
+use Xls\OLE\PpsFile;
+use Xls\OLE\PpsRoot;
 
 /**
  * Class for generating Excel Spreadsheets
@@ -462,7 +463,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeOLEFile()
     {
-        $ole = new PPS\File(OLE::asc2Ucs($this->biff->getWorkbookName()));
+        $ole = new PpsFile(OLE::asc2Ucs($this->biff->getWorkbookName()));
 
         $ole->init();
         $ole->append($this->data);
@@ -473,7 +474,7 @@ class Workbook extends BIFFwriter
             }
         }
 
-        $root = new PPS\Root(
+        $root = new PpsRoot(
             $this->getCreationTimestamp(),
             $this->getCreationTimestamp(),
             array($ole)

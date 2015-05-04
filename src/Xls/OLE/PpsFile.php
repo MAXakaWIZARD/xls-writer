@@ -1,9 +1,6 @@
 <?php
 
-namespace Xls\OLE\PPS;
-
-use Xls\OLE\PPS as OlePPS;
-use Xls\OLE\OLE;
+namespace Xls\OLE;
 
 /**
  * Class for creating File PPS's for OLE containers
@@ -12,13 +9,12 @@ use Xls\OLE\OLE;
  * @category Structures
  * @package  OLE
  */
-class File extends OlePPS
+class PpsFile extends PPS
 {
     /**
      * The constructor
      *
      * @param string $name The name of the file (in Unicode)
-     * @see OLE::asc2Ucs()
      */
     public function __construct($name)
     {
@@ -37,12 +33,12 @@ class File extends OlePPS
     public function init()
     {
         $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_File");
-        $this->ppsFile = @fopen($this->tmpFilename, "w+b");
-        if ($this->ppsFile === false) {
+        $this->filePointer = @fopen($this->tmpFilename, "w+b");
+        if ($this->filePointer === false) {
             throw new \Exception("Can't create temporary file");
         }
 
-        fseek($this->ppsFile, 0);
+        fseek($this->filePointer, 0);
 
         return true;
     }
@@ -54,19 +50,8 @@ class File extends OlePPS
      */
     public function append($data)
     {
-        if (is_resource($this->ppsFile)) {
-            fwrite($this->ppsFile, $data);
-        } else {
-            $this->data .= $data;
+        if (is_resource($this->filePointer)) {
+            fwrite($this->filePointer, $data);
         }
-    }
-
-    /**
-     * Returns a stream for reading this file using fread() etc.
-     * @return  resource  a read-only stream
-     */
-    public function getStream()
-    {
-        $this->ole->getStream($this);
     }
 }
