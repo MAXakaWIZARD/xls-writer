@@ -143,17 +143,9 @@ class Workbook extends BIFFwriter
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
-        $this->initSST();
+        $this->sst = new SharedStringsTable();
 
         $this->creationTimestamp = time();
-    }
-
-    /**
-     *
-     */
-    protected function initSST()
-    {
-        $this->sst = new SharedStringsTable();
     }
 
     /**
@@ -195,7 +187,7 @@ class Workbook extends BIFFwriter
     /**
      * Returns an array of the worksheet objects in a workbook
      *
-     * @return array
+     * @return Worksheet[]
      */
     public function getWorksheets()
     {
@@ -259,7 +251,7 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * @param $name
+     * @param string $name
      *
      * @return string
      * @throws \Exception
@@ -320,7 +312,7 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * @param $name
+     * @param string $name
      *
      * @return bool
      */

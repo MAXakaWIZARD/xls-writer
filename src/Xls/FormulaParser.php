@@ -81,7 +81,7 @@ class FormulaParser
      *
      * @param integer $byteOrder The byte order (Little endian or Big endian) of the architecture
      * (optional). 1 => big endian, 0 (default) little endian.
-     * @param $version
+     * @param integer $version
      */
     public function __construct($byteOrder, $version)
     {
