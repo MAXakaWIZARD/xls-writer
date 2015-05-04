@@ -660,43 +660,45 @@ class Workbook extends BIFFwriter
     protected function storePrintTitleNames()
     {
         foreach ($this->worksheets as $sheet) {
-            $rowmin = $sheet->titleRowMin;
-            $rowmax = $sheet->titleRowMax;
-            $colmin = $sheet->titleColMin;
-            $colmax = $sheet->titleColMax;
-
-            // Determine if row + col, row, col or nothing has been defined
-            // and write the appropriate record
-            if (isset($rowmin) && isset($colmin)) {
-                // Row and column titles have been defined.
-                // Row title has been defined.
-                $this->appendRecord('NameLong', array(
-                    $sheet->index,
-                    0x07, // NAME type
-                    $rowmin,
-                    $rowmax,
-                    $colmin,
-                    $colmax
-                ));
-            } elseif (isset($rowmin) || isset($colmin)) {
-                if (!isset($colmin)) {
-                    $colmin = 0x00;
-                    $colmax = 0xff;
-                } elseif (!isset($rowmin)) {
-                    $rowmin = 0x00;
-                    $rowmax = 0x3fff;
-                }
-
-                $this->appendRecord('NameShort', array(
-                    $sheet->index,
-                    0x07, // NAME type
-                    $rowmin,
-                    $rowmax,
-                    $colmin,
-                    $colmax
-                ));
-            }
+            $this->storePrintTitleName($sheet);
         }
+    }
+
+    /**
+     * @param Worksheet $sheet
+     */
+    protected function storePrintTitleName(Worksheet $sheet)
+    {
+        $rowmin = $sheet->titleRowMin;
+        $rowmax = $sheet->titleRowMax;
+        $colmin = $sheet->titleColMin;
+        $colmax = $sheet->titleColMax;
+
+        if (isset($rowmin) && isset($colmin)) {
+            $recordType = 'NameLong';
+        } elseif (isset($colmin)) {
+            $recordType = 'NameShort';
+            $rowmin = 0x00;
+            $rowmax = 0x3fff;
+        } elseif (isset($rowmin)) {
+            $recordType = 'NameShort';
+            $colmin = 0x00;
+            $colmax = 0xff;
+        } else {
+            return;
+        }
+
+        $this->appendRecord(
+            $recordType,
+            array(
+                $sheet->index,
+                0x07, // NAME type
+                $rowmin,
+                $rowmax,
+                $colmin,
+                $colmax
+            )
+        );
     }
 
     /**
