@@ -524,12 +524,12 @@ class Workbook extends BIFFwriter
     protected function storeAllFonts()
     {
         // tmp_format is added by the constructor. We use this to write the default XF's
-        $font = $this->tmpFormat->getFontRecord();
+        $fontRecordData = $this->tmpFormat->getFontRecord();
 
         // Note: Fonts are 0-indexed. According to the SDK there is no index 4,
         // so the following fonts are 0, 1, 2, 3, 5
         for ($i = 1; $i <= 5; $i++) {
-            $this->append($font);
+            $this->append($fontRecordData);
         }
 
         // Iterate through the XF objects and write a FONT record if it isn't the

@@ -224,8 +224,8 @@ class Format
      */
     public $rightColor;
 
-    protected $diag;
-    protected $diagColor;
+    public $diag;
+    public $diagColor;
 
     /**
      * Constructor
@@ -282,8 +282,8 @@ class Format
 
         // Set properties passed to Workbook::addFormat()
         foreach ($properties as $property => $value) {
-            if (method_exists($this, 'set' . ucwords($property))) {
-                $methodName = 'set' . ucwords($property);
+            $methodName = 'set' . ucwords($property);
+            if (method_exists($this, $methodName)) {
                 $this->$methodName($value);
             }
         }
@@ -294,140 +294,12 @@ class Format
      * Generate an Excel BIFF XF record (style or cell).
      *
      * @param string $style The type of the XF record ('style' or 'cell').
-     * @return string The XF record
+     * @return string The XF record data
      */
     public function getXf($style)
     {
-        // Set the type of the XF record and some of the attributes.
-        if ($style == 'style') {
-            $style = 0xFFF5;
-        } else {
-            $style = $this->locked;
-            $style |= $this->hidden << 1;
-        }
-
-        // Flags to indicate if attributes have been set.
-        $atrNum = ($this->numFormat != 0) ? 1 : 0;
-        $atrFnt = ($this->fontIndex != 0) ? 1 : 0;
-        $atrAlc = ($this->textWrap) ? 1 : 0;
-        $atrBdr = ($this->bottom
-            || $this->top
-            || $this->left
-            || $this->right) ? 1 : 0;
-        $atrPat = (($this->fgColor != 0x40)
-            || ($this->bgColor != 0x41)
-            || $this->pattern) ? 1 : 0;
-        $atrProt = $this->locked | $this->hidden;
-
-        // Zero the default border colour if the border has not been set.
-        if ($this->bottom == 0) {
-            $this->bottomColor = 0;
-        }
-        if ($this->top == 0) {
-            $this->topColor = 0;
-        }
-        if ($this->right == 0) {
-            $this->rightColor = 0;
-        }
-        if ($this->left == 0) {
-            $this->leftColor = 0;
-        }
-        if ($this->diag == 0) {
-            $this->diagColor = 0;
-        }
-
-        $record = 0x00E0; // Record identifier
-        if ($this->version === Biff5::VERSION) {
-            $length = 0x0010; // Number of bytes to follow
-        } else {
-            $length = 0x0014;
-        }
-
-        $ifnt = $this->fontIndex; // Index to FONT record
-        $ifmt = $this->numFormat; // Index to FORMAT record
-        if ($this->version === Biff5::VERSION) {
-            $align = $this->textHorAlign; // Alignment
-            $align |= $this->textWrap << 3;
-            $align |= $this->textVertAlign << 4;
-            $align |= $this->textJustlast << 7;
-            $align |= $this->rotation << 8;
-            $align |= $atrNum << 10;
-            $align |= $atrFnt << 11;
-            $align |= $atrAlc << 12;
-            $align |= $atrBdr << 13;
-            $align |= $atrPat << 14;
-            $align |= $atrProt << 15;
-
-            $icv = $this->fgColor; // fg and bg pattern colors
-            $icv |= $this->bgColor << 7;
-
-            $fill = $this->pattern; // Fill and border line style
-            $fill |= $this->bottom << 6;
-            $fill |= $this->bottomColor << 9;
-
-            $border1 = $this->top; // Border line style and color
-            $border1 |= $this->left << 3;
-            $border1 |= $this->right << 6;
-            $border1 |= $this->topColor << 9;
-
-            $border2 = $this->leftColor; // Border color
-            $border2 |= $this->rightColor << 7;
-
-            $header = pack("vv", $record, $length);
-            $data = pack(
-                "vvvvvvvv",
-                $ifnt,
-                $ifmt,
-                $style,
-                $align,
-                $icv,
-                $fill,
-                $border1,
-                $border2
-            );
-        } else {
-            $align = $this->textHorAlign; // Alignment
-            $align |= $this->textWrap << 3;
-            $align |= $this->textVertAlign << 4;
-            $align |= $this->textJustlast << 7;
-
-            $usedAttr = $atrNum << 2;
-            $usedAttr |= $atrFnt << 3;
-            $usedAttr |= $atrAlc << 4;
-            $usedAttr |= $atrBdr << 5;
-            $usedAttr |= $atrPat << 6;
-            $usedAttr |= $atrProt << 7;
-
-            $icv = $this->fgColor; // fg and bg pattern colors
-            $icv |= $this->bgColor << 7;
-
-            $border1 = $this->left; // Border line style and color
-            $border1 |= $this->right << 4;
-            $border1 |= $this->top << 8;
-            $border1 |= $this->bottom << 12;
-            $border1 |= $this->leftColor << 16;
-            $border1 |= $this->rightColor << 23;
-            $diagTlToRb = 0;
-            $diagTrToLb = 0;
-            $border1 |= $diagTlToRb << 30;
-            $border1 |= $diagTrToLb << 31;
-
-            $border2 = $this->topColor; // Border color
-            $border2 |= $this->bottomColor << 7;
-            $border2 |= $this->diagColor << 14;
-            $border2 |= $this->diag << 21;
-            $border2 |= $this->pattern << 26;
-
-            $header = pack("vv", $record, $length);
-
-            $rotation = $this->rotation;
-            $biff8Options = 0x00;
-            $data = pack("vvvC", $ifnt, $ifmt, $style, $align);
-            $data .= pack("CCC", $rotation, $biff8Options, $usedAttr);
-            $data .= pack("VVv", $border1, $border2, $icv);
-        }
-
-        return ($header . $data);
+        $record = new Record\Xf();
+        return $record->getData($this, $style);
     }
 
     /**
