@@ -4,6 +4,27 @@ namespace Xls;
 
 class Palette
 {
+    protected static $colorsMap = array(
+        'aqua' => 0x07,
+        'cyan' => 0x07,
+        'black' => 0x00,
+        'blue' => 0x04,
+        'brown' => 0x10,
+        'magenta' => 0x06,
+        'fuchsia' => 0x06,
+        'gray' => 0x17,
+        'grey' => 0x17,
+        'green' => 0x11,
+        'lime' => 0x03,
+        'navy' => 0x12,
+        'orange' => 0x35,
+        'purple' => 0x14,
+        'red' => 0x02,
+        'silver' => 0x16,
+        'white' => 0x01,
+        'yellow' => 0x05
+    );
+
     /**
      * Return Excel 97+ default palette
      * @return array
@@ -92,5 +113,55 @@ class Palette
         ) {
             throw new \Exception("Color component outside range: 0 <= color <= 255");
         }
+    }
+
+    /**
+     * @return array
+     */
+    public static function getColorsMap()
+    {
+        return self::$colorsMap;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
+    public static function isValidColor($name)
+    {
+        return isset(self::$colorsMap[$name]);
+    }
+
+    /**
+     * Used to convert a color
+     * string into a number. Color range is 0..63 but we will restrict it
+     * to 8..63 to comply with Gnumeric. Colors 0..7 are repeated in 8..15.
+     *
+     * @param string|integer $name name of the color (i.e.: 'blue', 'red', etc..). Optional.
+     *
+     * @return integer The color index
+     */
+    public static function getColor($name)
+    {
+        $defaultColor = 0x7FFF;
+
+        // Return the default color, 0x7FFF, if undef,
+        if ($name === '') {
+            return $defaultColor;
+        }
+
+        // or the color string converted to an integer,
+        if (self::isValidColor($name)) {
+            return self::$colorsMap[$name];
+        }
+
+        // String is unrecognised or arg is outside range,
+        if (preg_match("/\D/", $name) || $name > 63) {
+            return $defaultColor;
+        }
+
+        // or an integer in the valid range
+        return $name;
     }
 }

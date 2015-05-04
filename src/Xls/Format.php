@@ -224,6 +224,9 @@ class Format
      */
     public $rightColor;
 
+    protected $diag;
+    protected $diagColor;
+
     /**
      * Constructor
      *
@@ -275,7 +278,7 @@ class Format
         $this->topColor = 0x40;
         $this->leftColor = 0x40;
         $this->rightColor = 0x40;
-        $this->diag_color = 0x40;
+        $this->diagColor = 0x40;
 
         // Set properties passed to Workbook::addFormat()
         foreach ($properties as $property => $value) {
@@ -330,7 +333,7 @@ class Format
             $this->leftColor = 0;
         }
         if ($this->diag == 0) {
-            $this->diag_color = 0;
+            $this->diagColor = 0;
         }
 
         $record = 0x00E0; // Record identifier
@@ -411,7 +414,7 @@ class Format
 
             $border2 = $this->topColor; // Border color
             $border2 |= $this->bottomColor << 7;
-            $border2 |= $this->diag_color << 14;
+            $border2 |= $this->diagColor << 14;
             $border2 |= $this->diag << 21;
             $border2 |= $this->pattern << 26;
 
@@ -469,59 +472,17 @@ class Format
     }
 
     /**
-     * Used in conjunction with the set_xxx_color methods to convert a color
+     * Used to convert a color
      * string into a number. Color range is 0..63 but we will restrict it
      * to 8..63 to comply with Gnumeric. Colors 0..7 are repeated in 8..15.
      *
-     * @param string $name name of the color (i.e.: 'blue', 'red', etc..). Optional.
+     * @param string|integer $name name of the color (i.e.: 'blue', 'red', etc..). Optional.
      *
      * @return integer The color index
      */
     protected function getColor($name = '')
     {
-        $colors = array(
-            'aqua' => 0x07,
-            'cyan' => 0x07,
-            'black' => 0x00,
-            'blue' => 0x04,
-            'brown' => 0x10,
-            'magenta' => 0x06,
-            'fuchsia' => 0x06,
-            'gray' => 0x17,
-            'grey' => 0x17,
-            'green' => 0x11,
-            'lime' => 0x03,
-            'navy' => 0x12,
-            'orange' => 0x35,
-            'purple' => 0x14,
-            'red' => 0x02,
-            'silver' => 0x16,
-            'white' => 0x01,
-            'yellow' => 0x05
-        );
-
-        // Return the default color, 0x7FFF, if undef,
-        if ($name === '') {
-            return (0x7FFF);
-        }
-
-        // or the color string converted to an integer,
-        if (isset($colors[$name])) {
-            return ($colors[$name]);
-        }
-
-        // or the default color if string is unrecognised,
-        if (preg_match("/\D/", $name)) {
-            return (0x7FFF);
-        }
-
-        // or the default color if arg is outside range,
-        if ($name > 63) {
-            return (0x7FFF);
-        }
-
-        // or an integer in the valid range
-        return $name;
+        return Palette::getColor($name);
     }
 
     /**
@@ -638,10 +599,6 @@ class Format
         }
     }
 
-    /************************************
-     * FUNCTIONS FOR SETTING CELLS BORDERS
-     */
-
     /**
      * Sets the width for the bottom border of the cell
      *
@@ -682,7 +639,6 @@ class Format
         $this->right = $style;
     }
 
-
     /**
      * Set cells borders to the same style
      *
@@ -696,15 +652,10 @@ class Format
         $this->setRight($style);
     }
 
-
-    /*******************************************
-     * FUNCTIONS FOR SETTING CELLS BORDERS COLORS
-     */
-
     /**
      * Sets all the cell's borders to the same color
      *
-     * @param mixed $color The color we are setting. Either a string (like 'blue'),
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
      *                     or an integer (range is [8...63]).
      */
     public function setBorderColor($color)
@@ -718,57 +669,52 @@ class Format
     /**
      * Sets the cell's bottom border color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setBottomColor($color)
     {
-        $value = $this->getColor($color);
-        $this->bottomColor = $value;
+        $this->bottomColor = $this->getColor($color);
     }
 
     /**
      * Sets the cell's top border color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setTopColor($color)
     {
-        $value = $this->getColor($color);
-        $this->topColor = $value;
+        $this->topColor = $this->getColor($color);
     }
 
     /**
      * Sets the cell's left border color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setLeftColor($color)
     {
-        $value = $this->getColor($color);
-        $this->leftColor = $value;
+        $this->leftColor = $this->getColor($color);
     }
 
     /**
      * Sets the cell's right border color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setRightColor($color)
     {
-        $value = $this->getColor($color);
-        $this->rightColor = $value;
+        $this->rightColor = $this->getColor($color);
     }
 
 
     /**
      * Sets the cell's foreground color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setFgColor($color)
     {
-        $value = $this->getColor($color);
-        $this->fgColor = $value;
+        $this->fgColor = $this->getColor($color);
         if ($this->pattern == 0) { // force color to be seen
             $this->pattern = 1;
         }
@@ -777,12 +723,11 @@ class Format
     /**
      * Sets the cell's background color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setBgColor($color)
     {
-        $value = $this->getColor($color);
-        $this->bgColor = $value;
+        $this->bgColor = $this->getColor($color);
         if ($this->pattern == 0) { // force color to be seen
             $this->pattern = 1;
         }
@@ -791,12 +736,11 @@ class Format
     /**
      * Sets the cell's color
      *
-     * @param mixed $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setColor($color)
     {
-        $value = $this->getColor($color);
-        $this->color = $value;
+        $this->color = $this->getColor($color);
     }
 
     /**
