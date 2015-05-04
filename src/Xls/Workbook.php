@@ -42,12 +42,6 @@ class Workbook extends BIFFwriter
     protected $firstSheet;
 
     /**
-     * Number of workbook tabs selected
-     * @var integer
-     */
-    protected $selected;
-
-    /**
      * Index for creating adding new formats to the workbook
      * @var integer
      */
@@ -59,19 +53,6 @@ class Workbook extends BIFFwriter
      * @see close()
      */
     protected $fileClosed;
-
-    /**
-     * The BIFF file size for the workbook.
-     * @var integer
-     * @see calcSheetOffsets()
-     */
-    protected $biffSize;
-
-    /**
-     * The default sheetname for all sheets created.
-     * @var string
-     */
-    protected $sheetName;
 
     /**
      * The default XF format.
@@ -116,17 +97,6 @@ class Workbook extends BIFFwriter
     protected $countryCode;
 
     /**
-     * @var int
-     */
-    protected $stringSizeinfo;
-
-    /**
-     * number of bytes for sizeinfo of strings
-     * @var integer
-     */
-    protected $stringSizeinfoSize;
-
-    /**
      * @var
      */
     protected $blockSizes;
@@ -156,30 +126,24 @@ class Workbook extends BIFFwriter
         $this->filename = $filename;
         $this->formulaParser = new FormulaParser($this->byteOrder, $this->version);
         $this->f1904 = 0;
-        $this->selected = 0;
         $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
         $this->fileClosed = false;
-        $this->biffSize = 0;
-        $this->sheetName = 'Sheet';
 
         $this->activeSheet = 0;
         $this->firstSheet = 0;
         $this->worksheets = array();
         $this->sheetNames = array();
 
-        $this->formats = array();
-        $this->palette = array();
         $this->countryCode = -1;
-        $this->stringSizeinfo = 3;
 
+        $this->palette = Palette::getXl97Palette();
+
+        $this->formats = array();
         $this->tmpFormat = new Format($this->version);
-
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
         $this->initSST();
-
-        $this->setPaletteXl97();
 
         $this->creationTimestamp = time();
     }
@@ -263,7 +227,7 @@ class Workbook extends BIFFwriter
         $index = count($this->worksheets);
 
         if ($name == '') {
-            $name = $this->sheetName . ($index + 1);
+            $name = 'Sheet' . ($index + 1);
         }
 
         $maxLen = $this->biff->getMaxSheetNameLength();
@@ -362,7 +326,7 @@ class Workbook extends BIFFwriter
     public function addFormat($properties = array())
     {
         $format = new Format($this->version, $this->xfIndex, $properties);
-        $this->xfIndex += 1;
+        $this->xfIndex++;
         $this->formats[] = $format;
 
         return $format;
@@ -396,90 +360,28 @@ class Workbook extends BIFFwriter
             @_ = ($_[0], hex $1, hex $2, hex $3);
         }*/
 
-        // Check that the colour index is the right range
-        if ($index < 8 || $index > 64) {
-            throw new \Exception("Color index $index outside range: 8 <= index <= 64");
-        }
+        Palette::validateColor($index, $red, $green, $blue);
 
-        // Check that the colour components are in the right range
-        if (($red < 0 || $red > 255)
-            || ($green < 0 || $green > 255)
-            || ($blue < 0 || $blue > 255)
-        ) {
-            throw new \Exception("Color component outside range: 0 <= color <= 255");
-        }
+        // Set the RGB value, adjust colour index (wingless dragonfly)
+        $this->palette[$index - 8] = array($red, $green, $blue, 0);
 
-        $index -= 8; // Adjust colour index (wingless dragonfly)
-
-        // Set the RGB value
-        $this->palette[$index] = array($red, $green, $blue, 0);
-
-        return $index + 8;
+        return $index;
     }
 
     /**
-     * Sets the colour palette to the Excel 97+ default.
+     * @return int
      */
-    protected function setPaletteXl97()
+    protected function getSelectedSheetsCount()
     {
-        $this->palette = array(
-            array(0x00, 0x00, 0x00, 0x00), // 8
-            array(0xff, 0xff, 0xff, 0x00), // 9
-            array(0xff, 0x00, 0x00, 0x00), // 10
-            array(0x00, 0xff, 0x00, 0x00), // 11
-            array(0x00, 0x00, 0xff, 0x00), // 12
-            array(0xff, 0xff, 0x00, 0x00), // 13
-            array(0xff, 0x00, 0xff, 0x00), // 14
-            array(0x00, 0xff, 0xff, 0x00), // 15
-            array(0x80, 0x00, 0x00, 0x00), // 16
-            array(0x00, 0x80, 0x00, 0x00), // 17
-            array(0x00, 0x00, 0x80, 0x00), // 18
-            array(0x80, 0x80, 0x00, 0x00), // 19
-            array(0x80, 0x00, 0x80, 0x00), // 20
-            array(0x00, 0x80, 0x80, 0x00), // 21
-            array(0xc0, 0xc0, 0xc0, 0x00), // 22
-            array(0x80, 0x80, 0x80, 0x00), // 23
-            array(0x99, 0x99, 0xff, 0x00), // 24
-            array(0x99, 0x33, 0x66, 0x00), // 25
-            array(0xff, 0xff, 0xcc, 0x00), // 26
-            array(0xcc, 0xff, 0xff, 0x00), // 27
-            array(0x66, 0x00, 0x66, 0x00), // 28
-            array(0xff, 0x80, 0x80, 0x00), // 29
-            array(0x00, 0x66, 0xcc, 0x00), // 30
-            array(0xcc, 0xcc, 0xff, 0x00), // 31
-            array(0x00, 0x00, 0x80, 0x00), // 32
-            array(0xff, 0x00, 0xff, 0x00), // 33
-            array(0xff, 0xff, 0x00, 0x00), // 34
-            array(0x00, 0xff, 0xff, 0x00), // 35
-            array(0x80, 0x00, 0x80, 0x00), // 36
-            array(0x80, 0x00, 0x00, 0x00), // 37
-            array(0x00, 0x80, 0x80, 0x00), // 38
-            array(0x00, 0x00, 0xff, 0x00), // 39
-            array(0x00, 0xcc, 0xff, 0x00), // 40
-            array(0xcc, 0xff, 0xff, 0x00), // 41
-            array(0xcc, 0xff, 0xcc, 0x00), // 42
-            array(0xff, 0xff, 0x99, 0x00), // 43
-            array(0x99, 0xcc, 0xff, 0x00), // 44
-            array(0xff, 0x99, 0xcc, 0x00), // 45
-            array(0xcc, 0x99, 0xff, 0x00), // 46
-            array(0xff, 0xcc, 0x99, 0x00), // 47
-            array(0x33, 0x66, 0xff, 0x00), // 48
-            array(0x33, 0xcc, 0xcc, 0x00), // 49
-            array(0x99, 0xcc, 0x00, 0x00), // 50
-            array(0xff, 0xcc, 0x00, 0x00), // 51
-            array(0xff, 0x99, 0x00, 0x00), // 52
-            array(0xff, 0x66, 0x00, 0x00), // 53
-            array(0x66, 0x66, 0x99, 0x00), // 54
-            array(0x96, 0x96, 0x96, 0x00), // 55
-            array(0x00, 0x33, 0x66, 0x00), // 56
-            array(0x33, 0x99, 0x66, 0x00), // 57
-            array(0x00, 0x33, 0x00, 0x00), // 58
-            array(0x33, 0x33, 0x00, 0x00), // 59
-            array(0x99, 0x33, 0x00, 0x00), // 60
-            array(0x99, 0x33, 0x66, 0x00), // 61
-            array(0x33, 0x33, 0x99, 0x00), // 62
-            array(0x33, 0x33, 0x33, 0x00), // 63
-        );
+        $selected = 0;
+
+        foreach ($this->worksheets as $sheet) {
+            if ($sheet->isSelected()) {
+                $selected++;
+            }
+        }
+
+        return $selected;
     }
 
     /**
@@ -498,9 +400,6 @@ class Workbook extends BIFFwriter
         // Calculate the number of selected worksheet tabs and call the finalization
         // methods for each worksheet
         foreach ($this->worksheets as $sheet) {
-            if ($sheet->isSelected()) {
-                $this->selected++;
-            }
             $sheet->close($this->sheetNames);
         }
 
@@ -611,8 +510,6 @@ class Workbook extends BIFFwriter
             $sheet->setOffset($offset);
             $offset += $sheet->getDataSize();
         }
-
-        $this->biffSize = $offset;
     }
 
     /**
@@ -819,7 +716,7 @@ class Workbook extends BIFFwriter
         $this->appendRecord(
             'Window1',
             array(
-                $this->selected,
+                $this->getSelectedSheetsCount(),
                 $this->firstSheet,
                 $this->activeSheet
             )
