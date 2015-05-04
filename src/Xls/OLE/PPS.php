@@ -96,7 +96,7 @@ class PPS
     /**
      * The constructor
      *
-     * @param integer $index   The PPS index
+     * @param integer $index The PPS index
      * @param string $name The PPS name
      * @param integer $type The PPS type. Dir, Root or File
      * @param integer $prev The index of the previous PPS
@@ -105,7 +105,7 @@ class PPS
      * @param integer $time1st A timestamp
      * @param integer $time2nd A timestamp
      * @param string $data  The (usually binary) source data of the PPS
-     * @param array $children Array containing children PPS for this PPS
+     * @param PPS[] $children Array containing children PPS for this PPS
      */
     public function __construct(
         $index = null,
