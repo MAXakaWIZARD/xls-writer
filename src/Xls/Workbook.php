@@ -54,7 +54,7 @@ class Workbook extends BIFFwriter
      * @var boolean
      * @see close()
      */
-    protected $fileClosed = false;
+    protected $saved = false;
 
     /**
      * The default XF format.
@@ -114,18 +114,12 @@ class Workbook extends BIFFwriter
     protected $sst;
 
     /**
-     * Class constructor
-     *
-     * @param string $filename filename for storing the workbook. "-" for writing to stdout.
      * @param int $version
      */
-    public function __construct(
-        $filename,
-        $version = Biff5::VERSION
-    ) {
+    public function __construct($version = Biff5::VERSION)
+    {
         parent::__construct($version);
 
-        $this->filename = $filename;
         $this->formulaParser = new FormulaParser($this->byteOrder, $this->version);
 
         $this->palette = Palette::getXl97Palette();
@@ -156,20 +150,76 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Calls finalization methods.
+     * Assemble worksheets into a workbook and send the BIFF data to an OLE
+     * storage.
      * This method should always be the last one to be called on every workbook
+     *
+     * @param string $filePath File path to save
      *
      * @throws \Exception
      * @return boolean true on success.
      */
-    public function close()
+    public function save($filePath)
     {
-        if ($this->fileClosed) {
+        $this->filename = $filePath;
+
+        if ($this->saved) {
+            throw new \Exception('Workbook was already saved!');
+        }
+
+        if (count($this->worksheets) == 0) {
             return;
         }
 
-        $this->save();
-        $this->fileClosed = true;
+        // Calculate the number of selected worksheet tabs and call the finalization
+        // methods for each worksheet
+        foreach ($this->worksheets as $sheet) {
+            $sheet->close($this->sheetNames);
+        }
+
+        // Add Workbook globals
+        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
+        $this->appendRecord('Codepage', array($this->biff->getCodepage()));
+
+        if ($this->isBiff8()) {
+            $this->storeWindow1();
+            $this->storeNames();
+        } else {
+            $this->storeExterns();
+            $this->storeNames();
+            $this->storeWindow1();
+        }
+
+        $this->storeDatemode();
+        $this->storeAllFonts();
+        $this->storeAllNumFormats();
+        $this->storeAllXfs();
+        $this->storeAllStyles();
+        $this->appendRecord('Palette', array($this->palette));
+
+        $this->calcSheetOffsets();
+        foreach ($this->worksheets as $sheet) {
+            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
+        }
+
+        if ($this->countryCode != -1) {
+            $this->appendRecord('Country', array($this->countryCode));
+        }
+
+        if ($this->isBiff8()) {
+            /* TODO: store external SUPBOOK records and XCT and CRN records
+            * in case of external references for BIFF8
+            */
+            //$this->appendRecord('Supbook', $this->worksheets);
+            //$this->storeExternsheetBiff8();
+            $this->storeSharedStringsTable();
+        }
+
+        $this->appendRecord('Eof');
+
+        $this->saveOleFile();
+
+        $this->saved = true;
     }
 
     /**
@@ -375,67 +425,6 @@ class Workbook extends BIFFwriter
         }
 
         return $selected;
-    }
-
-    /**
-     * Assemble worksheets into a workbook and send the BIFF data to an OLE
-     * storage.
-     *
-     * @throws \Exception
-     */
-    protected function save()
-    {
-        if (count($this->worksheets) == 0) {
-            return;
-        }
-
-        // Calculate the number of selected worksheet tabs and call the finalization
-        // methods for each worksheet
-        foreach ($this->worksheets as $sheet) {
-            $sheet->close($this->sheetNames);
-        }
-
-        // Add Workbook globals
-        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
-        $this->appendRecord('Codepage', array($this->biff->getCodepage()));
-
-        if ($this->isBiff8()) {
-            $this->storeWindow1();
-            $this->storeNames();
-        } else {
-            $this->storeExterns();
-            $this->storeNames();
-            $this->storeWindow1();
-        }
-
-        $this->storeDatemode();
-        $this->storeAllFonts();
-        $this->storeAllNumFormats();
-        $this->storeAllXfs();
-        $this->storeAllStyles();
-        $this->appendRecord('Palette', array($this->palette));
-
-        $this->calcSheetOffsets();
-        foreach ($this->worksheets as $sheet) {
-            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
-        }
-
-        if ($this->countryCode != -1) {
-            $this->appendRecord('Country', array($this->countryCode));
-        }
-
-        if ($this->isBiff8()) {
-            /* TODO: store external SUPBOOK records and XCT and CRN records
-            * in case of external references for BIFF8
-            */
-            //$this->appendRecord('Supbook', $this->worksheets);
-            //$this->storeExternsheetBiff8();
-            $this->storeSharedStringsTable();
-        }
-
-        $this->appendRecord('Eof');
-
-        $this->saveOleFile();
     }
 
     /**

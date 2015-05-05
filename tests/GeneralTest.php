@@ -1,7 +1,7 @@
 <?php
 namespace Xls\Tests;
 
-use Xls\Writer;
+use Xls\Workbook;
 use Xls\Biff5;
 use Xls\Biff8;
 use Xls\Format;
@@ -10,7 +10,7 @@ use Xls\Cell;
 /**
  *
  */
-class XlsWriterTest extends \PHPUnit_Framework_TestCase
+class GeneralTest extends \PHPUnit_Framework_TestCase
 {
     const WORKBOOK_TS = 1429042916;
 
@@ -41,7 +41,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
     public function testUnsupportedVersion()
     {
         $this->setExpectedException('\Exception', 'Unsupported BIFF version');
-        new Writer($this->testFilePath, 0);
+        new Workbook($this->testFilePath, 0);
     }
 
     /**
@@ -50,7 +50,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testGeneral($params)
     {
-        $workbook = new Writer($this->testFilePath, $params['format']);
+        $workbook = new Workbook($params['format']);
         //needed for test files comparison
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
@@ -65,7 +65,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $worksheet->write(3, 0, 'Juan Herrera');
         $worksheet->write(3, 1, 32);
 
-        $workbook->close();
+        $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
@@ -100,7 +100,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testRich($params)
     {
-        $workbook = new Writer($this->testFilePath, $params['format']);
+        $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         $worksheet = $workbook->addWorksheet($params['sheetName']);
@@ -161,7 +161,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $countValidator->setFormula1('INDIRECT(ADDRESS(ROW(), COLUMN())) > 0');
         $worksheet->setValidation(1, 1, 3, 1, $countValidator);
 
-        $workbook->close();
+        $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
@@ -219,14 +219,14 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testProtected($params)
     {
-        $workbook = new Writer($this->testFilePath, $params['format']);
+        $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         $worksheet = $workbook->addWorksheet();
         $worksheet->write(0, 0, 'Test');
         $worksheet->protect('1234');
 
-        $workbook->close();
+        $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
@@ -258,14 +258,14 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testSelection()
     {
-        $workbook = new Writer($this->testFilePath);
+        $workbook = new Workbook();
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         $worksheet = $workbook->addWorksheet();
         $worksheet->write(0, 0, 'Test');
         $worksheet->setSelection(0, 0, 5, 5);
 
-        $workbook->close();
+        $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/selection.xls', $this->testFilePath);
@@ -276,7 +276,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
      */
     public function testMultipleSheets()
     {
-        $workbook = new Writer($this->testFilePath);
+        $workbook = new Workbook();
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         for ($i = 1; $i <= 4; $i++) {
@@ -284,7 +284,7 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
             $s->write(0, 0, 'Test' . $i);
         }
 
-        $workbook->close();
+        $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/multiple_sheets.xls', $this->testFilePath);

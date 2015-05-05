@@ -25,7 +25,7 @@ If you notice compliance oversights, please send a patch via pull request.
 ```php
 require('vendor/autoload.php');
 
-$workbook = new Xls\Writer('test.xls');
+$workbook = new Xls\Workbook();
 
 $worksheet = $workbook->addWorksheet('My first worksheet');
 
@@ -38,7 +38,7 @@ $worksheet->write(2, 1, 31);
 $worksheet->write(3, 0, 'Juan Herrera');
 $worksheet->write(3, 1, 32);
 
-$workbook->close();
+$workbook->save('/path/to/test.xls');
 ```
 
 ## Documentation

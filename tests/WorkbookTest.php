@@ -11,11 +11,6 @@ use Xls\Biff8;
 class WorkbookTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var string
-     */
-    protected $testFilePath;
-
-    /**
      * @var Workbook
      */
     protected $workbook;
@@ -25,8 +20,7 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->testFilePath = TEST_DATA_PATH . '/test.xls';
-        $this->workbook = new Workbook($this->testFilePath);
+        $this->workbook = new Workbook();
     }
 
     /**
@@ -83,7 +77,7 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
      */
     public function testVeryLongSheetName()
     {
-        $this->workbook = new Workbook($this->testFilePath, Biff8::VERSION);
+        $this->workbook = new Workbook(Biff8::VERSION);
         $longName = str_repeat('a', 300);
         $this->setExpectedException('\Exception', "Sheet name must be shorter than 255 chars");
         $this->workbook->addWorksheet($longName);
