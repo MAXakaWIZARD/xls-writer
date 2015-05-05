@@ -91,19 +91,19 @@ class Worksheet extends BIFFwriter
      * Array containing format information for columns
      * @var array
      */
-    public $colInfo;
+    public $colInfo = array();
 
     /**
      * Array containing the selected area for the worksheet
      * @var array
      */
-    public $selection;
+    public $selection = array(0, 0, 0, 0);
 
     /**
      * Array containing the panes for the worksheet
      * @var array
      */
-    public $panes;
+    public $panes = array();
 
     /**
      * The active pane for the worksheet
@@ -115,19 +115,19 @@ class Worksheet extends BIFFwriter
      * Bit specifying if panes are frozen
      * @var integer
      */
-    public $frozen;
+    public $frozen = 0;
 
     /**
      * Bit specifying if the worksheet is selected
      * @var integer
      */
-    protected $selected;
+    protected $selected = 0;
 
     /**
      * The paper size (for printing) (DOCUMENT!!!)
      * @var integer
      */
-    public $paperSize;
+    public $paperSize = 0;
 
     /**
      * Bit specifying paper orientation (for printing). 0 => landscape, 1 => portrait
@@ -139,25 +139,25 @@ class Worksheet extends BIFFwriter
      * The page header caption
      * @var string
      */
-    public $header;
+    public $header = '';
 
     /**
      * The page footer caption
      * @var string
      */
-    public $footer;
+    public $footer = '';
 
     /**
      * The horizontal centering value for the page
      * @var integer
      */
-    public $hcenter;
+    public $hcenter = 0;
 
     /**
      * The vertical centering value for the page
      * @var integer
      */
-    public $vcenter;
+    public $vcenter = 0;
 
     /**
      * The margin for the header
@@ -199,103 +199,103 @@ class Worksheet extends BIFFwriter
      * First row to reapeat on each printed page
      * @var integer
      */
-    public $titleRowMin;
+    public $titleRowMin = null;
 
     /**
      * Last row to reapeat on each printed page
      * @var integer
      */
-    public $titleRowMax;
+    public $titleRowMax = null;
 
     /**
      * First column to reapeat on each printed page
      * @var integer
      */
-    public $titleColMin;
+    public $titleColMin = null;
 
     /**
      * Last column to reapeat on each printed page
      * @var integer
      */
-    public $titleColMax;
+    public $titleColMax = null;
 
     /**
      * First row of the area to print
      * @var integer
      */
-    public $printRowMin;
+    public $printRowMin = null;
 
     /**
      * Last row to of the area to print
      * @var integer
      */
-    public $printRowMax;
+    public $printRowMax = null;
 
     /**
      * First column of the area to print
      * @var integer
      */
-    public $printColMin;
+    public $printColMin = null;
 
     /**
      * Last column of the area to print
      * @var integer
      */
-    public $printColMax;
+    public $printColMax = null;
 
     /**
      * Whether to display RightToLeft.
      * @var integer
      */
-    public $arabic;
+    public $arabic = 0;
 
     /**
      * Whether to use outline.
      * @var integer
      */
-    public $outlineOn;
+    public $outlineOn = 1;
 
     /**
      * Auto outline styles.
      * @var bool
      */
-    public $outlineStyle;
+    public $outlineStyle = 0;
 
     /**
      * Whether to have outline summary below.
      * @var bool
      */
-    public $outlineBelow;
+    public $outlineBelow = 1;
 
     /**
      * Whether to have outline summary at the right.
      * @var bool
      */
-    public $outlineRight;
+    public $outlineRight = 1;
 
     /**
      * Outline row level.
      * @var integer
      */
-    public $outlineRowLevel;
+    public $outlineRowLevel = 0;
 
     /**
      * Whether to fit to page when printing or not.
      * @var bool
      */
-    public $fitPage;
+    public $fitPage = 0;
 
     /**
      * Number of pages to fit wide
      * @var integer
      */
-    public $fitWidth;
+    public $fitWidth = 0;
 
     /**
      * Number of pages to fit high
      * @var integer
      */
-    public $fitHeight;
+    public $fitHeight = 0;
 
     /**
      * @var SharedStringsTable
@@ -325,31 +325,31 @@ class Worksheet extends BIFFwriter
      * Merged cell ranges
      * @var array
      */
-    public $mergedRanges;
+    public $mergedRanges = array();
 
     /**
      * Charset encoding currently used when calling writeString()
      * @var string
      */
-    public $inputEncoding;
+    public $inputEncoding = '';
 
     /**
      * @var int
      */
     protected $offset;
 
-    protected $printGridLines;
-    protected $screenGridLines;
-    protected $printHeaders;
-    protected $hbreaks;
-    protected $vbreaks;
-    protected $protect;
-    protected $password;
-    protected $colSizes;
-    protected $rowSizes;
-    protected $zoom;
-    protected $printScale;
-    protected $dv;
+    protected $printGridLines = 1;
+    protected $screenGridLines = 1;
+    protected $printHeaders = 0;
+    protected $hbreaks = array();
+    protected $vbreaks = array();
+    protected $protect = 0;
+    protected $password = null;
+    protected $colSizes = array();
+    protected $rowSizes = array();
+    protected $zoom = 100;
+    protected $printScale = 100;
+    protected $dv = array();
 
     /**
      * Constructor
@@ -385,67 +385,15 @@ class Worksheet extends BIFFwriter
         $this->dimRowmax = 0;
         $this->dimColmin = $this->xlsColmax + 1;
         $this->dimColmax = 0;
-        $this->colInfo = array();
-        $this->selection = array(0, 0, 0, 0);
-        $this->panes = array();
         $this->activePane = 3;
-        $this->frozen = 0;
-        $this->selected = 0;
 
-        $this->paperSize = 0x0;
         $this->orientation = self::ORIENTATION_PORTRAIT;
-        $this->header = '';
-        $this->footer = '';
-        $this->hcenter = 0;
-        $this->vcenter = 0;
         $this->marginHead = 0.50;
         $this->marginFoot = 0.50;
         $this->marginLeft = 0.75;
         $this->marginRight = 0.75;
         $this->marginTop = 1.00;
         $this->marginBottom = 1.00;
-
-        $this->titleRowMin = null;
-        $this->titleRowMax = null;
-        $this->titleColMin = null;
-        $this->titleColMax = null;
-        $this->printRowMin = null;
-        $this->printRowMax = null;
-        $this->printColMin = null;
-        $this->printColMax = null;
-
-        $this->printGridLines = 1;
-        $this->screenGridLines = 1;
-        $this->printHeaders = 0;
-
-        $this->fitPage = 0;
-        $this->fitWidth = 0;
-        $this->fitHeight = 0;
-
-        $this->hbreaks = array();
-        $this->vbreaks = array();
-
-        $this->protect = 0;
-        $this->password = null;
-
-        $this->colSizes = array();
-        $this->rowSizes = array();
-
-        $this->zoom = 100;
-        $this->printScale = 100;
-
-        $this->outlineRowLevel = 0;
-        $this->outlineStyle = 0;
-        $this->outlineBelow = 1;
-        $this->outlineRight = 1;
-        $this->outlineOn = 1;
-        $this->arabic = 0;
-
-        $this->mergedRanges = array();
-
-        $this->inputEncoding = '';
-
-        $this->dv = array();
 
         $this->init();
     }
