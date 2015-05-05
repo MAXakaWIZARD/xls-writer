@@ -21,6 +21,29 @@ class Format
     const SCRIPT_SUPER = 1;
     const SCRIPT_SUB = 2;
 
+    const FONT_NORMAL = 400;
+    const FONT_BOLD = 700;
+
+    const PATTERN_NONE = 0;
+    const PATTERN_SOLID = 1;
+    const PATTERN_GRAY6 = 18;
+    const PATTERN_GRAY12 = 17;
+    const PATTERN_GRAY25 = 4;
+    const PATTERN_GRAY50 = 2;
+    const PATTERN_GRAY75 = 3;
+    const PATTERN_HORIZONTAL_STRIPE = 5;
+    const PATTERN_VERTICAL_STRIPE = 6;
+    const PATTERN_REVERSE_DIAGONAL_STRIPE = 7;
+    const PATTERN_DIAGONAL_STRIPE = 8;
+    const PATTERN_DIAGONAL_CROSSHATCH = 9;
+    const PATTERN_THICK_DIAGONAL_CROSSHATCH = 10;
+    const PATTERN_THIN_HORIZONTAL_STRIPE = 11;
+    const PATTERN_THIN_VERTICAL_STRIPE = 12;
+    const PATTERN_THIN_REVERSE_DIAGONAL_STRIPE = 13;
+    const PATTERN_THIN_DIAGONAL_STRIPE = 14;
+    const PATTERN_THIN_HORIZONTAL_CROSSHATCH = 15;
+    const PATTERN_THIN_DIAGONAL_CROSSHATCH = 16;
+
     /**
      * @var integer
      */
@@ -242,9 +265,12 @@ class Format
         'top' => 0,
         'vcentre' => 1,
         'vcenter' => 1,
+        'center' => 1,
         'bottom' => 2,
         'vjustify' => 3,
-        'vequal_space' => 4
+        'justify' => 3,
+        'vequal_space' => 4,
+        'equal_space' => 4
     );
 
     /**
@@ -378,34 +404,19 @@ class Format
     }
 
     /**
-     * This is an alias for the unintuitive setAlign('merge')
-     *
+     * Sets the boldness of the text.
      */
-    public function setMerge()
+    public function setBold()
     {
-        $this->setAlign('merge');
+        $this->bold = self::FONT_BOLD;
     }
 
     /**
-     * Sets the boldness of the text.
-     * Bold has a range 100..1000.
-     * 0 (400) is normal. 1 (700) is bold.
      *
-     * @param integer $weight Weight for the text, 0 maps to 400 (normal text),
-     * 1 maps to 700 (bold text). Valid range is: 100-1000.
-     * It's Optional, default is 1 (bold).
      */
-    public function setBold($weight = 1)
+    public function setNormal()
     {
-        if ($weight == 1) {
-            $this->bold = 0x2BC; // Bold text
-        } elseif ($weight == 0) {
-            $this->bold = 0x190; // Normal text
-        } elseif ($weight < 0x064) {
-            $this->bold = 0x190; // Lower bound
-        } elseif ($weight > 0x3E8) {
-            $this->bold = 0x190; // Upper bound
-        }
+        $this->bold = self::FONT_NORMAL;
     }
 
     /**
@@ -524,8 +535,8 @@ class Format
     public function setFgColor($color)
     {
         $this->fgColor = $this->getColor($color);
-        if ($this->pattern == 0) { // force color to be seen
-            $this->pattern = 1;
+        if ($this->pattern == self::PATTERN_NONE) {
+            $this->setPattern(self::PATTERN_SOLID);
         }
     }
 
@@ -537,8 +548,8 @@ class Format
     public function setBgColor($color)
     {
         $this->bgColor = $this->getColor($color);
-        if ($this->pattern == 0) { // force color to be seen
-            $this->pattern = 1;
+        if ($this->pattern == self::PATTERN_NONE) {
+            $this->setPattern(self::PATTERN_SOLID);
         }
     }
 
@@ -555,12 +566,12 @@ class Format
     /**
      * Sets the fill pattern attribute of a cell
      *
-     * @param integer $arg Optional. Defaults to 1. Meaningful values are: 0-18,
+     * @param integer $pattern Optional. Defaults to 1. Meaningful values are: 0-18,
      *                     0 meaning no background.
      */
-    public function setPattern($arg = 1)
+    public function setPattern($pattern = self::PATTERN_SOLID)
     {
-        $this->pattern = $arg;
+        $this->pattern = $pattern;
     }
 
     /**
@@ -606,7 +617,7 @@ class Format
      * Sets the orientation of the text
      *
      * @param integer $angle The rotation angle for the text (clockwise). Possible
-    values are: 0, 90, 270 and -1 for stacking top-to-bottom.
+     * values are: 0, 90, 270 and -1 for stacking top-to-bottom.
      * @throws \Exception
      */
     public function setTextRotation($angle)
