@@ -46,12 +46,6 @@ class Worksheet extends BIFFwriter
     public $fileHandle;
 
     /**
-     * Boolean indicating if we are using a temporary file for storing data
-     * @var bool
-     */
-    public $usingTmpFile;
-
-    /**
      * Maximum number of rows for an Excel spreadsheet (BIFF5)
      * @var integer
      */
@@ -384,7 +378,6 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->usingTmpFile = true;
         $this->xlsRowmax = Biff5::MAX_ROWS;
         $this->xlsColmax = Biff5::MAX_COLS;
         $this->xlsStrmax = Biff5::MAX_STR_LENGTH;
@@ -464,19 +457,11 @@ class Worksheet extends BIFFwriter
      */
     protected function init()
     {
-        if (!$this->usingTmpFile) {
-            return;
-        }
-
         $this->tmpFile = tempnam($this->tmpDir, "Spreadsheet_Excel_Writer");
-        $fh = @fopen($this->tmpFile, "w+b");
+        $this->fileHandle = @fopen($this->tmpFile, "w+b");
 
-        if ($fh === false) {
-            // If tmpfile() fails store data in memory
-            $this->usingTmpFile = false;
-        } else {
-            // Store filehandle
-            $this->fileHandle = $fh;
+        if ($this->fileHandle === false) {
+            throw new \Exception('Unable to create temporary file');
         }
     }
 
@@ -598,7 +583,6 @@ class Worksheet extends BIFFwriter
         if ($this->tmpFile != '') {
             @unlink($this->tmpFile);
             $this->tmpFile = '';
-            $this->usingTmpFile = true;
         }
     }
 
@@ -614,30 +598,25 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Retrieves data from memory in one chunk, or from disk in $buffer
-     * sized chunks.
+     * Retrieves data from memory in one chunk (prepended data),
+     * or from disk in chunks (appended data).
      *
      * @return string The data
      */
     public function getData()
     {
-        $buffer = 4096;
-
         // Return data stored in memory
         if (isset($this->data)) {
             $tmp = $this->data;
-            unset($this->data);
-            $fh = $this->fileHandle;
-            if ($this->usingTmpFile) {
-                fseek($fh, 0);
-            }
+            $this->data = null;
+
+            fseek($this->fileHandle, 0);
+
             return $tmp;
         }
-        // Return data stored on disk
-        if ($this->usingTmpFile) {
-            if ($tmp = fread($this->fileHandle, $buffer)) {
-                return $tmp;
-            }
+
+        if ($tmp = fread($this->fileHandle, 4096)) {
+            return $tmp;
         }
 
         // No data to return
@@ -1216,19 +1195,14 @@ class Worksheet extends BIFFwriter
 
 
     /**
-     * Store Worksheet data in memory using the parent's class append() or to a
-     * temporary file, the default.
+     * Store Worksheet data to a temporary file.
      * @param string $data The binary data to append
      */
     protected function append($data)
     {
-        if ($this->usingTmpFile) {
-            $data = $this->addContinueIfNeeded($data);
-            fwrite($this->fileHandle, $data);
-            $this->datasize += strlen($data);
-        } else {
-            parent::append($data);
-        }
+        $data = $this->addContinueIfNeeded($data);
+        fwrite($this->fileHandle, $data);
+        $this->datasize += strlen($data);
     }
 
     /**
