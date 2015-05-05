@@ -24,26 +24,6 @@ class Format
     const FONT_NORMAL = 400;
     const FONT_BOLD = 700;
 
-    const PATTERN_NONE = 0;
-    const PATTERN_SOLID = 1;
-    const PATTERN_GRAY6 = 18;
-    const PATTERN_GRAY12 = 17;
-    const PATTERN_GRAY25 = 4;
-    const PATTERN_GRAY50 = 2;
-    const PATTERN_GRAY75 = 3;
-    const PATTERN_HORIZONTAL_STRIPE = 5;
-    const PATTERN_VERTICAL_STRIPE = 6;
-    const PATTERN_REVERSE_DIAGONAL_STRIPE = 7;
-    const PATTERN_DIAGONAL_STRIPE = 8;
-    const PATTERN_DIAGONAL_CROSSHATCH = 9;
-    const PATTERN_THICK_DIAGONAL_CROSSHATCH = 10;
-    const PATTERN_THIN_HORIZONTAL_STRIPE = 11;
-    const PATTERN_THIN_VERTICAL_STRIPE = 12;
-    const PATTERN_THIN_REVERSE_DIAGONAL_STRIPE = 13;
-    const PATTERN_THIN_DIAGONAL_STRIPE = 14;
-    const PATTERN_THIN_HORIZONTAL_CROSSHATCH = 15;
-    const PATTERN_THIN_DIAGONAL_CROSSHATCH = 16;
-
     /**
      * @var integer
      */
@@ -77,7 +57,7 @@ class Format
      * Bold style
      * @var integer
      */
-    public $bold = 0x0190;
+    public $bold = self::FONT_NORMAL;
 
     /**
      * Bit specifiying if the font is italic.
@@ -535,8 +515,8 @@ class Format
     public function setFgColor($color)
     {
         $this->fgColor = $this->getColor($color);
-        if ($this->pattern == self::PATTERN_NONE) {
-            $this->setPattern(self::PATTERN_SOLID);
+        if ($this->pattern == Fill::PATTERN_NONE) {
+            $this->setPattern(Fill::PATTERN_SOLID);
         }
     }
 
@@ -548,8 +528,8 @@ class Format
     public function setBgColor($color)
     {
         $this->bgColor = $this->getColor($color);
-        if ($this->pattern == self::PATTERN_NONE) {
-            $this->setPattern(self::PATTERN_SOLID);
+        if ($this->pattern == Fill::PATTERN_NONE) {
+            $this->setPattern(Fill::PATTERN_SOLID);
         }
     }
 
@@ -569,7 +549,7 @@ class Format
      * @param integer $pattern Optional. Defaults to 1. Meaningful values are: 0-18,
      *                     0 meaning no background.
      */
-    public function setPattern($pattern = self::PATTERN_SOLID)
+    public function setPattern($pattern = Fill::PATTERN_SOLID)
     {
         $this->pattern = $pattern;
     }

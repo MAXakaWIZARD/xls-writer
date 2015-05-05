@@ -5,6 +5,7 @@ use Xls\Workbook;
 use Xls\Biff5;
 use Xls\Biff8;
 use Xls\Format;
+use Xls\Fill;
 use Xls\Cell;
 
 /**
@@ -111,7 +112,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $headerFormat->setBorderColor('navy');
         $headerFormat->setColor('blue');
         $headerFormat->setAlign('center');
-        $headerFormat->setPattern(Format::PATTERN_GRAY50);
+        $headerFormat->setPattern(Fill::PATTERN_GRAY50);
 
         //#ccc
         $workbook->setCustomColor(12, 204, 204, 204);
@@ -207,8 +208,6 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        //if ($params['file'] == 'rich.xls') exit;
-        //if ($params['file'] == 'rich_biff8.xls') exit;
         $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
     }
 
