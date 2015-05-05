@@ -253,6 +253,25 @@ class Format
         'equal_space' => 4
     );
 
+    protected $rotationMap = array(
+        0 => array(
+            Biff5::VERSION => 0,
+            Biff8::VERSION => 0,
+        ),
+        90 => array(
+            Biff5::VERSION => 3,
+            Biff8::VERSION => 180,
+        ),
+        270 => array(
+            Biff5::VERSION => 2,
+            Biff8::VERSION => 90,
+        ),
+        -1 => array(
+            Biff5::VERSION => 1,
+            Biff8::VERSION => 255,
+        )
+    );
+
     /**
      * @param integer $version
      * @param integer $index the XF index for the format.
@@ -602,39 +621,15 @@ class Format
      */
     public function setTextRotation($angle)
     {
-        switch ($angle) {
-            case 0:
-                $this->rotation = 0;
-                break;
-            case 90:
-                if ($this->version === Biff5::VERSION) {
-                    $this->rotation = 3;
-                } else {
-                    $this->rotation = 180;
-                }
-                break;
-            case 270:
-                if ($this->version == Biff5::VERSION) {
-                    $this->rotation = 2;
-                } else {
-                    $this->rotation = 90;
-                }
-                break;
-            case -1:
-                if ($this->version == Biff5::VERSION) {
-                    $this->rotation = 1;
-                } else {
-                    $this->rotation = 255;
-                }
-                break;
-            default:
-                throw new \Exception(
-                    "Invalid value for angle." .
-                    " Possible values are: 0, 90, 270 and -1 " .
-                    "for stacking top-to-bottom."
-                );
-                break;
+        if (!isset($this->rotationMap[$angle])) {
+            throw new \Exception(
+                "Invalid value for angle." .
+                " Possible values are: 0, 90, 270 and -1 " .
+                "for stacking top-to-bottom."
+            );
         }
+
+        $this->rotation = $this->rotationMap[$angle][$this->version];
     }
 
     /**
