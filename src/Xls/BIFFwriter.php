@@ -48,6 +48,7 @@ class BIFFwriter
 
     /**
      * The size of the data in bytes. Should be the same as strlen($this->data)
+     * But this is not true for Worksheet, cause it writes directly to file
      * @var integer
      */
     protected $datasize = 0;
@@ -155,7 +156,7 @@ class BIFFwriter
         $data = $this->addContinueIfNeeded($data);
 
         $this->data = $data . $this->data;
-        $this->datasize = strlen($this->data);
+        $this->datasize += strlen($data);
     }
 
     /**
@@ -165,8 +166,8 @@ class BIFFwriter
     {
         $data = $this->addContinueIfNeeded($data);
 
-        $this->data = $this->data . $data;
-        $this->datasize = strlen($this->data);
+        $this->data .= $data;
+        $this->datasize += strlen($data);
     }
 
     /**

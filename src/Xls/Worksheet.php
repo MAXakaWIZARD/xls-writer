@@ -427,13 +427,12 @@ class Worksheet extends BIFFwriter
      * and to the end of the workbook.
      *
      * @see Workbook::storeWorkbook()
-     * @param array $sheetnames The array of sheetnames from the Workbook this
+     *
+     * @param array $sheetNames The array of sheetnames from the Workbook this
      *                          worksheet belongs to
      */
-    public function close($sheetnames)
+    public function close($sheetNames)
     {
-        $numSheets = count($sheetnames);
-
         /***********************************************
          * Prepend in reverse order!!
          */
@@ -494,17 +493,16 @@ class Worksheet extends BIFFwriter
         // Prepend PRINTHEADERS
         $this->storePrintHeaders();
 
-        // Prepend EXTERNSHEET references
         if ($this->isBiff5()) {
-            for ($i = $numSheets; $i > 0; $i--) {
-                $sheetname = $sheetnames[$i - 1];
-                $this->storeExternsheet($sheetname);
+            $sheetsCount = count($sheetNames);
+            // Prepend EXTERNSHEET references
+            for ($i = $sheetsCount; $i > 0; $i--) {
+                $sheetName = $sheetNames[$i - 1];
+                $this->storeExternsheet($sheetName);
             }
-        }
 
-        // Prepend the EXTERNCOUNT of external references.
-        if ($this->isBiff5()) {
-            $this->prependRecord('Externcount', array($numSheets));
+            // Prepend the EXTERNCOUNT of external references.
+            $this->prependRecord('Externcount', array($sheetsCount));
         }
 
         // Prepend the COLINFO records if they exist

@@ -270,4 +270,23 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/selection.xls', $this->testFilePath);
     }
+
+    /**
+     *
+     */
+    public function testMultipleSheets()
+    {
+        $workbook = new Writer($this->testFilePath);
+        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+
+        for ($i = 1; $i <= 4; $i++) {
+            $s = $workbook->addWorksheet();
+            $s->write(0, 0, 'Test' . $i);
+        }
+
+        $workbook->close();
+
+        $this->assertFileExists($this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/multiple_sheets.xls', $this->testFilePath);
+    }
 }

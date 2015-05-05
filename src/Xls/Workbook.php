@@ -428,8 +428,8 @@ class Workbook extends BIFFwriter
         $this->storeAllXfs();
         $this->storeAllStyles();
         $this->appendRecord('Palette', array($this->palette));
-        $this->calcSheetOffsets();
 
+        $this->calcSheetOffsets();
         foreach ($this->worksheets as $sheet) {
             $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
         }
