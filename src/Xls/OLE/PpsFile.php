@@ -20,17 +20,19 @@ class PpsFile extends PPS
     {
         parent::__construct(
             null,
-            $name,
+            OLE::asc2Ucs($name),
             OLE::PPS_TYPE_FILE
         );
+
+        $this->init();
     }
 
     /**
-     * Initialization method. Has to be called right after OLE_PPS_File().
+     * Init temporary file
      * @throws \Exception
      * @return boolean true on success.
      */
-    public function init()
+    protected function init()
     {
         $this->tmpFilename = tempnam($this->tmpDir, "OLE_PPS_File");
         $this->filePointer = @fopen($this->tmpFilename, "w+b");

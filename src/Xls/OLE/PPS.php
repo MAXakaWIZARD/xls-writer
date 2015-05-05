@@ -51,13 +51,7 @@ class PPS
      * A timestamp
      * @var integer
      */
-    protected $time1st;
-
-    /**
-     * A timestamp
-     * @var integer
-     */
-    protected $time2nd;
+    protected $timestamp;
 
     /**
      * Starting block (small or big) for this PPS's data  inside the container
@@ -102,8 +96,7 @@ class PPS
      * @param integer $prev The index of the previous PPS
      * @param integer $next The index of the next PPS
      * @param integer $dir  The index of it's first child if this is a Dir or Root PPS
-     * @param integer $time1st A timestamp
-     * @param integer $time2nd A timestamp
+     * @param integer $timestamp A timestamp
      * @param string $data  The (usually binary) source data of the PPS
      * @param PPS[] $children Array containing children PPS for this PPS
      */
@@ -114,19 +107,19 @@ class PPS
         $prev = null,
         $next = null,
         $dir = null,
-        $time1st = null,
-        $time2nd = null,
+        $timestamp = null,
         $data = '',
         $children = array()
     ) {
         $this->index = $index;
         $this->name = $name;
         $this->type = $type;
+
         $this->prevPps = $prev;
         $this->nextPps = $next;
         $this->dirPps = $dir;
-        $this->time1st = $time1st;
-        $this->time2nd = $time2nd;
+
+        $this->timestamp = $timestamp;
 
         $this->children = $children;
 
@@ -169,10 +162,11 @@ class PPS
         if (is_resource($this->filePointer)) {
             fseek($this->filePointer, 0);
             $stats = fstat($this->filePointer);
+
             return $stats[7];
-        } else {
-            return strlen($this->data);
         }
+
+        return strlen($this->data);
     }
 
     /**
@@ -182,12 +176,15 @@ class PPS
      */
     public function getPpsWk()
     {
-        $ret = $this->name;
-        for ($i = 0; $i < (64 - strlen($this->name)); $i++) {
-            $ret .= "\x00";
+        $result = $this->name;
+        $nameLength = strlen($this->name);
+        for ($i = 0; $i < (64 - $nameLength); $i++) {
+            $result .= "\x00";
         }
 
-        $ret .= pack("v", strlen($this->name) + 2) // 66
+        $datetime = OLE::localDate2OLE($this->timestamp);
+
+        $result .= pack("v", $nameLength + 2) // 66
             . pack("c", $this->type) // 67
             . pack("c", 0x00) //UK                // 68
             . pack("V", $this->prevPps) //Prev    // 72
@@ -198,13 +195,13 @@ class PPS
             . "\xc0\x00\x00\x00" // 92
             . "\x00\x00\x00\x46" // 96 // Seems to be ok only for Root
             . "\x00\x00\x00\x00" // 100
-            . OLE::localDate2OLE($this->time1st) // 108
-            . OLE::localDate2OLE($this->time2nd) // 116
+            . $datetime // 108
+            . $datetime // 116
             . pack("V", $this->getStartBlock()) // 120
             . pack("V", $this->getSize()) // 124
             . pack("V", 0); // 128
 
-        return $ret;
+        return $result;
     }
 
     /**
@@ -212,40 +209,44 @@ class PPS
      * PPS. I don't think it'll work with Dir PPS's.
      *
      * @param PPS[] &$list Reference to the array of PPS's for the whole OLE container
-     * @param array $toSave
+     * @param PPS[] $toSave
      * @param $depth
      *
-     * @return integer          The index for this PPS
+     * @return integer The index for this PPS
      */
-    public static function savePpsSetPnt(&$list, $toSave, $depth = 0)
+    public static function setPointers(&$list, $toSave, $depth = 0)
     {
-        if (!is_array($toSave) || (count($toSave) == 0)) {
+        $toSaveCount = count($toSave);
+
+        if (!is_array($toSave) || $toSaveCount == 0) {
             return 0xFFFFFFFF;
-        } elseif (count($toSave) == 1) {
-            $cnt = count($list);
-            // If the first entry, it's the root... Don't clone it!
-            $list[$cnt] = ($depth == 0) ? $toSave[0] : clone $toSave[0];
-            $list[$cnt]->setIndex($cnt);
-            $list[$cnt]->setPrevPps(0xFFFFFFFF);
-            $list[$cnt]->setNextPps(0xFFFFFFFF);
-            $list[$cnt]->setDirPps(self::savePpsSetPnt($list, $list[$cnt]->getChildren(), $depth++));
-
-            return $cnt;
-        } else {
-            $iPos = (int)floor(count($toSave) / 2);
-            $aPrev = array_slice($toSave, 0, $iPos);
-            $aNext = array_slice($toSave, $iPos + 1);
-
-            $cnt = count($list);
-            // If the first entry, it's the root... Don't clone it!
-            $list[$cnt] = ($depth == 0) ? $toSave[$iPos] : clone $toSave[$iPos];
-            $list[$cnt]->setIndex($cnt);
-            $list[$cnt]->setPrevPps(self::savePpsSetPnt($list, $aPrev, $depth++));
-            $list[$cnt]->setNextPps(self::savePpsSetPnt($list, $aNext, $depth++));
-            $list[$cnt]->setDirPps(self::savePpsSetPnt($list, $list[$cnt]->getChildren(), $depth++));
-
-            return $cnt;
         }
+
+        $cnt = count($list);
+        $iPos = intval(floor($toSaveCount / 2));
+
+        if ($toSaveCount == 1) {
+            $prev = 0xFFFFFFFF;
+            $next = 0xFFFFFFFF;
+        } else {
+            $aPrev = array_slice($toSave, 0, $iPos);
+            $prev = self::setPointers($list, $aPrev, $depth++);
+
+            $aNext = array_slice($toSave, $iPos + 1);
+            $next = self::setPointers($list, $aNext, $depth++);
+        }
+
+        // If the first entry, it's the root... Don't clone it!
+        $list[$cnt] = ($depth == 0) ? $toSave[$iPos] : clone $toSave[$iPos];
+        $list[$cnt]->setIndex($cnt);
+
+        $list[$cnt]->setPrevPps($prev);
+        $list[$cnt]->setNextPps($next);
+
+        $dir = self::setPointers($list, $list[$cnt]->getChildren(), $depth++);
+        $list[$cnt]->setDirPps($dir);
+
+        return $cnt;
     }
 
     /**
@@ -349,7 +350,7 @@ class PPS
     }
 
     /**
-     * @param $stream
+     * @param resource $stream
      *
      * @return string
      */

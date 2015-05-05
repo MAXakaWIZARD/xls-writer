@@ -729,4 +729,20 @@ class Format
     {
         return $this->version;
     }
+
+    /**
+     * @return bool
+     */
+    public function isBuiltInNumFormat()
+    {
+        return preg_match("/^\d+$/", $this->numFormat) === 1;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isZeroStringNumFormat()
+    {
+        return preg_match("/^0+\d/", $this->numFormat) === 1;
+    }
 }

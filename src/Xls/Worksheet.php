@@ -426,7 +426,7 @@ class Worksheet extends BIFFwriter
      * Add data to the beginning of the workbook (note the reverse order)
      * and to the end of the workbook.
      *
-     * @see Workbook::storeWorkbook()
+     * @see Workbook::save()
      *
      * @param array $sheetNames The array of sheetnames from the Workbook this
      *                          worksheet belongs to

@@ -28,32 +28,33 @@ class Workbook extends BIFFwriter
      * Flag for 1904 date system (0 => base date is 1900, 1 => base date is 1904)
      * @var integer
      */
-    protected $f1904;
+    protected $f1904 = 0;
 
     /**
      * The active worksheet of the workbook (0 indexed)
      * @var integer
      */
-    protected $activeSheet;
+    protected $activeSheet = 0;
 
     /**
      * 1st displayed worksheet in the workbook (0 indexed)
      * @var integer
      */
-    protected $firstSheet;
+    protected $firstSheet = 0;
 
     /**
      * Index for creating adding new formats to the workbook
+     * 15 style XF's and 1 cell XF
      * @var integer
      */
-    protected $xfIndex;
+    protected $xfIndex = 16;
 
     /**
      * Flag for preventing close from being called twice.
      * @var boolean
      * @see close()
      */
-    protected $fileClosed;
+    protected $fileClosed = false;
 
     /**
      * The default XF format.
@@ -65,19 +66,19 @@ class Workbook extends BIFFwriter
      * Array containing references to all of this workbook's worksheets
      * @var Worksheet[]
      */
-    protected $worksheets;
+    protected $worksheets = array();
 
     /**
      * Array of sheetnames for creating the EXTERNSHEET records
      * @var array
      */
-    protected $sheetNames;
+    protected $sheetNames = array();
 
     /**
      * Array containing references to all of this workbook's formats
      * @var Format[]
      */
-    protected $formats;
+    protected $formats = array();
 
     /**
      * Array containing the colour palette
@@ -95,7 +96,7 @@ class Workbook extends BIFFwriter
      * The country code used for localization
      * @var integer
      */
-    protected $countryCode;
+    protected $countryCode = -1;
 
     /**
      * @var
@@ -126,27 +127,16 @@ class Workbook extends BIFFwriter
 
         $this->filename = $filename;
         $this->formulaParser = new FormulaParser($this->byteOrder, $this->version);
-        $this->f1904 = 0;
-        $this->xfIndex = 16; // 15 style XF's and 1 cell XF.
-        $this->fileClosed = false;
-
-        $this->activeSheet = 0;
-        $this->firstSheet = 0;
-        $this->worksheets = array();
-        $this->sheetNames = array();
-
-        $this->countryCode = -1;
 
         $this->palette = Palette::getXl97Palette();
 
-        $this->formats = array();
         $this->tmpFormat = new Format($this->version);
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
         $this->sst = new SharedStringsTable();
 
-        $this->creationTimestamp = time();
+        $this->setCreationTimestamp(time());
     }
 
     /**
@@ -175,14 +165,11 @@ class Workbook extends BIFFwriter
     public function close()
     {
         if ($this->fileClosed) {
-            // Prevent close() from being called twice.
-            return true;
+            return;
         }
 
-        $this->storeWorkbook();
+        $this->save();
         $this->fileClosed = true;
-
-        return true;
     }
 
     /**
@@ -395,12 +382,11 @@ class Workbook extends BIFFwriter
      * storage.
      *
      * @throws \Exception
-     * @return boolean true on success.
      */
-    protected function storeWorkbook()
+    protected function save()
     {
         if (count($this->worksheets) == 0) {
-            return true;
+            return;
         }
 
         // Calculate the number of selected worksheet tabs and call the finalization
@@ -449,23 +435,18 @@ class Workbook extends BIFFwriter
 
         $this->appendRecord('Eof');
 
-        // Store the workbook in an OLE container
-        $this->storeOLEFile();
-
-        return true;
+        $this->saveOleFile();
     }
 
     /**
      * Store the workbook in an OLE container
      *
      * @throws \Exception
-     * @return boolean true on success.
      */
-    protected function storeOLEFile()
+    protected function saveOleFile()
     {
-        $ole = new PpsFile(OLE::asc2Ucs($this->biff->getWorkbookName()));
+        $ole = new PpsFile($this->biff->getWorkbookName());
 
-        $ole->init();
         $ole->append($this->data);
 
         foreach ($this->worksheets as $sheet) {
@@ -476,13 +457,10 @@ class Workbook extends BIFFwriter
 
         $root = new PpsRoot(
             $this->getCreationTimestamp(),
-            $this->getCreationTimestamp(),
             array($ole)
         );
 
         $root->save($this->filename);
-
-        return true;
     }
 
     /**
@@ -559,8 +537,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeAllNumFormats()
     {
-        $hashNumFormats = array();
-        $numFormats = array();
+        $map = array();
         $index = 164;
 
         // Iterate through the XF objects and write a FORMAT record if it isn't a
@@ -568,32 +545,22 @@ class Workbook extends BIFFwriter
         foreach ($this->formats as $format) {
             $numFormat = $format->numFormat;
 
-            // Check if $num_format is an index to a built-in format.
-            // Also check for a string of zeros, which is a valid format string
-            // but would evaluate to zero.
-            if (!preg_match("/^0+\d/", $numFormat)) {
-                if (preg_match("/^\d+$/", $numFormat)) { // built-in format
-                    continue;
-                }
+            if (!$format->isZeroStringNumFormat()
+                || $format->isBuiltInNumFormat()
+            ) {
+                continue;
             }
 
-            if (isset($hashNumFormats[$numFormat])) {
+            if (isset($map[$numFormat])) {
                 // FORMAT has already been used
-                $format->numFormat = $hashNumFormats[$numFormat];
+                $format->numFormat = $map[$numFormat];
             } else {
                 // Add a new FORMAT
-                $hashNumFormats[$numFormat] = $index;
+                $map[$numFormat] = $index;
                 $format->numFormat = $index;
-                array_push($numFormats, $numFormat);
+                $this->appendRecord('Format', array($numFormat, $index));
                 $index++;
             }
-        }
-
-        // Write the new FORMAT records starting from 0xA4
-        $index = 164;
-        foreach ($numFormats as $numFormat) {
-            $this->appendRecord('Format', array($numFormat, $index));
-            $index++;
         }
     }
 
@@ -769,7 +736,6 @@ class Workbook extends BIFFwriter
         );
 
         $data = $this->sst->getBlocksSizesOrDataToWrite($this->blockSizes, true);
-
         foreach ($data as $item) {
             $this->append($item);
         }

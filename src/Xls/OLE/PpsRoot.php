@@ -27,15 +27,11 @@ class PpsRoot extends PPS
     protected $rootFilePointer;
 
     /**
-     * Constructor
-     *
-     * @param integer $time1st A timestamp
-     * @param integer $time2nd A timestamp
+     * @param integer $timestamp A timestamp
      * @param PpsFile[] $children
      */
     public function __construct(
-        $time1st = null,
-        $time2nd = null,
+        $timestamp = null,
         $children = array()
     ) {
         parent::__construct(
@@ -45,8 +41,7 @@ class PpsRoot extends PPS
             null,
             null,
             null,
-            $time1st,
-            $time2nd,
+            $timestamp,
             null,
             $children
         );
@@ -61,39 +56,50 @@ class PpsRoot extends PPS
      */
     public function save($filename)
     {
-        // Initial Setting for saving
-        $this->bigBlockSize = pow(
-            2,
-            ((isset($this->bigBlockSize)) ? $this->adjust2($this->bigBlockSize) : 9)
-        );
-        $this->smallBlockSize = pow(
-            2,
-            ((isset($this->smallBlockSize)) ? $this->adjust2($this->smallBlockSize) : 6)
-        );
+        $this->openFile($filename);
 
-        $this->rootFilePointer = @fopen($filename, "wb");
-        if ($this->rootFilePointer === false) {
-            throw new \Exception("Can't open $filename. It may be in use or protected.");
-        }
+        $this->setBlockSizes();
 
         // Make an array of PPS's (for Save)
-        $aList = array();
-        self::savePpsSetPnt($aList, array($this));
-        // calculate values for header
-        list($iSBDcnt, $iBBcnt, $iPPScnt) = $this->calcSize($aList);
-        // Save Header
+        $list = array();
+        self::setPointers($list, array($this));
+
+        list($iSBDcnt, $iBBcnt, $iPPScnt) = $this->calcSize($list);
+
         $this->saveHeader($iSBDcnt, $iBBcnt, $iPPScnt);
 
         // Make Small Data string (write SBD)
-        $this->data = $this->getAndWriteSmallData($aList);
+        $this->data = $this->getAndWriteSmallData($list);
 
-        $this->saveBigData($iSBDcnt, $aList);
-        $this->savePps($aList);
+        $this->saveBigData($iSBDcnt, $list);
+        $this->savePps($list);
         $this->saveBigBlockChain($iSBDcnt, $iBBcnt, $iPPScnt);
 
         fclose($this->rootFilePointer);
 
         return true;
+    }
+
+    /**
+     *
+     */
+    protected function setBlockSizes()
+    {
+        $this->bigBlockSize = pow(2, 9);
+        $this->smallBlockSize = pow(2, 6);
+    }
+
+    /**
+     * @param $filename
+     *
+     * @throws \Exception
+     */
+    protected function openFile($filename)
+    {
+        $this->rootFilePointer = @fopen($filename, "wb");
+        if ($this->rootFilePointer === false) {
+            throw new \Exception("Can't open $filename. It may be in use or protected.");
+        }
     }
 
     /**
