@@ -36,200 +36,218 @@ class Format
      * Index to the FONT record.
      * @var integer
      */
-    public $fontIndex;
+    public $fontIndex = 0;
 
     /**
      * The font name (ASCII).
      * @var string
      */
-    public $fontName;
+    public $fontName = 'Arial';
 
     /**
      * Height of font (1/20 of a point)
      * @var integer
      */
-    public $size;
+    public $size = 10;
 
     /**
      * Bold style
      * @var integer
      */
-    public $bold;
+    public $bold = 0x0190;
 
     /**
      * Bit specifiying if the font is italic.
      * @var integer
      */
-    public $italic;
+    public $italic = 0;
 
     /**
      * Index to the cell's color
      * @var integer
      */
-    public $color;
+    public $color = 0x7FFF;
 
     /**
      * The text underline property
      * @var integer
      */
-    public $underline;
+    public $underline = 0;
 
     /**
      * Bit specifiying if the font has strikeout.
      * @var integer
      */
-    public $fontStrikeout;
+    public $fontStrikeout = 0;
 
     /**
      * Bit specifiying if the font has outline.
      * @var integer
      */
-    public $fontOutline;
+    public $fontOutline = 0;
 
     /**
      * Bit specifiying if the font has shadow.
      * @var integer
      */
-    public $fontShadow;
+    public $fontShadow = 0;
 
     /**
      * 2 bytes specifiying the script type for the font.
      * @var integer
      */
-    public $fontScript;
+    public $fontScript = 0;
 
     /**
      * Byte specifiying the font family.
      * @var integer
      */
-    public $fontFamily;
+    public $fontFamily = 0;
 
     /**
      * Byte specifiying the font charset.
      * @var integer
      */
-    public $fontCharset;
+    public $fontCharset = 0;
 
     /**
      * An index (2 bytes) to a FORMAT record (number format).
      * @var integer
      */
-    public $numFormat;
+    public $numFormat = 0;
 
     /**
      * Bit specifying if formulas are hidden.
      * @var integer
      */
-    public $hidden;
+    public $hidden = 0;
 
     /**
      * Bit specifying if the cell is locked.
      * @var integer
      */
-    public $locked;
+    public $locked = 0;
 
     /**
      * The three bits specifying the text horizontal alignment.
      * @var integer
      */
-    public $textHorAlign;
+    public $textHorAlign = 0;
 
     /**
      * Bit specifying if the text is wrapped at the right border.
      * @var integer
      */
-    public $textWrap;
+    public $textWrap = 0;
 
     /**
      * The three bits specifying the text vertical alignment.
      * @var integer
      */
-    public $textVertAlign;
+    public $textVertAlign = 2;
 
     /**
      * 1 bit, apparently not used.
      * @var integer
      */
-    public $textJustlast;
+    public $textJustlast = 0;
 
     /**
      * The two bits specifying the text rotation.
      * @var integer
      */
-    public $rotation;
+    public $rotation = 0;
 
     /**
      * The cell's foreground color.
      * @var integer
      */
-    public $fgColor;
+    public $fgColor = 0x40;
 
     /**
      * The cell's background color.
      * @var integer
      */
-    public $bgColor;
+    public $bgColor = 0x41;
 
     /**
      * The cell's background fill pattern.
      * @var integer
      */
-    public $pattern;
+    public $pattern = 0;
 
     /**
      * Style of the bottom border of the cell
      * @var integer
      */
-    public $bottom;
+    public $bottom = 0;
 
     /**
      * Color of the bottom border of the cell.
      * @var integer
      */
-    public $bottomColor;
+    public $bottomColor = 0x40;
 
     /**
      * Style of the top border of the cell
      * @var integer
      */
-    public $top;
+    public $top = 0;
 
     /**
      * Color of the top border of the cell.
      * @var integer
      */
-    public $topColor;
+    public $topColor = 0x40;
 
     /**
      * Style of the left border of the cell
      * @var integer
      */
-    public $left;
+    public $left = 0;
 
     /**
      * Color of the left border of the cell.
      * @var integer
      */
-    public $leftColor;
+    public $leftColor = 0x40;
 
     /**
      * Style of the right border of the cell
      * @var integer
      */
-    public $right;
+    public $right = 0;
 
     /**
      * Color of the right border of the cell.
      * @var integer
      */
-    public $rightColor;
+    public $rightColor = 0x40;
 
-    public $diag;
-    public $diagColor;
+    public $diag = 0;
+    public $diagColor = 0x40;
+
+    protected $horAlignMap = array(
+        'left' => 1,
+        'centre' => 2,
+        'center' => 2,
+        'right' => 3,
+        'fill' => 4,
+        'justify' => 5,
+        'merge' => 6,
+        'equal_space' => 7
+    );
+
+    protected $vertAlignMap = array(
+        'top' => 0,
+        'vcentre' => 1,
+        'vcenter' => 1,
+        'bottom' => 2,
+        'vjustify' => 3,
+        'vequal_space' => 4
+    );
 
     /**
-     * Constructor
-     *
      * @param integer $version
      * @param integer $index the XF index for the format.
      * @param array $properties array with properties to be set on initialization.
@@ -238,49 +256,15 @@ class Format
     {
         $this->xfIndex = $index;
         $this->version = $version;
-        $this->fontIndex = 0;
-        $this->fontName = 'Arial';
-        $this->size = 10;
-        $this->bold = 0x0190;
-        $this->italic = 0;
-        $this->color = 0x7FFF;
-        $this->underline = 0;
-        $this->fontStrikeout = 0;
-        $this->fontOutline = 0;
-        $this->fontShadow = 0;
-        $this->fontScript = 0;
-        $this->fontFamily = 0;
-        $this->fontCharset = 0;
 
-        $this->numFormat = 0;
+        $this->setProperties($properties);
+    }
 
-        $this->hidden = 0;
-        $this->locked = 0;
-
-        $this->textHorAlign = 0;
-        $this->textWrap = 0;
-        $this->textVertAlign = 2;
-        $this->textJustlast = 0;
-        $this->rotation = 0;
-
-        $this->fgColor = 0x40;
-        $this->bgColor = 0x41;
-
-        $this->pattern = 0;
-
-        $this->bottom = 0;
-        $this->top = 0;
-        $this->left = 0;
-        $this->right = 0;
-        $this->diag = 0;
-
-        $this->bottomColor = 0x40;
-        $this->topColor = 0x40;
-        $this->leftColor = 0x40;
-        $this->rightColor = 0x40;
-        $this->diagColor = 0x40;
-
-        // Set properties passed to Workbook::addFormat()
+    /**
+     * @param array $properties
+     */
+    protected function setProperties($properties)
+    {
         foreach ($properties as $property => $value) {
             $methodName = 'set' . ucwords($property);
             if (method_exists($this, $methodName)) {
@@ -288,7 +272,6 @@ class Format
             }
         }
     }
-
 
     /**
      * Generate an Excel BIFF XF record (style or cell).
@@ -375,35 +358,9 @@ class Format
      */
     public function setHAlign($location)
     {
-        if (preg_match("/\d/", $location)) {
-            return; // Ignore numbers
-        }
-
         $location = strtolower($location);
-
-        switch ($location) {
-            case 'left':
-                $this->textHorAlign = 1;
-                break;
-            case 'centre':
-            case 'center':
-                $this->textHorAlign = 2;
-                break;
-            case 'right':
-                $this->textHorAlign = 3;
-                break;
-            case 'fill':
-                $this->textHorAlign = 4;
-                break;
-            case 'justify':
-                $this->textHorAlign = 5;
-                break;
-            case 'merge':
-                $this->textHorAlign = 6;
-                break;
-            case 'equal_space':
-                $this->textHorAlign = 7;
-                break;
+        if (isset($this->horAlignMap[$location])) {
+            $this->textHorAlign = $this->horAlignMap[$location];
         }
     }
 
@@ -414,29 +371,9 @@ class Format
      */
     public function setVAlign($location)
     {
-        if (preg_match("/\d/", $location)) {
-            return; // Ignore numbers
-        }
-
         $location = strtolower($location);
-
-        switch ($location) {
-            case 'top':
-                $this->textVertAlign = 0;
-                break;
-            case 'vcentre':
-            case 'vcenter':
-                $this->textVertAlign = 1;
-                break;
-            case 'bottom':
-                $this->textVertAlign = 2;
-                break;
-            case 'vjustify':
-                $this->textVertAlign = 3;
-                break;
-            case 'vequal_space':
-                $this->textVertAlign = 4;
-                break;
+        if (isset($this->vertAlignMap[$location])) {
+            $this->textVertAlign = $this->vertAlignMap[$location];
         }
     }
 

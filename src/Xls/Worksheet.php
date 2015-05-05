@@ -347,8 +347,17 @@ class Worksheet extends BIFFwriter
     protected $password = null;
     protected $colSizes = array();
     protected $rowSizes = array();
+
+    /**
+     * @var float
+     */
     protected $zoom = 100;
+
+    /**
+     * @var float
+     */
     protected $printScale = 100;
+
     protected $dv = array();
 
     /**

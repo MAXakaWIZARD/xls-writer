@@ -103,12 +103,14 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $workbook = new Writer($this->testFilePath, $params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
-        $worksheet = $workbook->addWorksheet('New PC');
+        $worksheet = $workbook->addWorksheet($params['sheetName']);
 
         $headerFormat = $workbook->addFormat();
         $headerFormat->setBold();
         $headerFormat->setBorder(Format::BORDER_THIN);
         $headerFormat->setColor('blue');
+        $headerFormat->setHAlign('center');
+        $headerFormat->setVAlign('vcenter');
 
         //#ccc
         $workbook->setCustomColor(12, 204, 204, 204);
@@ -174,13 +176,15 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
             array(
                 array(
                     'format' => Biff5::VERSION,
-                    'file' => 'rich.xls'
+                    'file' => 'rich.xls',
+                    'sheetName' => 'New PC'
                 )
             ),
             array(
                 array(
                     'format' => Biff8::VERSION,
-                    'file' => 'rich_biff8.xls'
+                    'file' => 'rich_biff8.xls',
+                    'sheetName' => 'New PC BIFF8'
                 )
             )
         );
