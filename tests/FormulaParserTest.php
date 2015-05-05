@@ -39,11 +39,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
         }
 
         foreach ($params['formula'] as $formula) {
-            $result = $this->parser->parse($formula);
-
-            if (isset($params['correct']) && $params['correct'] === true) {
-                $this->assertTrue($result);
-            }
+            $this->parser->parse($formula);
         }
     }
 
@@ -63,7 +59,14 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         '$C$2+$D$3',
                         'Sheet1!A1+Sheet1:Sheet2!B1',
                         "'Sheet1'!A1-'Sheet1:Sheet2'!A10",
-                        '2+2*3/4'
+                        '2+2*3/4',
+                        'IF(3>=2,1,0)',
+                        'IF(3>2,1,0)',
+                        'IF(3<2,1,0)',
+                        'IF(3<=2,1,0)',
+                        'IF(3=2,"Equal","Not equal")',
+                        'IF(3<>2;1;0)',
+                        '"Lazy dog " & "jumped over"',
                     ),
                     'correct' => true
                 )

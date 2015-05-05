@@ -20,6 +20,41 @@ class Token
     const TOKEN_NE = "<>";
     const TOKEN_CONCAT = "&";
 
+    protected static $ptgMap = array(
+        self::TOKEN_MUL => 'ptgMul',
+        self::TOKEN_DIV => 'ptgDiv',
+        self::TOKEN_ADD => 'ptgAdd',
+        self::TOKEN_SUB => 'ptgSub',
+        self::TOKEN_LT => 'ptgLT',
+        self::TOKEN_GT => 'ptgGT',
+        self::TOKEN_LE => 'ptgLE',
+        self::TOKEN_GE => 'ptgGE',
+        self::TOKEN_EQ => 'ptgEQ',
+        self::TOKEN_NE => 'ptgNE',
+        self::TOKEN_CONCAT => 'ptgConcat',
+    );
+
+    protected static $deterministicMap = array(
+        self::TOKEN_MUL => 1,
+        self::TOKEN_DIV => 1,
+        self::TOKEN_ADD => 1,
+        self::TOKEN_SUB => 1,
+        self::TOKEN_LE => 1,
+        self::TOKEN_GE => 1,
+        self::TOKEN_EQ => 1,
+        self::TOKEN_NE => 1,
+        self::TOKEN_CONCAT => 1,
+        self::TOKEN_COMA => 1,
+        self::TOKEN_SEMICOLON => 1,
+        self::TOKEN_OPEN => 1,
+        self::TOKEN_CLOSE => 1
+    );
+
+    protected static $lookaheadMap = array(
+        self::TOKEN_GT => array('='),
+        self::TOKEN_LT => array('=', '>'),
+    );
+
     /**
      * Reference A1 or $A$1
      * @param $token
@@ -133,5 +168,110 @@ class Token
     public static function isFunctionCall($token)
     {
         return preg_match("/^[A-Z0-9\xc0-\xdc\.]+$/", $token) === 1;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isMulOrDiv($token)
+    {
+        return $token == self::TOKEN_MUL || $token == self::TOKEN_DIV;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isAddOrSub($token)
+    {
+        return $token == self::TOKEN_ADD || $token == self::TOKEN_SUB;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isCommaOrSemicolon($token)
+    {
+        return $token == self::TOKEN_COMA || $token == self::TOKEN_SEMICOLON;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isComparison($token)
+    {
+        return $token == self::TOKEN_LT
+            || $token == self::TOKEN_GT
+            || $token == self::TOKEN_LE
+            || $token == self::TOKEN_GE
+            || $token == self::TOKEN_EQ
+            || $token == self::TOKEN_NE;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isLtOrGt($token)
+    {
+        return $token == self::TOKEN_LT
+        || $token == self::TOKEN_GT;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isConcat($token)
+    {
+        return $token == self::TOKEN_CONCAT;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return string|null
+     */
+    public static function getPtg($token)
+    {
+        if (isset(self::$ptgMap[$token])) {
+            return self::$ptgMap[$token];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isDeterministic($token)
+    {
+        return isset(self::$deterministicMap[$token]);
+    }
+
+    /**
+     * @param $token
+     * @param $lookahead
+     *
+     * @return bool
+     */
+    public static function isPossibleLookahead($token, $lookahead)
+    {
+        if (!isset(self::$lookaheadMap[$token])) {
+            return true;
+        }
+
+        return in_array($lookahead, self::$lookaheadMap[$token], true);
     }
 }

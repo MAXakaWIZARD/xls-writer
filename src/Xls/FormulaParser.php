@@ -112,7 +112,6 @@ class FormulaParser
         } elseif (Token::isRange($token)) {
             return $this->convertRange2d($token);
         } elseif (Token::isExternalRange($token)) {
-            // match external ranges like Sheet1!A1 or Sheet1:Sheet2!A1:B2
             return $this->convertRange3d($token);
         } elseif (isset($this->ptg[$token])) {
             // operators (including parentheses)
@@ -173,6 +172,7 @@ class FormulaParser
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
         } else {
             $encoding = 0;
+
             return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
         }
     }
@@ -188,15 +188,56 @@ class FormulaParser
      */
     protected function convertFunction($token, $numArgs)
     {
-        $args = $this->functions[$token][1];
+        $ptg = $this->getFunctionPtg($token);
+        $args = $this->getFunctionArgsNumber($token);
 
         // Fixed number of args eg. TIME($i,$j,$k).
         if ($args >= 0) {
-            return pack("Cv", $this->ptg['ptgFuncV'], $this->functions[$token][0]);
+            return pack("Cv", $this->ptg['ptgFuncV'], $ptg);
         }
 
         // Variable number of args eg. SUM($i,$j,$k, ..).
-        return pack("CCv", $this->ptg['ptgFuncVarV'], $numArgs, $this->functions[$token][0]);
+        return pack("CCv", $this->ptg['ptgFuncVarV'], $numArgs, $ptg);
+    }
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function getFunctionArgsNumber($function)
+    {
+        $function = $this->getFunction($function);
+
+        return $function[1];
+    }
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     */
+    protected function getFunctionPtg($function)
+    {
+        $function = $this->getFunction($function);
+
+        return $function[0];
+    }
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function getFunction($function)
+    {
+        if (!isset($this->functions[$function])) {
+            throw new \Exception("Function $function() doesn't exist");
+        }
+
+        return $this->functions[$function];
     }
 
     /**
@@ -219,10 +260,8 @@ class FormulaParser
         }
 
         // Convert the cell references
-        $cellArray1 = $this->cellToPackedRowcol($cell1);
-        list($row1, $col1) = $cellArray1;
-        $cellArray2 = $this->cellToPackedRowcol($cell2);
-        list($row2, $col2) = $cellArray2;
+        list($row1, $col1) = $this->cellToPackedRowcol($cell1);
+        list($row2, $col2) = $this->cellToPackedRowcol($cell2);
 
         // The ptg value depends on the class of the ptg.
         if ($class == 0) {
@@ -248,8 +287,6 @@ class FormulaParser
      */
     protected function convertRange3d($token)
     {
-        $class = 2; // as far as I know, this is magick.
-
         // Split the ref at the ! symbol
         list($extRef, $range) = explode('!', $token);
 
@@ -265,15 +302,14 @@ class FormulaParser
 
         // Convert the cell references
         if (Token::isReference($cell1)) {
-            $cellArray1 = $this->cellToPackedRowcol($cell1);
-            list($row1, $col1) = $cellArray1;
-            $cellArray2 = $this->cellToPackedRowcol($cell2);
-            list($row2, $col2) = $cellArray2;
-        } else { // It's a rows range (like 26:27)
-            $cellsArray = $this->rangeToPackedRange($cell1 . ':' . $cell2);
-            list($row1, $col1, $row2, $col2) = $cellsArray;
+            list($row1, $col1) = $this->cellToPackedRowcol($cell1);
+            list($row2, $col2) = $this->cellToPackedRowcol($cell2);
+        } else {
+            // It's a rows range (like 26:27)
+            list($row1, $col1, $row2, $col2) = $this->rangeToPackedRange($cell1 . ':' . $cell2);
         }
 
+        $class = 2; // as far as I know, this is magick.
         // The ptg value depends on the class of the ptg.
         if ($class == 0) {
             $ptgArea = pack("C", $this->ptg['ptgArea3d']);
@@ -297,12 +333,9 @@ class FormulaParser
      */
     protected function convertRef2d($cell)
     {
+        list($row, $col) = $this->cellToPackedRowcol($cell);
+
         $class = 2; // as far as I know, this is magick.
-
-        // Convert the cell reference
-        $cellArray = $this->cellToPackedRowcol($cell);
-        list($row, $col) = $cellArray;
-
         // The ptg value depends on the class of the ptg.
         if ($class == 0) {
             $ptgRef = pack("C", $this->ptg['ptgRef']);
@@ -327,8 +360,6 @@ class FormulaParser
      */
     protected function convertRef3d($cell)
     {
-        $class = 2; // as far as I know, this is magick.
-
         // Split the ref at the ! symbol
         list($extRef, $cell) = explode('!', $cell);
 
@@ -342,6 +373,7 @@ class FormulaParser
         // Convert the cell reference part
         list($row, $col) = $this->cellToPackedRowcol($cell);
 
+        $class = 2; // as far as I know, this is magick.
         // The ptg value depends on the class of the ptg.
         if ($class == 0) {
             $ptgRef = pack("C", $this->ptg['ptgRef3d']);
@@ -444,18 +476,12 @@ class FormulaParser
         // assume all references belong to this document
         $supbookIndex = 0x00;
         $ref = pack('vvv', $supbookIndex, $sheet1, $sheet2);
-        $totalReferences = count($this->references);
-        $index = -1;
-        for ($i = 0; $i < $totalReferences; $i++) {
-            if ($ref == $this->references[$i]) {
-                $index = $i;
-                break;
-            }
-        }
-        // if REF was not found add it to references array
-        if ($index == -1) {
-            $this->references[$totalReferences] = $ref;
-            $index = $totalReferences;
+
+        $index = array_search($ref, $this->references);
+        if ($index === false) {
+            // if REF was not found add it to references array
+            $this->references[] = $ref;
+            $index = count($this->references);
         }
 
         return pack('v', $index);
@@ -613,8 +639,42 @@ class FormulaParser
     protected function advance()
     {
         $token = '';
+
+        $i = $this->eatWhitespace();
+        $formulaLength = strlen($this->formula);
+
+        while ($i < $formulaLength) {
+            $token .= $this->formula{$i};
+            if ($i < ($formulaLength - 1)) {
+                $this->lookahead = $this->formula{$i + 1};
+            } else {
+                $this->lookahead = '';
+            }
+
+            if ($this->match($token) != '') {
+                $this->currentChar = $i + 1;
+                $this->currentToken = $token;
+                return;
+            }
+
+            if ($i < ($formulaLength - 2)) {
+                $this->lookahead = $this->formula{$i + 2};
+            } else {
+                // if we run out of characters lookahead becomes empty
+                $this->lookahead = '';
+            }
+            $i++;
+        }
+    }
+
+    /**
+     * @return int
+     */
+    protected function eatWhitespace()
+    {
         $i = $this->currentChar;
         $formulaLength = strlen($this->formula);
+
         // eat up white spaces
         if ($i < $formulaLength) {
             while ($this->formula{$i} == " ") {
@@ -626,30 +686,7 @@ class FormulaParser
             }
         }
 
-        while ($i < $formulaLength) {
-            $token .= $this->formula{$i};
-            if ($i < ($formulaLength - 1)) {
-                $this->lookahead = $this->formula{$i + 1};
-            } else {
-                $this->lookahead = '';
-            }
-
-            if ($this->match($token) != '') {
-                //if ($i < strlen($this->formula) - 1) {
-                //    $this->lookahead = $this->formula{$i+1};
-                //}
-                $this->currentChar = $i + 1;
-                $this->currentToken = $token;
-                return 1;
-            }
-
-            if ($i < ($formulaLength - 2)) {
-                $this->lookahead = $this->formula{$i + 2};
-            } else { // if we run out of characters _lookahead becomes empty
-                $this->lookahead = '';
-            }
-            $i++;
-        }
+        return $i;
     }
 
     /**
@@ -660,69 +697,60 @@ class FormulaParser
      */
     protected function match($token)
     {
-        switch ($token) {
-            case Token::TOKEN_ADD:
-            case Token::TOKEN_SUB:
-            case Token::TOKEN_MUL:
-            case Token::TOKEN_DIV:
-            case Token::TOKEN_OPEN:
-            case Token::TOKEN_CLOSE:
-            case Token::TOKEN_COMA:
-            case Token::TOKEN_SEMICOLON:
-            case Token::TOKEN_GE:
-            case Token::TOKEN_LE:
-            case Token::TOKEN_EQ:
-            case Token::TOKEN_NE:
-            case Token::TOKEN_CONCAT:
+        if (Token::isDeterministic($token)) {
+            return $token;
+        }
+
+        if (Token::isLtOrGt($token)) {
+            if (!Token::isPossibleLookahead($token, $this->lookahead)) {
+                // it's not a GE, LTE or NE token
                 return $token;
-            case Token::TOKEN_GT:
-                if ($this->lookahead == '=') {
-                    // it's a GE token
-                    break;
-                }
-                return $token;
-            case Token::TOKEN_LT:
-                if (($this->lookahead == '=') || ($this->lookahead == '>')) {
-                    // it's a LE or a NE token
-                    break;
-                }
-                return $token;
-            default:
-                if (Token::isReference($token)
-                    && !preg_match("/[0-9]/", $this->lookahead)
-                    && ($this->lookahead != ':')
-                    && ($this->lookahead != '.')
-                    && ($this->lookahead != '!')
-                ) {
-                    return $token;
-                } elseif (Token::isExternalReference($token)
-                    && !preg_match("/[0-9]/", $this->lookahead)
-                    && ($this->lookahead != ':')
-                    && ($this->lookahead != '.')
-                ) {
-                    return $token;
-                } elseif (Token::isRange($token)
-                    && !preg_match("/[0-9]/", $this->lookahead)
-                ) {
-                    return $token;
-                } elseif (Token::isExternalRange($token)
-                    && !preg_match("/[0-9]/", $this->lookahead)
-                ) {
-                    return $token;
-                } elseif (is_numeric($token)
-                    && (!is_numeric($token . $this->lookahead) || ($this->lookahead == ''))
-                    && ($this->lookahead != '!')
-                    && ($this->lookahead != ':')
-                ) {
-                    // If it's a number (check that it's not a sheet name or range)
-                    return $token;
-                } elseif (Token::isString($token)) {
-                    return $token;
-                } elseif (Token::isFunctionCall($token)
-                    && ($this->lookahead == "(")
-                ) {
-                    return $token;
-                }
+            }
+
+            return '';
+        }
+
+        return $this->processDefaultCase($token);
+    }
+
+    /**
+     * @param $token
+     *
+     * @return string
+     */
+    protected function processDefaultCase($token)
+    {
+        $lookaheadHasNumber = preg_match("/[0-9]/", $this->lookahead) === 1;
+        $isLookaheadNotDotOrColon = $this->lookahead != '.' && $this->lookahead != ':';
+
+        if (Token::isReference($token)
+            && !$lookaheadHasNumber
+            && $isLookaheadNotDotOrColon
+            && $this->lookahead != '!'
+        ) {
+            return $token;
+        } elseif (Token::isExternalReference($token)
+            && !$lookaheadHasNumber
+            && $isLookaheadNotDotOrColon
+        ) {
+            return $token;
+        } elseif ((Token::isRange($token) || Token::isExternalRange($token))
+            && !$lookaheadHasNumber
+        ) {
+            return $token;
+        } elseif (is_numeric($token)
+            && (!is_numeric($token . $this->lookahead) || $this->lookahead == '')
+            && $this->lookahead != '!'
+            && $this->lookahead != ':'
+        ) {
+            // If it's a number (check that it's not a sheet name or range)
+            return $token;
+        } elseif (Token::isString($token)) {
+            return $token;
+        } elseif (Token::isFunctionCall($token)
+            && $this->lookahead == "("
+        ) {
+            return $token;
         }
 
         return '';
@@ -732,17 +760,14 @@ class FormulaParser
      * The parsing method. It parses a formula.
      *
      * @param string $formula The formula to parse, without the initial equal sign (=).
-     * @return bool true on success
      */
     public function parse($formula)
     {
         $this->currentChar = 0;
         $this->formula = $formula;
-        $this->lookahead = $formula{1};
+        $this->lookahead = $formula[1];
         $this->advance();
         $this->parseTree = $this->condition();
-
-        return true;
     }
 
     /**
@@ -755,35 +780,12 @@ class FormulaParser
     {
         $result = $this->expression();
 
-        if ($this->currentToken == Token::TOKEN_LT) {
+        if (Token::isComparison($this->currentToken) || Token::isConcat($this->currentToken)) {
+            $ptg = Token::getPtg($this->currentToken);
             $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgLT', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_GT) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgGT', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_LE) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgLE', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_GE) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgGE', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_EQ) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgEQ', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_NE) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgNE', $result, $result2);
-        } elseif ($this->currentToken == Token::TOKEN_CONCAT) {
-            $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgConcat', $result, $result2);
+            $result = $this->createTree($ptg, $result, $this->expression());
         }
+
         return $result;
     }
 
@@ -801,30 +803,21 @@ class FormulaParser
         if (Token::isString($this->currentToken)) {
             $result = $this->createTree($this->currentToken, '', '');
             $this->advance();
+
             return $result;
         } elseif ($this->currentToken == Token::TOKEN_SUB) {
             // catch "-" Term
             $this->advance();
-            $result2 = $this->expression();
-            $result = $this->createTree('ptgUminus', $result2, '');
-            return $result;
+
+            return $this->createTree('ptgUminus', $this->expression(), '');
         }
 
         $result = $this->term();
 
-        while (($this->currentToken == Token::TOKEN_ADD)
-            || ($this->currentToken == Token::TOKEN_SUB)
-        ) {
-            /**/
-            if ($this->currentToken == Token::TOKEN_ADD) {
-                $this->advance();
-                $result2 = $this->term();
-                $result = $this->createTree('ptgAdd', $result, $result2);
-            } else {
-                $this->advance();
-                $result2 = $this->term();
-                $result = $this->createTree('ptgSub', $result, $result2);
-            }
+        while (Token::isAddOrSub($this->currentToken)) {
+            $ptg = Token::getPtg($this->currentToken);
+            $this->advance();
+            $result = $this->createTree($ptg, $result, $this->term());
         }
 
         return $result;
@@ -839,9 +832,7 @@ class FormulaParser
      */
     protected function parenthesizedExpression()
     {
-        $result = $this->createTree('ptgParen', $this->expression(), '');
-
-        return $result;
+        return $this->createTree('ptgParen', $this->expression(), '');
     }
 
     /**
@@ -854,19 +845,10 @@ class FormulaParser
     {
         $result = $this->fact();
 
-        while (($this->currentToken == Token::TOKEN_MUL)
-            || ($this->currentToken == Token::TOKEN_DIV)
-        ) {
-            /**/
-            if ($this->currentToken == Token::TOKEN_MUL) {
-                $this->advance();
-                $result2 = $this->fact();
-                $result = $this->createTree('ptgMul', $result, $result2);
-            } else {
-                $this->advance();
-                $result2 = $this->fact();
-                $result = $this->createTree('ptgDiv', $result, $result2);
-            }
+        while (Token::isMulOrDiv($this->currentToken)) {
+            $ptg = Token::getPtg($this->currentToken);
+            $this->advance();
+            $result = $this->createTree($ptg, $result, $this->fact());
         }
 
         return $result;
@@ -886,28 +868,35 @@ class FormulaParser
     {
         if ($this->currentToken == Token::TOKEN_OPEN) {
             $this->advance(); // eat the "("
+
             $result = $this->parenthesizedExpression();
             if ($this->currentToken != Token::TOKEN_CLOSE) {
                 throw new \Exception("')' token expected.");
             }
+
             $this->advance(); // eat the ")"
+
             return $result;
         }
 
         if (Token::isAnyReference($this->currentToken)) {
             $result = $this->createTree($this->currentToken, '', '');
             $this->advance();
+
             return $result;
         } elseif (Token::isAnyRange($this->currentToken)) {
             $result = $this->currentToken;
             $this->advance();
+
             return $result;
         } elseif (is_numeric($this->currentToken)) {
             $result = $this->createTree($this->currentToken, '', '');
             $this->advance();
+
             return $result;
         } elseif (Token::isFunctionCall($this->currentToken)) {
             $result = $this->func();
+
             return $result;
         }
 
@@ -929,35 +918,32 @@ class FormulaParser
         $numArgs = 0; // number of arguments received
         $function = strtoupper($this->currentToken);
         $result = ''; // initialize result
+
         $this->advance();
         $this->advance(); // eat the "("
+
         while ($this->currentToken != ')') {
-            /**/
             if ($numArgs > 0) {
-                if ($this->currentToken == Token::TOKEN_COMA
-                    || $this->currentToken == Token::TOKEN_SEMICOLON
-                ) {
-                    $this->advance(); // eat the "," or ";"
-                } else {
+                if (!Token::isCommaOrSemicolon($this->currentToken)) {
                     throw new \Exception(
                         "Syntax error: comma expected in " .
                         "function $function, arg #{$numArgs}"
                     );
                 }
-                $result2 = $this->condition();
-                $result = $this->createTree('arg', $result, $result2);
-            } else { // first argument
-                $result2 = $this->condition();
-                $result = $this->createTree('arg', '', $result2);
+
+                $this->advance(); // eat the "," or ";"
+            } else {
+                $result = '';
             }
+
+            $result = $this->createTree('arg', $result, $this->condition());
+
             $numArgs++;
         }
-        if (!isset($this->functions[$function])) {
-            throw new \Exception("Function $function() doesn't exist");
-        }
-        $args = $this->functions[$function][1];
-        // If fixed number of args eg. TIME($i,$j,$k). Check that the number of args is valid.
-        if (($args >= 0) && ($args != $numArgs)) {
+
+        $args = $this->getFunctionArgsNumber($function);
+        if ($args >= 0 && $args != $numArgs) {
+            // If fixed number of args eg. TIME($i,$j,$k). Check that the number of args is valid.
             throw new \Exception("Incorrect number of arguments in function $function() ");
         }
 
@@ -1017,6 +1003,7 @@ class FormulaParser
         if (empty($tree)) { // If it's the first call use _parse_tree
             $tree = $this->parseTree;
         }
+
         if (is_array($tree['left'])) {
             $convertedTree = $this->toReversePolish($tree['left']);
             $polish .= $convertedTree;
@@ -1024,6 +1011,7 @@ class FormulaParser
             $convertedTree = $this->convert($tree['left']);
             $polish .= $convertedTree;
         }
+
         if (is_array($tree['right'])) {
             $convertedTree = $this->toReversePolish($tree['right']);
             $polish .= $convertedTree;
