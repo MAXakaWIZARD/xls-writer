@@ -116,14 +116,6 @@ class Palette
     }
 
     /**
-     * @return array
-     */
-    public static function getColorsMap()
-    {
-        return self::$colorsMap;
-    }
-
-    /**
      * @param $name
      *
      * @return bool
