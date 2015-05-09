@@ -271,11 +271,12 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @throws \Exception
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
      */
-    public function testSelection()
+    public function testSelection($params)
     {
-        $workbook = new Workbook();
+        $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         $worksheet = $workbook->addWorksheet();
@@ -285,7 +286,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/selection.xls', $this->testFilePath);
+        $correctFilePath = $this->getFilePath('selection', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
     /**
