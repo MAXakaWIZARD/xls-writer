@@ -48,6 +48,19 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @param $params
+     *
+     * @return Workbook
+     */
+    protected function createWorkbook($params)
+    {
+        $workbook = new Workbook($params['format']);
+        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+
+        return $workbook;
+    }
+
+    /**
      *
      */
     public function testUnsupportedVersion()
@@ -62,9 +75,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testGeneral($params)
     {
-        $workbook = new Workbook($params['format']);
-        //needed for test files comparison
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         $worksheet = $workbook->addWorksheet('My first worksheet');
 
@@ -116,8 +127,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testRich($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         $worksheet = $workbook->addWorksheet('New PC');
 
@@ -256,8 +266,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testProtected($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         $worksheet = $workbook->addWorksheet();
         $worksheet->write(0, 0, 'Test');
@@ -276,8 +285,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testSelection($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         $worksheet = $workbook->addWorksheet();
         $worksheet->write(0, 0, 'Test');
@@ -296,8 +304,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testMultipleSheets($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         for ($i = 1; $i <= 4; $i++) {
             $s = $workbook->addWorksheet();
@@ -317,8 +324,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testDefcols($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
 
         $worksheet = $workbook->addWorksheet();
         $worksheet->write(0, 0, 'Test1');
@@ -342,8 +348,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
      */
     public function testCountry($params)
     {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook = $this->createWorkbook($params);
         $workbook->setCountry($workbook::COUNTRY_USA);
 
         $worksheet = $workbook->addWorksheet();
