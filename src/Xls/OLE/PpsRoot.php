@@ -148,20 +148,6 @@ class PpsRoot extends PPS
     }
 
     /**
-     * Helper function for caculating a magic value for block sizes
-     *
-     * @param integer $i2 The argument
-     * @see save()
-     * @return integer
-     */
-    public function adjust2($i2)
-    {
-        $iWk = log($i2) / log(2);
-
-        return ($iWk > floor($iWk)) ? floor($iWk) + 1 : $iWk;
-    }
-
-    /**
      * Saving big data (PPS's with data bigger than OLE_DATA_SIZE_SMALL)
      *
      * @param integer $iStBlk
@@ -519,38 +505,5 @@ class PpsRoot extends PPS
     protected function getPointersPerBlock($blockSize, $pointerSize = OLE::LONG_INT_SIZE)
     {
         return intval(floor($blockSize / $pointerSize));
-    }
-
-    /**
-     * Support method for some hexdumping
-     *
-     * @param string $data - Binary data
-     * @param integer $from - Start offset of data to dump
-     * @param integer $to - Target offset of data to dump
-     */
-    public function dump($data, $from, $to)
-    {
-        $chars = array();
-        for ($i = $from; $i < $to; $i++) {
-            if (sizeof($chars) == 16) {
-                printf("%08X (% 12d) |", $i - 16, $i - 16);
-                foreach ($chars as $char) {
-                    printf(" %02X", $char);
-                }
-                print " |\n";
-
-                $chars = array();
-            }
-
-            $chars[] = ord($data[$i]);
-        }
-
-        if (sizeof($chars)) {
-            printf("%08X (% 12d) |", $i - sizeof($chars), $i - sizeof($chars));
-            foreach ($chars as $char) {
-                printf(" %02X", $char);
-            }
-            print " |\n";
-        }
     }
 }
