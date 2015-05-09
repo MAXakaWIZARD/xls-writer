@@ -24,6 +24,8 @@
 
 namespace Xls\Writer;
 
+use Xls\Utils;
+
 // Possible operator types
 
 /*
@@ -124,12 +126,12 @@ class Validator
     {
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if (pearIsError($error)) {
+        if (Utils::isError($error)) {
             return $this->_formula1;
         }
 
         $this->_formula1 = $this->_parser->toReversePolish();
-        if (pearIsError($this->_formula1)) {
+        if (Utils::isError($this->_formula1)) {
             return $this->_formula1;
         }
         return true;
@@ -139,12 +141,12 @@ class Validator
     {
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if (pearIsError($error)) {
+        if (Utils::isError($error)) {
             return $this->_formula2;
         }
 
         $this->_formula2 = $this->_parser->toReversePolish();
-        if (pearIsError($this->_formula2)) {
+        if (Utils::isError($this->_formula2)) {
             return $this->_formula2;
         }
         return true;

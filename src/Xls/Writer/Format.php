@@ -34,6 +34,8 @@
 
 namespace Xls\Writer;
 
+use Xls\Utils;
+
 /**
  * Class for generating Excel XF records (formats)
  *

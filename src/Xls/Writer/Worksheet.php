@@ -34,6 +34,8 @@
 
 namespace Xls\Writer;
 
+use Xls\Utils;
+
 /**
  * Class for generating Excel Spreadsheets
  *
@@ -1859,13 +1861,13 @@ class Worksheet extends BIFFwriter
 
         // Parse the formula using the parser in Parser.php
         $error = $this->_parser->parse($formula);
-        if (pearIsError($error)) {
+        if (Utils::isError($error)) {
             $this->writeString($row, $col, $error->getMessage());
             return -1;
         }
 
         $formula = $this->_parser->toReversePolish();
-        if (pearIsError($formula)) {
+        if (Utils::isError($formula)) {
             $this->writeString($row, $col, $formula->getMessage());
             return -1;
         }

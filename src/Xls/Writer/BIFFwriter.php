@@ -2,6 +2,8 @@
 
 namespace Xls\Writer;
 
+use Xls\Utils;
+
 /**
  * Class for writing Excel BIFF records.
  *

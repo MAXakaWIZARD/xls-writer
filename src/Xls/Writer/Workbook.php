@@ -2,6 +2,8 @@
 
 namespace Xls\Writer;
 
+use Xls\Utils;
+
 /**
  * Class for generating Excel Spreadsheets
 */

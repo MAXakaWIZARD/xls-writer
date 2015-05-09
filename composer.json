@@ -18,7 +18,6 @@
     "autoload": {
         "psr-0": {
             "Xls": "src/"
-        },
-        "files": ["src/pear_bridge.php"]
+        }
     }
 }
