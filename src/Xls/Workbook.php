@@ -204,7 +204,7 @@ class Workbook extends BIFFwriter
         $this->appendRecord('Palette', array($this->palette));
 
         $this->calcSheetOffsets();
-        foreach ($this->worksheets as $sheet) {
+        foreach ($this->getWorksheets() as $sheet) {
             $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
         }
 
