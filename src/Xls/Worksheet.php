@@ -511,7 +511,7 @@ class Worksheet extends BIFFwriter
             for ($i = 0; $i < $colcount; $i++) {
                 $this->storeColinfo($this->colInfo[$i]);
             }
-            $this->prependRecord('Defcolwith');
+            $this->prependRecord('Defcolwidth');
         }
 
         $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
@@ -673,13 +673,17 @@ class Worksheet extends BIFFwriter
         foreach ($this->colInfo as $key => $colinfo) {
             $existingStart = $colinfo[0];
             $existingEnd = $colinfo[1];
-            // if the new range starts within another range
+
             if ($firstcol > $existingStart
                 && $firstcol < $existingEnd
-            ) { // trim the existing range to the beginning of the new range
+            ) {
+                // if the new range starts within another range
+                // trim the existing range to the beginning of the new range
                 $this->colInfo[$key][1] = $firstcol - 1;
-                // if the new range lies WITHIN the existing range
-                if ($lastcol < $existingEnd) { // split the existing range by adding a range after our new range
+
+                if ($lastcol < $existingEnd) {
+                    // if the new range lies WITHIN the existing range
+                    // split the existing range by adding a range after our new range
                     $this->colInfo[] = array(
                         $lastcol + 1,
                         $existingEnd,
@@ -689,19 +693,22 @@ class Worksheet extends BIFFwriter
                         $colinfo[5]
                     );
                 }
-            } // if the new range ends inside an existing range
-            elseif ($lastcol > $existingStart
+            } elseif ($lastcol > $existingStart
                 && $lastcol < $existingEnd
-            ) { // trim the existing range to the end of the new range
+            ) {
+                // if the new range ends inside an existing range
+                // trim the existing range to the end of the new range
                 $this->colInfo[$key][0] = $lastcol + 1;
-            } // if the new range completely overlaps the existing range
-            elseif ($firstcol <= $existingStart && $lastcol >= $existingEnd) {
+            } elseif ($firstcol <= $existingStart && $lastcol >= $existingEnd) {
+                // if the new range completely overlaps the existing range
                 unset($this->colInfo[$key]);
             }
-        } // added by Dan Lynn <dan@spiderweblabs.com) on 2006-12-06
+        }
+
         // regenerate keys
         $this->colInfo = array_values($this->colInfo);
         $this->colInfo[] = array($firstcol, $lastcol, $width, &$format, $hidden, $level);
+
         // Set width to zero if column is hidden
         $width = ($hidden) ? 0 : $width;
         for ($col = $firstcol; $col <= $lastcol; $col++) {

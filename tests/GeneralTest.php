@@ -333,4 +333,27 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/multiple_sheets.xls', $this->testFilePath);
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function testDefcols()
+    {
+        $workbook = new Workbook();
+        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+
+        $worksheet = $workbook->addWorksheet();
+        $worksheet->write(0, 0, 'Test1');
+        $worksheet->write(0, 1, 'Test2');
+        $worksheet->write(0, 2, 'Test3');
+
+        $worksheet->setColumn(0, 0, 25);
+        $worksheet->setColumn(1, 1, 50);
+        $worksheet->setColumn(2, 3, 10, null, 1);
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/defcols.xls', $this->testFilePath);
+    }
 }
