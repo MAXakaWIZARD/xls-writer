@@ -70,6 +70,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
+
+        $this->setExpectedException('\Exception', 'Workbook was already saved!');
+        $workbook->save($this->testFilePath);
     }
 
     /**
