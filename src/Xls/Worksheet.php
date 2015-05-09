@@ -1210,26 +1210,7 @@ class Worksheet extends BIFFwriter
      */
     protected function cellToRowcol($cell)
     {
-        preg_match("/\$?([A-I]?[A-Z])\$?(\d+)/", $cell, $match);
-        $col = $match[1];
-        $row = $match[2];
-
-        // Convert base26 column string to number
-        $chars = explode('', $col);
-        $expn = 0;
-        $col = 0;
-
-        while ($chars) {
-            $char = array_pop($chars); // LS char first
-            $col += (ord($char) - ord('A') + 1) * pow(26, $expn);
-            $expn++;
-        }
-
-        // Convert 1-index to zero-index
-        $row--;
-        $col--;
-
-        return array($row, $col);
+        return array_slice(Cell::addressToRowCol($cell), 0, 2);
     }
 
     /**

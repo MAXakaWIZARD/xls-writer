@@ -529,7 +529,7 @@ class FormulaParser
     protected function cellToPackedRowcol($cell)
     {
         $cell = strtoupper($cell);
-        list($row, $col, $rowRel, $colRel) = $this->cellToRowcol($cell);
+        list($row, $col, $rowRel, $colRel) = Cell::addressToRowCol($cell);
 
         if ($col >= Biff5::MAX_COLS) {
             throw new \Exception("Column in: $cell greater than " . Biff5::MAX_COLS);
@@ -597,39 +597,6 @@ class FormulaParser
         $row2 = pack('v', $row2);
 
         return array($row1, $col1, $row2, $col2);
-    }
-
-    /**
-     * Convert an Excel cell reference such as A1 or $B2 or C$3 or $D$4 to a zero
-     * indexed row and column number. Also returns two (0,1) values to indicate
-     * whether the row or column are relative references.
-     *
-     * @param string $cell The Excel cell reference in A1 format.
-     * @return array
-     */
-    protected function cellToRowcol($cell)
-    {
-        preg_match('/(\$)?([A-I]?[A-Z])(\$)?(\d+)/', $cell, $match);
-        // return absolute column if there is a $ in the ref
-        $colRel = empty($match[1]) ? 1 : 0;
-        $colRef = $match[2];
-        $rowRel = empty($match[3]) ? 1 : 0;
-        $row = $match[4];
-
-        // Convert base26 column string to a number.
-        $expn = strlen($colRef) - 1;
-        $col = 0;
-        $colRefLength = strlen($colRef);
-        for ($i = 0; $i < $colRefLength; $i++) {
-            $col += (ord($colRef{$i}) - ord('A') + 1) * pow(26, $expn);
-            $expn--;
-        }
-
-        // Convert 1-index to zero-index
-        $row--;
-        $col--;
-
-        return array($row, $col, $rowRel, $colRel);
     }
 
     /**

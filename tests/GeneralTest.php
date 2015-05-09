@@ -243,18 +243,6 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     /**
      *
      */
-    public function testRowColToCell()
-    {
-        $this->assertSame('A1', Cell::getAddress(0, 0));
-        $this->assertSame('B2', Cell::getAddress(1, 1));
-        $this->assertSame('K256', Cell::getAddress(255, 10));
-        $this->assertSame('IV256', Cell::getAddress(255, 255));
-        $this->assertSame('AB1', Cell::getAddress(0, 27));
-    }
-
-    /**
-     *
-     */
     public function testRowColToCellInvalid()
     {
         $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
