@@ -230,6 +230,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $countValidator->setFormula1('INDIRECT(ADDRESS(ROW(), COLUMN())) > 0');
         $worksheet->setValidation(1, 1, 3, 1, $countValidator);
 
+        $anotherSheet = $workbook->addWorksheet('Another sheet');
+        $anotherSheet->write(0, 0, 'Test');
+
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
