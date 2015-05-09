@@ -289,11 +289,12 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     *
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
      */
-    public function testMultipleSheets()
+    public function testMultipleSheets($params)
     {
-        $workbook = new Workbook();
+        $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         for ($i = 1; $i <= 4; $i++) {
@@ -304,7 +305,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/multiple_sheets.xls', $this->testFilePath);
+        $correctFilePath = $this->getFilePath('multiple_sheets', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
     /**
