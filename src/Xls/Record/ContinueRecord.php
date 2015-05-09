@@ -22,15 +22,21 @@ class ContinueRecord extends AbstractRecord
      */
     public function getData($data, $limit)
     {
+        //reserve 4 bytes for header
+        $limit = $limit - 4;
+
         // The first bytes below limit remain intact. However, we have to change
         // the length field of the record.
-        $result = substr($data, 0, 2) . pack("v", $limit - 4) . substr($data, 4, $limit - 4);
+        $recordId = substr($data, 0, 2);
+        $newRecordSize = $limit - 4;
+        $recordData = substr($data, 4, $newRecordSize);
+        $result = $recordId . pack("v", $newRecordSize) . $recordData;
 
         $header = $this->getHeader($limit);
 
-        // Retrieve chunks of 2080/8224 bytes +4 for the header.
+        // Retrieve chunks of 2080/8224 bytes +4 for the header
         $dataLength = strlen($data);
-        for ($i = $limit; $i < ($dataLength - $limit); $i += $limit) {
+        for ($i = $limit; $i < $dataLength - $limit; $i += $limit) {
             $result .= $header;
             $result .= substr($data, $i, $limit);
         }

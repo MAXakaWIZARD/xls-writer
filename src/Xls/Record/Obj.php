@@ -43,11 +43,11 @@ class Obj extends AbstractRecord
         $fAutoB = 0x00; // Automatic border
         $frs = 0x0000; // Frame style
         $cf = 0x0009; // Image format, 9 = bitmap
-        $Reserved3 = 0x0000; // Reserved
+        $reserved3 = 0x0000; // Reserved
         $cbPictFmla = 0x0000; // Length of FMLA structure
-        $Reserved4 = 0x0000; // Reserved
+        $reserved4 = 0x0000; // Reserved
         $grbit2 = 0x0001; // Option flags
-        $Reserved5 = 0x0000; // Reserved
+        $reserved5 = 0x0000; // Reserved
 
         $data = pack("V", $cObj);
         $data .= pack("v", $OT);
@@ -74,11 +74,11 @@ class Obj extends AbstractRecord
         $data .= pack("C", $fAutoB);
         $data .= pack("v", $frs);
         $data .= pack("V", $cf);
-        $data .= pack("v", $Reserved3);
+        $data .= pack("v", $reserved3);
         $data .= pack("v", $cbPictFmla);
-        $data .= pack("v", $Reserved4);
+        $data .= pack("v", $reserved4);
         $data .= pack("v", $grbit2);
-        $data .= pack("V", $Reserved5);
+        $data .= pack("V", $reserved5);
 
         return $this->getHeader() . $data;
     }

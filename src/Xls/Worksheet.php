@@ -580,7 +580,6 @@ class Worksheet extends BIFFwriter
             return $tmp;
         }
 
-        // No data to return
         return '';
     }
 
@@ -2735,14 +2734,12 @@ class Worksheet extends BIFFwriter
      */
     public function insertBitmap($row, $col, $bitmap, $x = 0, $y = 0, $scaleX = 1, $scaleY = 1)
     {
-        $bitmapArray = $this->processBitmap($bitmap);
-        list($width, $height, $size, $data) = $bitmapArray;
+        list($width, $height, $size, $data) = $this->processBitmap($bitmap);
 
         // Scale the frame of the image.
         $width *= $scaleX;
         $height *= $scaleY;
 
-        // Calculate the vertices of the image and write the OBJ record
         $this->positionImage($col, $row, $x, $y, $width, $height);
 
         $this->appendRecord('Imdata', array($size, $data));
@@ -2810,6 +2807,7 @@ class Worksheet extends BIFFwriter
         if ($x1 >= $this->sizeCol($colStart)) {
             $x1 = 0;
         }
+
         if ($y1 >= $this->sizeRow($rowStart)) {
             $y1 = 0;
         }
@@ -2830,18 +2828,12 @@ class Worksheet extends BIFFwriter
         }
 
         // Bitmap isn't allowed to start or finish in a hidden cell, i.e. a cell
-        // with zero eight or width.
-        //
-        if ($this->sizeCol($colStart) == 0) {
-            return;
-        }
-        if ($this->sizeCol($colEnd) == 0) {
-            return;
-        }
-        if ($this->sizeRow($rowStart) == 0) {
-            return;
-        }
-        if ($this->sizeRow($rowEnd) == 0) {
+        // with zero height or width.
+        if ($this->sizeCol($colStart) == 0
+            || $this->sizeCol($colEnd) == 0
+            || $this->sizeRow($rowStart) == 0
+            || $this->sizeRow($rowEnd) == 0
+        ) {
             return;
         }
 
@@ -2851,16 +2843,19 @@ class Worksheet extends BIFFwriter
         $x2 = $width / $this->sizeCol($colEnd) * 1024; // Distance to right side of object
         $y2 = $height / $this->sizeRow($rowEnd) * 256; // Distance to bottom of object
 
-        $this->appendRecord('Obj', array(
-            $colStart,
-            $x1,
-            $rowStart,
-            $y1,
-            $colEnd,
-            $x2,
-            $rowEnd,
-            $y2
-        ));
+        $this->appendRecord(
+            'Obj',
+            array(
+                $colStart,
+                $x1,
+                $rowStart,
+                $y1,
+                $colEnd,
+                $x2,
+                $rowEnd,
+                $y2
+            )
+        );
     }
 
     /**
@@ -2877,13 +2872,13 @@ class Worksheet extends BIFFwriter
         // Look up the cell value to see if it has been changed
         if (isset($this->colSizes[$col])) {
             if ($this->colSizes[$col] == 0) {
-                return (0);
+                return 0;
             } else {
-                return (floor(7 * $this->colSizes[$col] + 5));
+                return floor(7 * $this->colSizes[$col] + 5);
             }
-        } else {
-            return (64);
         }
+
+        return 64;
     }
 
     /**
@@ -2901,13 +2896,13 @@ class Worksheet extends BIFFwriter
         // Look up the cell value to see if it has been changed
         if (isset($this->rowSizes[$row])) {
             if ($this->rowSizes[$row] == 0) {
-                return (0);
+                return 0;
             } else {
-                return (floor(4 / 3 * $this->rowSizes[$row]));
+                return floor(4 / 3 * $this->rowSizes[$row]);
             }
-        } else {
-            return 17;
         }
+
+        return 17;
     }
 
     /**
@@ -2915,30 +2910,30 @@ class Worksheet extends BIFFwriter
      * This is described in BITMAPCOREHEADER and BITMAPCOREINFO structures in the
      * MSDN library.
      *
-     * @param string $bitmap The bitmap to process
+     * @param string $filePath The bitmap to process
+     *
      * @throws \Exception
      * @return array Array with data and properties of the bitmap
      */
-    protected function processBitmap($bitmap)
+    protected function processBitmap($filePath)
     {
-        // Open file.
-        $bmpFd = @fopen($bitmap, "rb");
-        if (!$bmpFd) {
-            throw new \Exception("Couldn't import $bitmap");
+        $bmpFd = @fopen($filePath, "rb");
+        if ($bmpFd === false) {
+            throw new \Exception("Couldn't import $filePath");
         }
 
         // Slurp the file into a string.
-        $data = fread($bmpFd, filesize($bitmap));
+        $data = fread($bmpFd, filesize($filePath));
 
         // Check that the file is big enough to be a bitmap.
         if (strlen($data) <= 0x36) {
-            throw new \Exception("$bitmap doesn't contain enough data.\n");
+            throw new \Exception("$filePath doesn't contain enough data.\n");
         }
 
         // The first 2 bytes are used to identify the bitmap.
         $identity = unpack("A2ident", $data);
         if ($identity['ident'] != "BM") {
-            throw new \Exception("$bitmap doesn't appear to be a valid bitmap image.\n");
+            throw new \Exception("$filePath doesn't appear to be a valid bitmap image.\n");
         }
 
         // Remove bitmap data: ID.
@@ -2946,7 +2941,6 @@ class Worksheet extends BIFFwriter
 
         // Read and remove the bitmap size. This is more reliable than reading
         // the data size at offset 0x22.
-        //
         $sizeArray = unpack("Vsa", substr($data, 0, 4));
         $size = $sizeArray['sa'];
         $data = substr($data, 4);
@@ -2961,21 +2955,25 @@ class Worksheet extends BIFFwriter
         $width = $widthAndHeight[1];
         $height = $widthAndHeight[2];
         $data = substr($data, 8);
+
         if ($width > 0xFFFF) {
-            throw new \Exception("$bitmap: largest image width supported is 65k.\n");
+            throw new \Exception("$filePath: largest image width supported is 65k.\n");
         }
+
         if ($height > 0xFFFF) {
-            throw new \Exception("$bitmap: largest image height supported is 65k.\n");
+            throw new \Exception("$filePath: largest image height supported is 65k.\n");
         }
 
         // Read and remove the bitmap planes and bpp data. Verify them.
         $planesAndBitcount = unpack("v2", substr($data, 0, 4));
         $data = substr($data, 4);
+
         if ($planesAndBitcount[2] != 24) { // Bitcount
-            throw new \Exception("$bitmap isn't a 24bit true color bitmap.\n");
+            throw new \Exception("$filePath isn't a 24bit true color bitmap.\n");
         }
+
         if ($planesAndBitcount[1] != 1) {
-            throw new \Exception("$bitmap: only 1 plane supported in bitmap image.\n");
+            throw new \Exception("$filePath: only 1 plane supported in bitmap image.\n");
         }
 
         // Read and remove the bitmap compression. Verify compression.
@@ -2983,7 +2981,7 @@ class Worksheet extends BIFFwriter
         $data = substr($data, 4);
 
         if ($compression['comp'] != 0) {
-            throw new \Exception("$bitmap: compression not supported in bitmap image.\n");
+            throw new \Exception("$filePath: compression not supported in bitmap image.\n");
         }
 
         // Remove bitmap data: data size, hres, vres, colours, imp. colours.

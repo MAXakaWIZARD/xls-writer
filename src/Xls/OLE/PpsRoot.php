@@ -68,16 +68,13 @@ class PpsRoot extends PPS
 
         $this->saveHeader($iSBDcnt, $iBBcnt, $iPPScnt);
 
-        // Make Small Data string (write SBD)
-        $this->data = $this->getAndWriteSmallData($list);
+        $this->saveSmallData($list);
 
         $this->saveBigData($iSBDcnt, $list);
         $this->savePps($list);
         $this->saveBigBlockChain($iSBDcnt, $iBBcnt, $iPPScnt);
 
         fclose($this->rootFilePointer);
-
-        return true;
     }
 
     /**
@@ -151,11 +148,11 @@ class PpsRoot extends PPS
      * Saving big data (PPS's with data bigger than OLE_DATA_SIZE_SMALL)
      *
      * @param integer $iStBlk
-     * @param PPS[] &$raList Reference to array of PPS's
+     * @param PPS[] &$list Reference to array of PPS's
      */
-    public function saveBigData($iStBlk, &$raList)
+    public function saveBigData($iStBlk, &$list)
     {
-        foreach ($raList as $item) {
+        foreach ($list as $item) {
             if ($item->isDir()) {
                 continue;
             }
@@ -178,6 +175,7 @@ class PpsRoot extends PPS
                         $this->write("\x00");
                     }
                 }
+
                 // Set For PPS
                 $item->setStartBlock($iStBlk);
                 $iStBlk += $this->getBlocksCount($size, $this->bigBlockSize);
@@ -186,13 +184,13 @@ class PpsRoot extends PPS
     }
 
     /**
-     * @param $sourceStream
+     * @param resource $sourceStream
      */
     protected function copyFromItemStream($sourceStream)
     {
         fseek($sourceStream, 0);
-        while ($sBuff = fread($sourceStream, 4096)) {
-            $this->write($sBuff);
+        while ($buffer = fread($sourceStream, 4096)) {
+            $this->write($buffer);
         }
     }
 
@@ -202,7 +200,7 @@ class PpsRoot extends PPS
      * @param PPS[] &$list Reference to array of PPS's
      * @return string
      */
-    protected function getAndWriteSmallData(&$list)
+    protected function saveSmallData(&$list)
     {
         $result = '';
         $iSmBlk = 0;
@@ -249,24 +247,24 @@ class PpsRoot extends PPS
             }
         }
 
-        return $result;
+        $this->data = $result;
     }
 
     /**
      * Saves all the PPS's WKs
      *
-     * @param PPS[] $raList Reference to an array with all PPS's
+     * @param PPS[] $list Reference to an array with all PPS's
      */
-    protected function savePps(&$raList)
+    protected function savePps(&$list)
     {
         // Save each PPS WK
-        $raListCount = count($raList);
+        $raListCount = count($list);
         for ($i = 0; $i < $raListCount; $i++) {
-            $this->write($raList[$i]->getPpsWk());
+            $this->write($list[$i]->getPpsWk());
         }
 
         // Adjust for Block
-        $iCnt = count($raList);
+        $iCnt = count($list);
         $iBCnt = $this->getPointersPerBlock($this->bigBlockSize, OLE::PPS_SIZE);
         if ($iCnt % $iBCnt) {
             for ($i = 0; $i < (($iBCnt - ($iCnt % $iBCnt)) * OLE::PPS_SIZE); $i++) {

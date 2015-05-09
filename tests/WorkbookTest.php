@@ -157,4 +157,40 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', '$val needs to be an array');
         $sheet->writeCol(0, 0, null);
     }
+
+    /**
+     *
+     */
+    public function testWrongImagePath()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $path = TEST_DATA_PATH . '/not_exists.bmp';
+        $this->setExpectedException('\Exception', "Couldn't import $path");
+        $sheet->insertBitmap(0, 0, $path);
+    }
+
+    /**
+     *
+     */
+    public function testNonBmp()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $path = TEST_DATA_PATH . '/general.xls';
+        $this->setExpectedException('\Exception', "$path doesn't appear to be a valid bitmap image");
+        $sheet->insertBitmap(0, 0, $path);
+    }
+
+    /**
+     *
+     */
+    public function testEmptyBmp()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $path = TEST_DATA_PATH . '/corrupted.bmp';
+        $this->setExpectedException('\Exception', "$path doesn't contain enough data");
+        $sheet->insertBitmap(0, 0, $path);
+    }
 }

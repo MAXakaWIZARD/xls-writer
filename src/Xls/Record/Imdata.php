@@ -22,6 +22,7 @@ class Imdata extends AbstractRecord
         $env = 0x01;
 
         $header = pack("vvvvV", static::ID, $length, $cf, $env, $size);
+
         return $header . $data;
     }
 }

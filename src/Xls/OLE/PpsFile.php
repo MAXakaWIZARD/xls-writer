@@ -30,7 +30,6 @@ class PpsFile extends PPS
     /**
      * Init temporary file
      * @throws \Exception
-     * @return boolean true on success.
      */
     protected function init()
     {
@@ -39,10 +38,6 @@ class PpsFile extends PPS
         if ($this->filePointer === false) {
             throw new \Exception("Can't create temporary file");
         }
-
-        fseek($this->filePointer, 0);
-
-        return true;
     }
 
     /**

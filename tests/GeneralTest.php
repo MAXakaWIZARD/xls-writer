@@ -97,6 +97,21 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     /**
      * @return array
      */
+    public function providerBiff5()
+    {
+        return array(
+            array(
+                array(
+                    'format' => Biff5::VERSION,
+                    'suffix' => ''
+                )
+            )
+        );
+    }
+
+    /**
+     * @return array
+     */
     public function providerDifferentBiffVersions()
     {
         return array(
@@ -340,14 +355,11 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
+     * @dataProvider providerBiff5
      * @param array $params
      */
     public function testPortraitLayout($params)
     {
-        $params['format'] = Biff5::VERSION;
-        $params['suffix'] = '';
-
         $workbook = $this->createWorkbook($params);
         $workbook->setCountry($workbook::COUNTRY_USA);
 
@@ -384,14 +396,11 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
+     * @dataProvider providerBiff5
      * @param array $params
      */
     public function testLandscapeLayout($params)
     {
-        $params['format'] = Biff5::VERSION;
-        $params['suffix'] = '';
-
         $workbook = $this->createWorkbook($params);
         $workbook->setCountry($workbook::COUNTRY_USA);
 
@@ -418,6 +427,25 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFileExists($this->testFilePath);
         $correctFilePath = $this->getFilePath('layout_landscape', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
+
+    /**
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
+     */
+    public function testImage($params)
+    {
+        $workbook = $this->createWorkbook($params);
+
+        $sheet = $workbook->addWorksheet();
+        $sheet->write(0, 0, 'Test');
+        $sheet->insertBitmap(2, 2, TEST_DATA_PATH . '/elephpant.bmp');
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('image', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }
