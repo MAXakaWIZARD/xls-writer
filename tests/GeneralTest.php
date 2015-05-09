@@ -356,4 +356,23 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/defcols.xls', $this->testFilePath);
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function testCountry()
+    {
+        $workbook = new Workbook();
+        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+        $workbook->setCountry($workbook::COUNTRY_USA);
+
+        $worksheet = $workbook->addWorksheet();
+        $worksheet->write(0, 0, 'Test1');
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        exit;
+        $this->assertFileEquals(TEST_DATA_PATH . '/country.xls', $this->testFilePath);
+    }
 }

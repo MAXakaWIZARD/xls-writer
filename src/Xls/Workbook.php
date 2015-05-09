@@ -12,6 +12,8 @@ use Xls\OLE\PpsRoot;
 
 class Workbook extends BIFFwriter
 {
+    const COUNTRY_USA = 1;
+
     /**
      * Filename for the Workbook
      * @var string
