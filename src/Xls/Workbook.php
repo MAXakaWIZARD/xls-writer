@@ -12,6 +12,7 @@ use Xls\OLE\PpsRoot;
 
 class Workbook extends BIFFwriter
 {
+    const COUNTRY_NONE = -1;
     const COUNTRY_USA = 1;
 
     /**
@@ -98,7 +99,7 @@ class Workbook extends BIFFwriter
      * The country code used for localization
      * @var integer
      */
-    protected $countryCode = -1;
+    protected $countryCode = self::COUNTRY_NONE;
 
     /**
      * @var
@@ -179,9 +180,12 @@ class Workbook extends BIFFwriter
             $sheet->close($this->sheetNames);
         }
 
-        // Add Workbook globals
-        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
+        $this->appendRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
         $this->appendRecord('Codepage', array($this->biff->getCodepage()));
+
+        if ($this->countryCode != self::COUNTRY_NONE) {
+            $this->appendRecord('Country', array($this->countryCode));
+        }
 
         if ($this->isBiff8()) {
             $this->storeWindow1();
@@ -202,10 +206,6 @@ class Workbook extends BIFFwriter
         $this->calcSheetOffsets();
         foreach ($this->worksheets as $sheet) {
             $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
-        }
-
-        if ($this->countryCode != -1) {
-            $this->appendRecord('Country', array($this->countryCode));
         }
 
         if ($this->isBiff8()) {
@@ -468,7 +468,7 @@ class Workbook extends BIFFwriter
             /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $this->blockSizes = $this->sst->getBlocksSizesOrDataToWrite();
             $offset += $this->sst->calcSharedStringsTableLength($this->blockSizes);
-            if ($this->countryCode != -1) {
+            if ($this->countryCode != self::COUNTRY_NONE) {
                 $offset += 8; // adding COUNTRY record
             }
             // add the lenght of SUPBOOK, EXTERNSHEET and NAME records

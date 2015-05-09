@@ -372,7 +372,6 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        exit;
         $this->assertFileEquals(TEST_DATA_PATH . '/country.xls', $this->testFilePath);
     }
 }
