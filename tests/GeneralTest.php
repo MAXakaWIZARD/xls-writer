@@ -37,6 +37,17 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @param $prefix
+     * @param $suffix
+     *
+     * @return string
+     */
+    protected function getFilePath($prefix, $suffix)
+    {
+        return TEST_DATA_PATH . '/' . $prefix . $suffix . '.xls';
+    }
+
+    /**
      *
      */
     public function testUnsupportedVersion()
@@ -46,7 +57,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerGeneral
+     * @dataProvider providerDifferentBiffVersions
      * @param array $params
      */
     public function testGeneral($params)
@@ -69,7 +80,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
+        $correctFilePath = $this->getFilePath('general', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
 
         $this->setExpectedException('\Exception', 'Workbook was already saved!');
         $workbook->save($this->testFilePath);
@@ -78,26 +90,26 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     /**
      * @return array
      */
-    public function providerGeneral()
+    public function providerDifferentBiffVersions()
     {
         return array(
             array(
                 array(
                     'format' => Biff5::VERSION,
-                    'file' => 'general.xls'
+                    'suffix' => ''
                 )
             ),
             array(
                 array(
                     'format' => Biff8::VERSION,
-                    'file' => 'general_biff8.xls'
+                    'suffix' => '_biff8'
                 )
             )
         );
     }
 
     /**
-     * @dataProvider providerRich
+     * @dataProvider providerDifferentBiffVersions
      * @param $params
      *
      * @throws \Exception
@@ -107,7 +119,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
-        $worksheet = $workbook->addWorksheet($params['sheetName']);
+        $worksheet = $workbook->addWorksheet('New PC');
 
         $headerFormat = $workbook->addFormat();
         $headerFormat->setBold();
@@ -211,30 +223,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
-    }
-
-    /**
-     * @return array
-     */
-    public function providerRich()
-    {
-        return array(
-            array(
-                array(
-                    'format' => Biff5::VERSION,
-                    'file' => 'rich.xls',
-                    'sheetName' => 'New PC'
-                )
-            ),
-            array(
-                array(
-                    'format' => Biff8::VERSION,
-                    'file' => 'rich_biff8.xls',
-                    'sheetName' => 'New PC BIFF8'
-                )
-            )
-        );
+        $correctFilePath = $this->getFilePath('rich', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
     /**
@@ -259,7 +249,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerProtected
+     * @dataProvider providerDifferentBiffVersions
      * @param $params
      *
      * @throws \Exception
@@ -276,28 +266,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/' . $params['file'], $this->testFilePath);
-    }
-
-    /**
-     * @return array
-     */
-    public function providerProtected()
-    {
-        return array(
-            array(
-                array(
-                    'format' => Biff5::VERSION,
-                    'file' => 'protected.xls'
-                )
-            ),
-            array(
-                array(
-                    'format' => Biff8::VERSION,
-                    'file' => 'protected_biff8.xls'
-                )
-            )
-        );
+        $correctFilePath = $this->getFilePath('protected', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
     /**
@@ -361,11 +331,12 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @throws \Exception
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
      */
-    public function testCountry()
+    public function testCountry($params)
     {
-        $workbook = new Workbook();
+        $workbook = new Workbook($params['format']);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
         $workbook->setCountry($workbook::COUNTRY_USA);
 
@@ -375,6 +346,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $this->assertFileEquals(TEST_DATA_PATH . '/country.xls', $this->testFilePath);
+        $correctFilePath = $this->getFilePath('country', $params['suffix']);
+        //if ($params['suffix'] == '_biff8') exit;
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }

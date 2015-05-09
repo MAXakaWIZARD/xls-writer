@@ -468,9 +468,7 @@ class Workbook extends BIFFwriter
             /* TODO: check if this works for a lot of strings (> 8224 bytes) */
             $this->blockSizes = $this->sst->getBlocksSizesOrDataToWrite();
             $offset += $this->sst->calcSharedStringsTableLength($this->blockSizes);
-            if ($this->countryCode != self::COUNTRY_NONE) {
-                $offset += 8; // adding COUNTRY record
-            }
+
             // add the lenght of SUPBOOK, EXTERNSHEET and NAME records
             //$offset += 8; // TODO: calculate real value when storing the records
         }
