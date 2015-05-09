@@ -171,7 +171,7 @@ class Workbook extends BIFFwriter
         }
 
         if (count($this->worksheets) == 0) {
-            return;
+            throw new \Exception('Cannot save workbook with no sheets');
         }
 
         // Calculate the number of selected worksheet tabs and call the finalization

@@ -16,10 +16,16 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     protected $workbook;
 
     /**
+     * @var string
+     */
+    protected $testFilePath;
+
+    /**
      *
      */
     public function setUp()
     {
+        $this->testFilePath = TEST_DATA_PATH . '/test.xls';
         $this->workbook = new Workbook();
     }
 
@@ -99,5 +105,14 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException('\Exception', 'Color component outside range: 0 <= color <= 255');
         $this->workbook->setCustomColor(12, 265, 265, 265);
+    }
+
+    /**
+     *
+     */
+    public function testNoSheets()
+    {
+        $this->setExpectedException('\Exception', 'Cannot save workbook with no sheets');
+        $this->workbook->save($this->testFilePath);
     }
 }
