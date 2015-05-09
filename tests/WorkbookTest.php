@@ -115,4 +115,46 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', 'Cannot save workbook with no sheets');
         $this->workbook->save($this->testFilePath);
     }
+
+    /**
+     *
+     */
+    public function testWrongZoomFactor()
+    {
+        $sheet = $this->workbook->addWorksheet();
+        $this->setExpectedException('\Exception', 'Zoom factor 1000 outside range: 10 <= zoom <= 400');
+        $sheet->setZoom(1000);
+    }
+
+    /**
+     *
+     */
+    public function testWrongPrintScaleFactor()
+    {
+        $sheet = $this->workbook->addWorksheet();
+        $this->setExpectedException('\Exception', 'Print scale 1000 outside range: 10 <= zoom <= 400');
+        $sheet->setPrintScale(1000);
+    }
+
+    /**
+     *
+     */
+    public function testWriteRowWithWrongData()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', '$val needs to be an array');
+        $sheet->writeRow(0, 0, null);
+    }
+
+    /**
+     *
+     */
+    public function testWriteColWithWrongData()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', '$val needs to be an array');
+        $sheet->writeCol(0, 0, null);
+    }
 }

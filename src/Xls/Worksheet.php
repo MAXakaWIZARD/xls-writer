@@ -15,6 +15,12 @@ class Worksheet extends BIFFwriter
     const ORIENTATION_PORTRAIT = 1;
     const ORIENTATION_LANDSCAPE = 0;
 
+    const PAPER_CUSTOM = 0;
+    const PAPER_US_LETTER = 1;
+    const PAPER_A3 = 8;
+    const PAPER_A4 = 9;
+    const PAPER_A5 = 11;
+
     /**
      * Name of the Worksheet
      * @var string
@@ -127,7 +133,7 @@ class Worksheet extends BIFFwriter
      * The paper size (for printing) (DOCUMENT!!!)
      * @var integer
      */
-    public $paperSize = 0;
+    public $paperSize = self::PAPER_CUSTOM;
 
     /**
      * Bit specifying paper orientation (for printing). 0 => landscape, 1 => portrait
@@ -340,7 +346,7 @@ class Worksheet extends BIFFwriter
 
     protected $printGridLines = 1;
     protected $screenGridLines = 1;
-    protected $printHeaders = 0;
+    protected $printRowColHeaders = 0;
     protected $hbreaks = array();
     protected $vbreaks = array();
     protected $protect = 0;
@@ -778,14 +784,13 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Set the paper type. Ex. 1 = US Letter, 9 = A4
+     * Set the paper type
      * @param integer $size The type of paper size to use
      */
-    public function setPaper($size = 0)
+    public function setPaper($size = self::PAPER_CUSTOM)
     {
         $this->paperSize = $size;
     }
-
 
     /**
      * Set the page header caption and optional margin.
@@ -795,8 +800,9 @@ class Worksheet extends BIFFwriter
     public function setHeader($string, $margin = 0.50)
     {
         if (strlen($string) > Biff5::MAX_STR_LENGTH) {
-            return;
+            $string = substr($string, 0, Biff5::MAX_STR_LENGTH - 1);
         }
+
         $this->header = $string;
         $this->marginHead = $margin;
     }
@@ -809,8 +815,9 @@ class Worksheet extends BIFFwriter
     public function setFooter($string, $margin = 0.50)
     {
         if (strlen($string) > Biff5::MAX_STR_LENGTH) {
-            return;
+            $string = substr($string, 0, Biff5::MAX_STR_LENGTH - 1);
         }
+
         $this->footer = $string;
         $this->marginFoot = $margin;
     }
@@ -839,10 +846,8 @@ class Worksheet extends BIFFwriter
      */
     public function setMargins($margin)
     {
-        $this->setMarginLeft($margin);
-        $this->setMarginRight($margin);
-        $this->setMarginTop($margin);
-        $this->setMarginBottom($margin);
+        $this->setMarginsLeftRight($margin);
+        $this->setMarginsTopBottom($margin);
     }
 
     /**
@@ -969,7 +974,7 @@ class Worksheet extends BIFFwriter
      */
     public function printRowColHeaders($print = 1)
     {
-        $this->printHeaders = $print;
+        $this->printRowColHeaders = $print;
     }
 
     /**
@@ -1091,11 +1096,9 @@ class Worksheet extends BIFFwriter
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
      * @throws \Exception
-     * @return mixed
      */
     public function writeRow($row, $col, $val, $format = null)
     {
-        $retval = '';
         if (is_array($val)) {
             foreach ($val as $v) {
                 if (is_array($v)) {
@@ -1108,7 +1111,6 @@ class Worksheet extends BIFFwriter
         } else {
             throw new \Exception('$val needs to be an array');
         }
-        return ($retval);
     }
 
     /**
@@ -1118,11 +1120,9 @@ class Worksheet extends BIFFwriter
      * @param array $val    The array of values to write
      * @param mixed $format The optional format to apply to the cell
      * @throws \Exception
-     * @return mixed
      */
     public function writeCol($row, $col, $val, $format = null)
     {
-        $retval = '';
         if (is_array($val)) {
             foreach ($val as $v) {
                 $this->write($row, $col, $v, $format);
@@ -1131,7 +1131,6 @@ class Worksheet extends BIFFwriter
         } else {
             throw new \Exception('$val needs to be an array');
         }
-        return ($retval);
     }
 
     /**
@@ -1230,7 +1229,7 @@ class Worksheet extends BIFFwriter
         $row--;
         $col--;
 
-        return (array($row, $col));
+        return array($row, $col);
     }
 
     /**
@@ -2544,7 +2543,7 @@ class Worksheet extends BIFFwriter
         $record = 0x002a; // Record identifier
         $length = 0x0002; // Bytes to follow
 
-        $fPrintRwCol = $this->printHeaders; // Boolean flag
+        $fPrintRwCol = $this->printRowColHeaders; // Boolean flag
 
         $header = pack("vv", $record, $length);
         $data = pack("v", $fPrintRwCol);

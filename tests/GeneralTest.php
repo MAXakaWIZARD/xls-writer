@@ -363,4 +363,86 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $correctFilePath = $this->getFilePath('country', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
+
+    /**
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
+     */
+    public function testPortraitLayout($params)
+    {
+        $params['format'] = Biff5::VERSION;
+        $params['suffix'] = '';
+
+        $workbook = $this->createWorkbook($params);
+        $workbook->setCountry($workbook::COUNTRY_USA);
+
+        $sheet = $workbook->addWorksheet();
+        $row = array(
+            'Portrait layout test',
+            '',
+            '',
+            '',
+            '',
+            'Test2'
+        );
+        $sheet->writeRow(0, 0, $row);
+
+        $sheet->setZoom(125);
+
+        $sheet->setPortrait();
+        $sheet->setMargins(1.25);
+        $sheet->setHeader('Page header');
+        $sheet->setFooter('Page footer');
+        $sheet->setPrintScale(90);
+        $sheet->setPaper($sheet::PAPER_A3);
+        $sheet->printArea(0, 0, 10, 10);
+        $sheet->hideGridlines();
+        $sheet->setHPagebreaks(array(1));
+        $sheet->setVPagebreaks(array(5));
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('layout_portrait', $params['suffix']);
+        //if ($params['suffix'] == '_biff8') exit;
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
+
+    /**
+     * @dataProvider providerDifferentBiffVersions
+     * @param array $params
+     */
+    public function testLandscapeLayout($params)
+    {
+        $params['format'] = Biff5::VERSION;
+        $params['suffix'] = '';
+
+        $workbook = $this->createWorkbook($params);
+        $workbook->setCountry($workbook::COUNTRY_USA);
+
+        $sheet = $workbook->addWorksheet();
+        $sheet->write(0, 0, 'Landscape layout test');
+        $sheet->writeCol(0, 1, range(1, 10));
+
+        $sheet->setZoom(125);
+        $sheet->hideScreenGridlines();
+
+        $sheet->setLandscape();
+
+        //header and footer should be cut to max length (255)
+        $sheet->setHeader('Page header' . str_repeat('.', 255));
+        $sheet->setFooter('Page footer' . str_repeat('.', 255));
+
+        $sheet->centerHorizontally();
+        $sheet->centerVertically();
+        $sheet->fitToPages(5, 5);
+        $sheet->setPaper($sheet::PAPER_A4);
+        $sheet->printRowColHeaders();
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('layout_landscape', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
 }
