@@ -171,4 +171,22 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
         Writer::rowcolToCell(256, 256);
     }
+
+    /**
+     *
+     */
+    public function testImage()
+    {
+        $workbook = new Writer($this->testFilePath);
+        $workbook->setCreationTimestamp(1429042916);
+
+        $sheet = $workbook->addWorksheet();
+        $sheet->write(0, 0, 'Test');
+        $sheet->insertBitmap(2, 2, TEST_DATA_PATH . '/elephpant.bmp');
+
+        $workbook->close();
+
+        $this->assertFileExists($this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/image.xls', $this->testFilePath);
+    }
 }

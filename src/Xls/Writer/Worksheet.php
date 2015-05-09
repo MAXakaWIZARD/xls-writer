@@ -3270,10 +3270,6 @@ class Worksheet extends BIFFwriter
     function insertBitmap($row, $col, $bitmap, $x = 0, $y = 0, $scale_x = 1, $scale_y = 1)
     {
         $bitmap_array = $this->_processBitmap($bitmap);
-        if ($this->isError($bitmap_array)) {
-            $this->writeString($row, $col, $bitmap_array->getMessage());
-            return;
-        }
         list($width, $height, $size, $data) = $bitmap_array; //$this->_processBitmap($bitmap);
 
         // Scale the frame of the image.
