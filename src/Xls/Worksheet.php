@@ -520,7 +520,7 @@ class Worksheet extends BIFFwriter
         ***********************************************/
 
         // Append
-        $this->storeWindow2();
+        $this->appendRecord('Window2', array($this));
         $this->storeZoom();
         if (!empty($this->panes)) {
             $this->storePanes($this->panes);
@@ -1215,15 +1215,10 @@ class Worksheet extends BIFFwriter
         $symbolsRight = true,
         $autoStyle = false
     ) {
-        $this->outlineOn = $visible;
+        $this->outlineOn = ($visible) ? 1 : 0;
         $this->outlineBelow = $symbolsBelow;
         $this->outlineRight = $symbolsRight;
         $this->outlineStyle = $autoStyle;
-
-        // Ensure this is a boolean vale for Window2
-        if ($this->outlineOn) {
-            $this->outlineOn = 1;
-        }
     }
 
     /**
@@ -2063,62 +2058,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Write BIFF record Window2.
-     */
-    protected function storeWindow2()
-    {
-        $record = 0x023E; // Record identifier
-        if ($this->isBiff5()) {
-            $length = 0x000A; // Number of bytes to follow
-        } else {
-            $length = 0x0012;
-        }
-
-        $grbit = 0x00B6; // Option flags
-        $rwTop = 0x0000; // Top row visible in window
-        $colLeft = 0x0000; // Leftmost column visible in window
-
-        // The options flags that comprise $grbit
-        $fDspFmla = 0; // 0 - bit
-        $fDspGrid = $this->screenGridLines; // 1
-        $fDspRwCol = 1; // 2
-        $fFrozen = $this->frozen; // 3
-        $fDspZeros = 1; // 4
-        $fDefaultHdr = 1; // 5
-        $fArabic = $this->arabic; // 6
-        $fDspGuts = $this->outlineOn; // 7
-        $fFrozenNoSplit = 0; // 0 - bit
-        $fSelected = $this->selected; // 1
-        $fPaged = 1; // 2
-
-        $grbit = $fDspFmla;
-        $grbit |= $fDspGrid << 1;
-        $grbit |= $fDspRwCol << 2;
-        $grbit |= $fFrozen << 3;
-        $grbit |= $fDspZeros << 4;
-        $grbit |= $fDefaultHdr << 5;
-        $grbit |= $fArabic << 6;
-        $grbit |= $fDspGuts << 7;
-        $grbit |= $fFrozenNoSplit << 8;
-        $grbit |= $fSelected << 9;
-        $grbit |= $fPaged << 10;
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vvv", $grbit, $rwTop, $colLeft);
-
-        if ($this->isBiff5()) {
-            $rgbHdr = 0x00000000; // Row/column heading and gridline color
-            $data .= pack("V", $rgbHdr);
-        } else {
-            $rgbHdr = 0x0040; // Row/column heading and gridline color index
-            $zoomFactorPageBreak = 0x0000;
-            $zoomFactorNormal = 0x0000;
-            $data .= pack("vvvvV", $rgbHdr, 0x0000, $zoomFactorPageBreak, $zoomFactorNormal, 0x00000000);
-        }
-        $this->append($header . $data);
-    }
-
-    /**
      * Prepend the COLINFO records if they exist
      */
     protected function storeColinfo()
@@ -2185,7 +2124,7 @@ class Worksheet extends BIFFwriter
         $length = 0x000A; // Number of bytes to follow
 
         // Code specific to frozen or thawed panes.
-        if ($this->frozen) {
+        if ($this->isFrozen()) {
             // Set default values for $rwTop and $colLeft
             if (!isset($rwTop)) {
                 $rwTop = $y;
@@ -2880,5 +2819,37 @@ class Worksheet extends BIFFwriter
     public function isSelected()
     {
         return (bool)$this->selected;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFrozen()
+    {
+        return (bool)$this->frozen;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isArabic()
+    {
+        return (bool)$this->arabic;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOutlineOn()
+    {
+        return (bool)$this->outlineOn;
+    }
+
+    /**
+     * @return bool
+     */
+    public function areScreenGridLinesVisible()
+    {
+        return (bool)$this->screenGridLines;
     }
 }
