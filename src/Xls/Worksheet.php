@@ -452,20 +452,10 @@ class Worksheet extends BIFFwriter
         // Prepend the sheet protection
         $this->storeProtect();
 
-        // Prepend the page setup
-        $this->storeSetup();
+        $this->prependRecord('Setup', array($this));
 
-        // Prepend the bottom margin
-        $this->storeMarginBottom();
-
-        // Prepend the top margin
-        $this->storeMarginTop();
-
-        // Prepend the right margin
-        $this->storeMarginRight();
-
-        // Prepend the left margin
-        $this->storeMarginLeft();
+        // Prepend the margins
+        $this->storeMargins();
 
         // Prepend the page vertical centering
         $this->prependRecord('Vcenter', array($this->vcenter));
@@ -2175,145 +2165,14 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Store the page setup SETUP BIFF record.
+     * Store the margins records
      */
-    protected function storeSetup()
+    protected function storeMargins()
     {
-        $record = 0x00A1; // Record identifier
-        $length = 0x0022; // Number of bytes to follow
-
-        $iPaperSize = $this->paperSize; // Paper size
-        $iScale = $this->printScale; // Print scaling factor
-        $iPageStart = 0x01; // Starting page number
-        $iFitWidth = $this->fitWidth; // Fit to number of pages wide
-        $iFitHeight = $this->fitHeight; // Fit to number of pages high
-        $grbit = 0x00; // Option flags
-        $iRes = 0x0258; // Print resolution
-        $iVRes = 0x0258; // Vertical print resolution
-        $numHdr = $this->marginHead; // Header Margin
-        $numFtr = $this->marginFoot; // Footer Margin
-        $iCopies = 0x01; // Number of copies
-
-        $fLeftToRight = 0x0; // Print over then down
-        $fLandscape = $this->orientation; // Page orientation
-        $fNoPls = 0x0; // Setup not read from printer
-        $fNoColor = 0x0; // Print black and white
-        $fDraft = 0x0; // Print draft quality
-        $fNotes = 0x0; // Print notes
-        $fNoOrient = 0x0; // Orientation not set
-        $fUsePage = 0x0; // Use custom starting page
-
-        $grbit = $fLeftToRight;
-        $grbit |= $fLandscape << 1;
-        $grbit |= $fNoPls << 2;
-        $grbit |= $fNoColor << 3;
-        $grbit |= $fDraft << 4;
-        $grbit |= $fNotes << 5;
-        $grbit |= $fNoOrient << 6;
-        $grbit |= $fUsePage << 7;
-
-        $numHdr = pack("d", $numHdr);
-        $numFtr = pack("d", $numFtr);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $numHdr = strrev($numHdr);
-            $numFtr = strrev($numFtr);
-        }
-
-        $header = pack("vv", $record, $length);
-        $data1 = pack(
-            "vvvvvvvv",
-            $iPaperSize,
-            $iScale,
-            $iPageStart,
-            $iFitWidth,
-            $iFitHeight,
-            $grbit,
-            $iRes,
-            $iVRes
-        );
-        $data2 = $numHdr . $numFtr;
-        $data3 = pack("v", $iCopies);
-        $this->prepend($header . $data1 . $data2 . $data3);
-    }
-
-    /**
-     * Store the LEFTMARGIN BIFF record.
-     */
-    protected function storeMarginLeft()
-    {
-        $record = 0x0026; // Record identifier
-        $length = 0x0008; // Bytes to follow
-
-        $margin = $this->marginLeft; // Margin in inches
-
-        $header = pack("vv", $record, $length);
-
-        $data = pack("d", $margin);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $data = strrev($data);
-        }
-
-        $this->prepend($header . $data);
-    }
-
-    /**
-     * Store the RIGHTMARGIN BIFF record.
-     */
-    protected function storeMarginRight()
-    {
-        $record = 0x0027; // Record identifier
-        $length = 0x0008; // Bytes to follow
-
-        $margin = $this->marginRight; // Margin in inches
-
-        $header = pack("vv", $record, $length);
-
-        $data = pack("d", $margin);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $data = strrev($data);
-        }
-
-        $this->prepend($header . $data);
-    }
-
-    /**
-     * Store the TOPMARGIN BIFF record.
-     */
-    protected function storeMarginTop()
-    {
-        $record = 0x0028; // Record identifier
-        $length = 0x0008; // Bytes to follow
-
-        $margin = $this->marginTop; // Margin in inches
-
-        $header = pack("vv", $record, $length);
-
-        $data = pack("d", $margin);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $data = strrev($data);
-        }
-
-        $this->prepend($header . $data);
-    }
-
-    /**
-     * Store the BOTTOMMARGIN BIFF record.
-     */
-    protected function storeMarginBottom()
-    {
-        $record = 0x0029; // Record identifier
-        $length = 0x0008; // Bytes to follow
-
-        $margin = $this->marginBottom; // Margin in inches
-
-        $header = pack("vv", $record, $length);
-
-        $data = pack("d", $margin);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $data = strrev($data);
-        }
-
-        $this->prepend($header . $data);
+        $this->prependRecord('BottomMargin', array($this->marginBottom));
+        $this->prependRecord('TopMargin', array($this->marginTop));
+        $this->prependRecord('RightMargin', array($this->marginRight));
+        $this->prependRecord('LeftMargin', array($this->marginLeft));
     }
 
     /**
@@ -2382,7 +2241,7 @@ class Worksheet extends BIFFwriter
         $record = 0x0082; // Record identifier
         $length = 0x0002; // Bytes to follow
 
-        $fGridSet = !($this->printGridLines); // Boolean flag
+        $fGridSet = !$this->printGridLines; // Boolean flag
 
         $header = pack("vv", $record, $length);
         $data = pack("v", $fGridSet);
@@ -2425,7 +2284,7 @@ class Worksheet extends BIFFwriter
         if ($this->fitPage) {
             $grbit |= 0x0100; // Page setup fit to page
         }
-        if ($this->outlineOn) {
+        if ($this->isOutlineOn()) {
             $grbit |= 0x0400; // Outline symbols displayed
         }
 
@@ -2851,5 +2710,61 @@ class Worksheet extends BIFFwriter
     public function areScreenGridLinesVisible()
     {
         return (bool)$this->screenGridLines;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOrientation()
+    {
+        return $this->orientation;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPaperSize()
+    {
+        return $this->paperSize;
+    }
+
+    /**
+     * @return float
+     */
+    public function getMarginHead()
+    {
+        return $this->marginHead;
+    }
+
+    /**
+     * @return float
+     */
+    public function getMarginFoot()
+    {
+        return $this->marginFoot;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFitWidth()
+    {
+        return $this->fitWidth;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFitHeight()
+    {
+        return $this->fitHeight;
+    }
+
+    /**
+     * @return float
+     */
+    public function getPrintScale()
+    {
+        return $this->printScale;
     }
 }
