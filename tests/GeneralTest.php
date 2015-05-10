@@ -410,7 +410,6 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFileExists($this->testFilePath);
         $correctFilePath = $this->getFilePath('layout_portrait', $params['suffix']);
-        //if ($params['suffix'] == '_biff8') exit;
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
@@ -432,6 +431,7 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $sheet->setLandscape();
 
+        //TODO update truncateStringIfNeeded: it should cut to 255 chars, not to 254
         //header and footer should be cut to max length (255)
         $sheet->setHeader('Page header' . str_repeat('.', 255));
         $sheet->setFooter('Page footer' . str_repeat('.', 255));

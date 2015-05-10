@@ -64,12 +64,6 @@ class Worksheet extends BIFFwriter
     public $xlsColmax;
 
     /**
-     * Maximum number of characters for a string (LABEL record in BIFF5)
-     * @var integer
-     */
-    public $xlsStrmax;
-
-    /**
      * First row for the DIMENSIONS record
      * @var integer
      */
@@ -395,7 +389,6 @@ class Worksheet extends BIFFwriter
 
         $this->xlsRowmax = Biff5::MAX_ROWS;
         $this->xlsColmax = Biff5::MAX_COLS;
-        $this->xlsStrmax = Biff5::MAX_STR_LENGTH;
         $this->dimRowmin = $this->xlsRowmax + 1;
         $this->dimRowmax = 0;
         $this->dimColmin = $this->xlsColmax + 1;
@@ -752,11 +745,7 @@ class Worksheet extends BIFFwriter
      */
     public function setHeader($string, $margin = 0.50)
     {
-        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
-            $string = substr($string, 0, Biff5::MAX_STR_LENGTH - 1);
-        }
-
-        $this->header = $string;
+        $this->header = $this->truncateStringIfNeeded($string);
         $this->marginHead = $margin;
     }
 
@@ -767,12 +756,22 @@ class Worksheet extends BIFFwriter
      */
     public function setFooter($string, $margin = 0.50)
     {
+        $this->footer = $this->truncateStringIfNeeded($string);
+        $this->marginFoot = $margin;
+    }
+
+    /**
+     * @param $string
+     *
+     * @return string
+     */
+    protected function truncateStringIfNeeded($string)
+    {
         if (strlen($string) > Biff5::MAX_STR_LENGTH) {
             $string = substr($string, 0, Biff5::MAX_STR_LENGTH - 1);
         }
 
-        $this->footer = $string;
-        $this->marginFoot = $margin;
+        return $string;
     }
 
     /**
@@ -1313,11 +1312,8 @@ class Worksheet extends BIFFwriter
         $record = 0x0204; // Record identifier
         $xf = $this->xf($format); // The cell format
 
+        $str = $this->truncateStringIfNeeded($str);
         $strlen = strlen($str);
-        if ($strlen > $this->xlsStrmax) {
-            $str = substr($str, 0, $this->xlsStrmax);
-            $strlen = strlen($str);
-        }
 
         $length = 0x0008 + $strlen; // Bytes to follow
 
