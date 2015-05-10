@@ -4,6 +4,7 @@ namespace Xls\Record;
 
 use Xls\BIFFwriter;
 use Xls\Biff5;
+use Xls\Biff8;
 use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
@@ -57,5 +58,21 @@ abstract class AbstractRecord
     protected function xf($format)
     {
         return (is_object($format)) ? $format->getXfIndex(): 0x0F;
+    }
+
+    /**
+     *
+     */
+    protected function isBiff5()
+    {
+        return $this->version === Biff5::VERSION;
+    }
+
+    /**
+     *
+     */
+    protected function isBiff8()
+    {
+        return $this->version === Biff8::VERSION;
     }
 }

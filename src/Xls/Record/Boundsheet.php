@@ -21,7 +21,7 @@ class Boundsheet extends AbstractRecord
     {
         $grbit = 0x0000;
 
-        if ($this->version === Biff8::VERSION) {
+        if ($this->isBiff8()) {
             $length = 0x08 + strlen($sheetName);
             $cch = mb_strlen($sheetName, 'UTF-16LE');
             $data = pack("VvCC", $offset, $grbit, $cch, 0x1);

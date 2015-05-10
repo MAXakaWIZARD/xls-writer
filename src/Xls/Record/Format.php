@@ -20,13 +20,13 @@ class Format extends AbstractRecord
     public function getData($format, $formatIndex)
     {
         $formatLen = strlen($format);
-        if ($this->version === Biff8::VERSION) {
+        if ($this->isBiff8()) {
             $length = 5 + $formatLen;
         } else {
             $length = 3 + $formatLen;
         }
 
-        if ($this->version === Biff8::VERSION
+        if ($this->isBiff8()
             && function_exists('iconv')
         ) {
             // Encode format String
@@ -40,7 +40,7 @@ class Format extends AbstractRecord
             $cch = $formatLen;
         }
 
-        if ($this->version === Biff8::VERSION) {
+        if ($this->isBiff8()) {
             $data = pack("vvC", $formatIndex, $cch, $encoding);
         } else {
             $data = pack("vC", $formatIndex, $cch);

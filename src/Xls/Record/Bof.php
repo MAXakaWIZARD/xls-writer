@@ -21,7 +21,7 @@ class Bof extends AbstractRecord
     {
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->version === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $length = 0x08;
             $unknown = '';
             $build = 0x096C;

@@ -20,7 +20,7 @@ class Header extends AbstractRecord
     public function getData($text)
     {
         $cch = strlen($text);
-        if ($this->version === Biff8::VERSION) {
+        if ($this->isBiff8()) {
             $length = 3 + $cch;
             $encoding = 0x0;
             $data = pack("vC", $cch, $encoding);

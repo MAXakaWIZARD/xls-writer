@@ -466,11 +466,8 @@ class Worksheet extends BIFFwriter
         $this->prependRecord('Footer', array($this->footer));
         $this->prependRecord('Header', array($this->header));
 
-        // Prepend the vertical page breaks
-        $this->storeVbreak();
-
-        // Prepend the horizontal page breaks
-        $this->storeHbreak();
+        // Prepend page breaks
+        $this->storePageBreaks();
 
         // Prepend WSBOOL
         $this->storeWsbool();
@@ -2186,90 +2183,17 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Write the HORIZONTALPAGEBREAKS BIFF record.
-     *
      *
      */
-    protected function storeHbreak()
+    protected function storePageBreaks()
     {
-        // Return if the user hasn't specified pagebreaks
-        if (empty($this->hbreaks)) {
-            return;
+        if (!empty($this->vbreaks)) {
+            $this->prependRecord('VerticalPagebreaks', array($this->vbreaks));
         }
 
-        // Sort and filter array of page breaks
-        $breaks = $this->hbreaks;
-        sort($breaks, SORT_NUMERIC);
-        if ($breaks[0] == 0) { // don't use first break if it's 0
-            array_shift($breaks);
+        if (!empty($this->hbreaks)) {
+            $this->prependRecord('HorizontalPagebreaks', array($this->hbreaks));
         }
-
-        $record = 0x001b; // Record identifier
-        $cbrk = count($breaks); // Number of page breaks
-        if ($this->isBiff8()) {
-            $length = 2 + 6 * $cbrk; // Bytes to follow
-        } else {
-            $length = 2 + 2 * $cbrk; // Bytes to follow
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $cbrk);
-
-        // Append each page break
-        foreach ($breaks as $break) {
-            if ($this->isBiff8()) {
-                $data .= pack("vvv", $break, 0x0000, 0x00ff);
-            } else {
-                $data .= pack("v", $break);
-            }
-        }
-
-        $this->prepend($header . $data);
-    }
-
-    /**
-     * Write the VERTICALPAGEBREAKS BIFF record.
-     *
-     *
-     */
-    protected function storeVbreak()
-    {
-        // Return if the user hasn't specified pagebreaks
-        if (empty($this->vbreaks)) {
-            return;
-        }
-
-        // 1000 vertical pagebreaks appears to be an internal Excel 5 limit.
-        // It is slightly higher in Excel 97/200, approx. 1026
-        $breaks = array_slice($this->vbreaks, 0, 1000);
-
-        // Sort and filter array of page breaks
-        sort($breaks, SORT_NUMERIC);
-        if ($breaks[0] == 0) { // don't use first break if it's 0
-            array_shift($breaks);
-        }
-
-        $record = 0x001a; // Record identifier
-        $cbrk = count($breaks); // Number of page breaks
-        if ($this->isBiff8()) {
-            $length = 2 + 6 * $cbrk; // Bytes to follow
-        } else {
-            $length = 2 + 2 * $cbrk; // Bytes to follow
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $cbrk);
-
-        // Append each page break
-        foreach ($breaks as $break) {
-            if ($this->isBiff8()) {
-                $data .= pack("vvv", $break, 0x0000, 0xffff);
-            } else {
-                $data .= pack("v", $break);
-            }
-        }
-
-        $this->prepend($header . $data);
     }
 
     /**
