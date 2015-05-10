@@ -61,6 +61,50 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @return array
+     */
+    public function providerBiff5()
+    {
+        return array(
+            array(
+                array(
+                    'format' => Biff5::VERSION,
+                    'suffix' => ''
+                )
+            )
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function providerBiff8()
+    {
+        return array(
+            array(
+                array(
+                    'format' => Biff8::VERSION,
+                    'suffix' => '_biff8'
+                )
+            )
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function providerBiff5AndBiff8()
+    {
+        $biff5 = $this->providerBiff5();
+        $biff8 = $this->providerBiff8();
+
+        return array(
+            $biff5[0],
+            $biff8[0]
+        );
+    }
+
+    /**
      *
      */
     public function testUnsupportedVersion()
@@ -70,7 +114,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
+     * @dataProvider providerBiff5AndBiff8
+     *
      * @param array $params
      */
     public function testGeneral($params)
@@ -95,43 +140,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return array
-     */
-    public function providerBiff5()
-    {
-        return array(
-            array(
-                array(
-                    'format' => Biff5::VERSION,
-                    'suffix' => ''
-                )
-            )
-        );
-    }
-
-    /**
-     * @return array
-     */
-    public function providerDifferentBiffVersions()
-    {
-        return array(
-            array(
-                array(
-                    'format' => Biff5::VERSION,
-                    'suffix' => ''
-                )
-            ),
-            array(
-                array(
-                    'format' => Biff8::VERSION,
-                    'suffix' => '_biff8'
-                )
-            )
-        );
-    }
-
-    /**
-     * @dataProvider providerDifferentBiffVersions
+     * @dataProvider providerBiff5AndBiff8
+     *
      * @param $params
      *
      * @throws \Exception
@@ -250,7 +260,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
+     * @dataProvider providerBiff5AndBiff8
+     *
      * @param $params
      *
      * @throws \Exception
@@ -271,8 +282,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
-     * @param array $params
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
      */
     public function testSelection($params)
     {
@@ -290,8 +302,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
-     * @param array $params
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
      */
     public function testMultipleSheets($params)
     {
@@ -310,8 +323,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
-     * @param array $params
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
      */
     public function testDefcolsAndRowsizes($params)
     {
@@ -336,8 +350,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
-     * @param array $params
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
      */
     public function testCountry($params)
     {
@@ -431,8 +446,9 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @dataProvider providerDifferentBiffVersions
-     * @param array $params
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
      */
     public function testImage($params)
     {
@@ -446,6 +462,35 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFileExists($this->testFilePath);
         $correctFilePath = $this->getFilePath('image', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
+
+    /**
+     * @dataProvider providerBiff5AndBiff8
+     *
+     * @param $params
+     */
+    public function testMergeCells($params)
+    {
+        $workbook = $this->createWorkbook($params);
+        $sheet = $workbook->addWorksheet();
+
+        $sheet->writeRow(1, 0, array('Merge1', '', ''));
+        $sheet->mergeCells(1, 0, 1, 4);
+        $sheet->writeRow(2, 1, array('Merge2', '', ''));
+        $sheet->mergeCells(2, 1, 2, 4);
+        $sheet->writeRow(3, 2, array('Merge3', '', ''));
+        $sheet->mergeCells(3, 2, 3, 4);
+
+        $format = $workbook->addFormat();
+        $format->setAlign('center');
+        $sheet->writeRow(4, 3, array('Merge4', '', ''), $format);
+        $sheet->mergeCells(4, 3, 5, 4);
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('merge', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }

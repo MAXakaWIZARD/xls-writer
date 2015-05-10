@@ -584,32 +584,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Sets a merged cell range
-     *
-     * @param integer $firstRow First row of the area to merge
-     * @param integer $firstCol First column of the area to merge
-     * @param integer $lastRow  Last row of the area to merge
-     * @param integer $lastCol  Last column of the area to merge
-     */
-    public function setMerge($firstRow, $firstCol, $lastRow, $lastCol)
-    {
-        if (($lastRow < $firstRow) || ($lastCol < $firstCol)) {
-            return;
-        }
-
-        $maxRecordRanges = floor(($this->biff->getLimit() - 6) / 8);
-        if ($this->mergedCellsCounter >= $maxRecordRanges) {
-            $this->mergedCellsRecord++;
-            $this->mergedCellsCounter = 0;
-        }
-
-        // don't check rowmin, rowmax, etc... because we don't know when this
-        // is going to be called
-        $this->mergedRanges[$this->mergedCellsRecord][] = array($firstRow, $firstCol, $lastRow, $lastCol);
-        $this->mergedCellsCounter++;
-    }
-
-    /**
      * Set this worksheet as a selected worksheet,
      * i.e. the worksheet has its tab highlighted.
      *
@@ -2224,24 +2198,12 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Store the MERGEDCELLS record for all ranges of merged cells
+     * Store the MERGECELLS record for all ranges of merged cells
      */
     protected function storeMergedCells()
     {
-        // if there are no merged cell ranges set, return
-        if (count($this->mergedRanges) == 0) {
-            return;
-        }
-        $record = 0x00E5;
         foreach ($this->mergedRanges as $ranges) {
-            $length = 2 + count($ranges) * 8;
-            $header = pack('vv', $record, $length);
-            $data = pack('v', count($ranges));
-            foreach ($ranges as $range) {
-                $data .= pack('vvvv', $range[0], $range[2], $range[1], $range[3]);
-            }
-            $string = $header . $data;
-            $this->append($string, true);
+            $this->append($this->getRecord('MergeCells', array($ranges)));
         }
     }
 
@@ -2480,39 +2442,28 @@ class Worksheet extends BIFFwriter
 
     /**
      * Merges the area given by its arguments.
-     * This is an Excel97/2000 method. It is required to perform more complicated
-     * merging than the normal setAlign('merge').
      * @param integer $firstRow First row of the area to merge
      * @param integer $firstCol First column of the area to merge
      * @param integer $lastRow  Last row of the area to merge
      * @param integer $lastCol  Last column of the area to merge
+     * @throws \Exception
      */
     public function mergeCells($firstRow, $firstCol, $lastRow, $lastCol)
     {
-        $record = 0x00E5; // Record identifier
-        $length = 0x0A; // Bytes to follow
-        $cref = 1; // Number of refs
-
-        // Swap last row/col for first row/col as necessary
-        if ($firstRow > $lastRow) {
-            list($firstRow, $lastRow) = array($lastRow, $firstRow);
+        if ($lastRow < $firstRow || $lastCol < $firstCol) {
+            throw new \Exception('Invalid merge range');
         }
 
-        if ($firstCol > $lastCol) {
-            list($firstCol, $lastCol) = array($lastCol, $firstCol);
+        $maxRecordRanges = floor(($this->biff->getLimit() - 6) / 8);
+        if ($this->mergedCellsCounter >= $maxRecordRanges) {
+            $this->mergedCellsRecord++;
+            $this->mergedCellsCounter = 0;
         }
 
-        $header = pack("vv", $record, $length);
-        $data = pack(
-            "vvvvv",
-            $cref,
-            $firstRow,
-            $lastRow,
-            $firstCol,
-            $lastCol
-        );
-
-        $this->append($header . $data);
+        // don't check rowmin, rowmax, etc... because we don't know when this
+        // is going to be called
+        $this->mergedRanges[$this->mergedCellsRecord][] = array($firstRow, $firstCol, $lastRow, $lastCol);
+        $this->mergedCellsCounter++;
     }
 
     /**
