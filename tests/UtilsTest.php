@@ -7,6 +7,7 @@ use Xls\Biff8;
 use Xls\Format;
 use Xls\Fill;
 use Xls\Cell;
+use Xls\Utils;
 
 /**
  *
@@ -112,6 +113,29 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             array('K256', array(255, 10, 1, 1)),
             array('IV256', array(255, 255, 1, 1)),
             array('AB1', array(0, 27, 1, 1)),
+        );
+    }
+
+    /**
+     * @dataProvider providerHexDump
+     * @param string $expected
+     * @param int $value
+     *
+     * @throws \Exception
+     */
+    public function testHexDump($expected, $value)
+    {
+        $this->assertSame($expected, Utils::hexDump($value));
+    }
+
+    /**
+     * @return array
+     */
+    public function providerHexDump()
+    {
+        return array(
+            array('FF 00', pack('v', 255)),
+            array('01 00 00 00', pack('V', 1)),
         );
     }
 }
