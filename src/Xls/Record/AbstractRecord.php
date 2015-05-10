@@ -4,7 +4,7 @@ namespace Xls\Record;
 
 use Xls\BIFFwriter;
 use Xls\Biff5;
-use Xls\Format;
+use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
 {
@@ -50,7 +50,7 @@ abstract class AbstractRecord
     }
 
     /**
-     * @param Format $format
+     * @param XlsFormat $format
      *
      * @return int
      */
