@@ -2917,79 +2917,16 @@ class Worksheet extends BIFFwriter
      */
     protected function processBitmap($filePath)
     {
-        $bmpFd = @fopen($filePath, "rb");
-        if ($bmpFd === false) {
-            throw new \Exception("Couldn't import $filePath");
-        }
+        $bmp = new Bitmap($filePath);
 
-        // Slurp the file into a string.
-        $data = fread($bmpFd, filesize($filePath));
+        $size = $bmp->getSize();
+        $size -= Bitmap::HEADER_SIZE; // Subtract size of bitmap header.
+        $size += Record\BitmapCoreHeader::LENGTH; // Add size of BIFF header.
 
-        // Check that the file is big enough to be a bitmap.
-        if (strlen($data) <= 0x36) {
-            throw new \Exception("$filePath doesn't contain enough data.\n");
-        }
+        $width = $bmp->getWidth();
+        $height = $bmp->getHeight();
 
-        // The first 2 bytes are used to identify the bitmap.
-        $identity = unpack("A2ident", $data);
-        if ($identity['ident'] != "BM") {
-            throw new \Exception("$filePath doesn't appear to be a valid bitmap image.\n");
-        }
-
-        // Remove bitmap data: ID.
-        $data = substr($data, 2);
-
-        // Read and remove the bitmap size. This is more reliable than reading
-        // the data size at offset 0x22.
-        $sizeArray = unpack("Vsa", substr($data, 0, 4));
-        $size = $sizeArray['sa'];
-        $data = substr($data, 4);
-        $size -= 0x36; // Subtract size of bitmap header.
-        $size += 0x0C; // Add size of BIFF header.
-
-        // Remove bitmap data: reserved, offset, header length.
-        $data = substr($data, 12);
-
-        // Read and remove the bitmap width and height. Verify the sizes.
-        $widthAndHeight = unpack("V2", substr($data, 0, 8));
-        $width = $widthAndHeight[1];
-        $height = $widthAndHeight[2];
-        $data = substr($data, 8);
-
-        if ($width > 0xFFFF) {
-            throw new \Exception("$filePath: largest image width supported is 65k.\n");
-        }
-
-        if ($height > 0xFFFF) {
-            throw new \Exception("$filePath: largest image height supported is 65k.\n");
-        }
-
-        // Read and remove the bitmap planes and bpp data. Verify them.
-        $planesAndBitcount = unpack("v2", substr($data, 0, 4));
-        $data = substr($data, 4);
-
-        if ($planesAndBitcount[2] != 24) { // Bitcount
-            throw new \Exception("$filePath isn't a 24bit true color bitmap.\n");
-        }
-
-        if ($planesAndBitcount[1] != 1) {
-            throw new \Exception("$filePath: only 1 plane supported in bitmap image.\n");
-        }
-
-        // Read and remove the bitmap compression. Verify compression.
-        $compression = unpack("Vcomp", substr($data, 0, 4));
-        $data = substr($data, 4);
-
-        if ($compression['comp'] != 0) {
-            throw new \Exception("$filePath: compression not supported in bitmap image.\n");
-        }
-
-        // Remove bitmap data: data size, hres, vres, colours, imp. colours.
-        $data = substr($data, 20);
-
-        // Add the BITMAPCOREHEADER data
-        $header = pack("Vvvvv", 0x000c, $width, $height, 0x01, 0x18);
-        $data = $header . $data;
+        $data = $this->getRecord('BitmapCoreHeader', array($width, $height, $bmp->getDataWithoutHeader()));
 
         return array($width, $height, $size, $data);
     }
