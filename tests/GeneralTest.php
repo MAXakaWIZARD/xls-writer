@@ -123,11 +123,14 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook = $this->createWorkbook($params);
 
         $sheet = $workbook->addWorksheet('My first worksheet');
-
-        $sheet->writeRow(0, 0, array('Name', 'Age'));
-        $sheet->writeRow(1, 0, array('John Smith', 30));
-        $sheet->writeRow(2, 0, array('Johann Schmidt', 31));
-        $sheet->writeRow(3, 0, array('Juan Herrera', 32));
+        $sheet->writeRow(
+            0,
+            0,
+            array(
+                array('Name', 'John Smith', 'Johann Schmidt', 'Juan Herrera'),
+                array('Age', 30, 31, 32)
+            )
+        );
 
         $workbook->save($this->testFilePath);
 
@@ -223,7 +226,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $sheet->writeRow(11, 0, array('Grand total', '', ''), $grandFormat);
         $sheet->mergeCells(11, 0, 11, 2);
-        $sheet->writeFormula(11, 3, '=ROUND(D11-D11*0.2, 2)', $grandFormat);
+        //should be written as formula
+        $sheet->write(11, 3, '=ROUND(D11-D11*0.2, 2)', $grandFormat);
 
         //
         $discountFormat = $workbook->addFormat();

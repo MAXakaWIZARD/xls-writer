@@ -60,7 +60,7 @@ class Colinfo extends AbstractRecord
         $coldx += 0.72; // Fudge. Excel subtracts 0.72 !?
         $coldx *= 256; // Convert to units of 1/256 of a char
 
-        $ixfe = ($format) ? $format->getXfIndex(): 0x0F;
+        $ixfe = $this->xf($format);
         $reserved = 0x00; // Reserved
 
         $level = max(0, min($level, 7));

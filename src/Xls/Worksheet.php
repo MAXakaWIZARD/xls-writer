@@ -1016,33 +1016,47 @@ class Worksheet extends BIFFwriter
      */
     public function write($row, $col, $token, $format = null)
     {
-        // Check for a cell reference in A1 notation and substitute row and column
-        /*if ($_[0] =~ /^\D/) {
-            @_ = $this->substituteCellref(@_);
-    }*/
-
-        if (preg_match("/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/", $token)) {
-            // Match number
-            return $this->writeNumber($row, $col, $token, $format);
-        } elseif (preg_match("/^[fh]tt?p:\/\//", $token)) {
-            // Match http or ftp URL
-            return $this->writeUrl($row, $col, $token, '', $format);
-        } elseif (preg_match("/^mailto:/", $token)) {
-            // Match mailto:
-            return $this->writeUrl($row, $col, $token, '', $format);
-        } elseif (preg_match("/^(?:in|ex)ternal:/", $token)) {
-            // Match internal or external sheet link
-            return $this->writeUrl($row, $col, $token, '', $format);
-        } elseif (preg_match("/^=/", $token)) {
-            // Match formula
-            return $this->writeFormula($row, $col, $token, $format);
-        } elseif ($token == '') {
-            // Match blank
-            return $this->writeBlank($row, $col, $format);
+        if ($this->looksLikeNumber($token)) {
+            $this->writeNumber($row, $col, $token, $format);
+        } elseif ($this->looksLikeUrl($token)) {
+            $this->writeUrl($row, $col, $token, '', $format);
+        } elseif ($this->looksLikeFormula($token)) {
+            $this->writeFormula($row, $col, $token, $format);
         } else {
-            // Default: match string
-            return $this->writeString($row, $col, $token, $format);
+            $this->writeString($row, $col, $token, $format);
         }
+    }
+
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    protected function looksLikeNumber($value)
+    {
+        return preg_match("/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/", $value) === 1;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    protected function looksLikeFormula($value)
+    {
+        return preg_match("/^=/", $value) === 1;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    protected function looksLikeUrl($value)
+    {
+        return preg_match("/^[fh]tt?p:\/\//", $value) === 1
+            || preg_match("/^mailto:/", $value) === 1
+            || preg_match("/^(?:in|ex)ternal:/", $value) === 1;
     }
 
     /**
@@ -1134,20 +1148,20 @@ class Worksheet extends BIFFwriter
         if (preg_match("/([A-I]?[A-Z]):([A-I]?[A-Z])/", $cell, $match)) {
             list($noUse, $col1) = $this->cellToRowcol($match[1] . '1'); // Add a dummy row
             list($noUse, $col2) = $this->cellToRowcol($match[2] . '1'); // Add a dummy row
-            return (array($col1, $col2));
+            return array($col1, $col2);
         }
 
         // Convert a cell range: 'A1:B7'
         if (preg_match("/\$?([A-I]?[A-Z]\$?\d+):\$?([A-I]?[A-Z]\$?\d+)/", $cell, $match)) {
             list($row1, $col1) = $this->cellToRowcol($match[1]);
             list($row2, $col2) = $this->cellToRowcol($match[2]);
-            return (array($row1, $col1, $row2, $col2));
+            return array($row1, $col1, $row2, $col2);
         }
 
         // Convert a cell reference: 'A1' or 'AD2000'
         if (preg_match("/\$?([A-I]?[A-Z]\$?\d+)/", $cell)) {
             list($row1, $col1) = $this->cellToRowcol($match[1]);
-            return (array($row1, $col1));
+            return array($row1, $col1);
         }
 
         throw new \Exception("Unknown cell reference $cell", 0);
@@ -1221,11 +1235,29 @@ class Worksheet extends BIFFwriter
         $this->arabic = ($rtl ? 1 : 0);
     }
 
-    /******************************************************************************
-     *******************************************************************************
+    /**
+     * @param $row
      *
-     * BIFF RECORDS
+     * @throws \Exception
      */
+    protected function validateRowIndex($row)
+    {
+        if ($row >= $this->xlsRowmax) {
+            throw new \Exception('Row index is beyond max row number');
+        }
+    }
+
+    /**
+     * @param $col
+     *
+     * @throws \Exception
+     */
+    protected function validateColIndex($col)
+    {
+        if ($col >= $this->xlsColmax) {
+            throw new \Exception('Col index is beyond max col number');
+        }
+    }
 
 
     /**
@@ -1233,13 +1265,10 @@ class Worksheet extends BIFFwriter
      * An integer can be written as a double. Excel will display an
      * integer. $format is optional.
      *
-     * Returns  0 : normal termination
-     *         -2 : row or column out of range
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param float $num    The number to write
      * @param mixed $format The optional XF format
-     * @return integer
      */
     public function writeNumber($row, $col, $num, $format = null)
     {
@@ -1248,25 +1277,7 @@ class Worksheet extends BIFFwriter
 
         $xf = $this->xf($format); // The cell format
 
-        // Check that row and col are valid and store max and min values
-        if ($row >= $this->xlsRowmax) {
-            return (-2);
-        }
-        if ($col >= $this->xlsColmax) {
-            return (-2);
-        }
-        if ($row < $this->dimRowmin) {
-            $this->dimRowmin = $row;
-        }
-        if ($row > $this->dimRowmax) {
-            $this->dimRowmax = $row;
-        }
-        if ($col < $this->dimColmin) {
-            $this->dimColmin = $col;
-        }
-        if ($col > $this->dimColmax) {
-            $this->dimColmax = $col;
-        }
+        $this->checkRowCol($row, $col);
 
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $row, $col, $xf);
@@ -1277,68 +1288,45 @@ class Worksheet extends BIFFwriter
         }
 
         $this->append($header . $data . $xlDouble);
-
-        return 0;
     }
 
     /**
      * Write a string to the specified row and column (zero indexed).
      * NOTE: there is an Excel 5 defined limit of 255 characters.
      * $format is optional.
-     * Returns  0 : normal termination
-     *         -2 : row or column out of range
-     *         -3 : long string truncated to 255 chars
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param string $str    The string to write
      * @param mixed $format The XF format for the cell
-     * @return integer
      */
     public function writeString($row, $col, $str, $format = null)
     {
-        if ($this->isBiff8()) {
-            return $this->writeStringBIFF8($row, $col, $str, $format);
+        if ($str === '') {
+            $this->writeBlank($row, $col, $format);
+            return;
         }
 
-        $strlen = strlen($str);
+        $this->checkRowCol($row, $col);
+
+        if ($this->isBiff8()) {
+            $this->writeStringBIFF8($row, $col, $str, $format);
+            return;
+        }
+
         $record = 0x0204; // Record identifier
-        $length = 0x0008 + $strlen; // Bytes to follow
         $xf = $this->xf($format); // The cell format
 
-        $strError = 0;
-
-        // Check that row and col are valid and store max and min values
-        if ($row >= $this->xlsRowmax) {
-            return (-2);
-        }
-        if ($col >= $this->xlsColmax) {
-            return (-2);
-        }
-        if ($row < $this->dimRowmin) {
-            $this->dimRowmin = $row;
-        }
-        if ($row > $this->dimRowmax) {
-            $this->dimRowmax = $row;
-        }
-        if ($col < $this->dimColmin) {
-            $this->dimColmin = $col;
-        }
-        if ($col > $this->dimColmax) {
-            $this->dimColmax = $col;
-        }
-
+        $strlen = strlen($str);
         if ($strlen > $this->xlsStrmax) {
             $str = substr($str, 0, $this->xlsStrmax);
-            $length = 0x0008 + $this->xlsStrmax;
-            $strlen = $this->xlsStrmax;
-            $strError = -3;
+            $strlen = strlen($str);
         }
+
+        $length = 0x0008 + $strlen; // Bytes to follow
 
         $header = pack("vv", $record, $length);
         $data = pack("vvvv", $row, $col, $xf, $strlen);
         $this->append($header . $data . $str);
-
-        return ($strError);
     }
 
     /**
@@ -1359,14 +1347,10 @@ class Worksheet extends BIFFwriter
      * Write a string to the specified row and column (zero indexed).
      * This is the BIFF8 version (no 255 chars limit).
      * $format is optional.
-     * Returns  0 : normal termination
-     *         -2 : row or column out of range
-     *         -3 : long string truncated to 255 chars
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param string $str    The string to write
      * @param mixed $format The XF format for the cell
-     * @return integer
      */
     public function writeStringBIFF8($row, $col, $str, $format = null)
     {
@@ -1381,16 +1365,10 @@ class Worksheet extends BIFFwriter
             $strlen = strlen($str);
             $encoding = 0x0;
         }
+
         $record = 0x00FD; // Record identifier
         $length = 0x000A; // Bytes to follow
         $xf = $this->xf($format); // The cell format
-
-        $strError = 0;
-
-        // Check that row and col are valid and store max and min values
-        if (!$this->checkRowCol($row, $col)) {
-            return -2;
-        }
 
         $str = pack('vC', $strlen, $encoding) . $str;
 
@@ -1399,8 +1377,6 @@ class Worksheet extends BIFFwriter
         $header = pack('vv', $record, $length);
         $data = pack('vvvV', $row, $col, $xf, $this->sst->getStrIdx($str));
         $this->append($header . $data);
-
-        return $strError;
     }
 
     /**
@@ -1413,26 +1389,24 @@ class Worksheet extends BIFFwriter
      */
     protected function checkRowCol($row, $col)
     {
-        if ($row >= $this->xlsRowmax) {
-            return false;
-        }
-        if ($col >= $this->xlsColmax) {
-            return false;
-        }
+        $this->validateRowIndex($row);
+        $this->validateColIndex($col);
+
         if ($row < $this->dimRowmin) {
             $this->dimRowmin = $row;
         }
+
         if ($row > $this->dimRowmax) {
             $this->dimRowmax = $row;
         }
+
         if ($col < $this->dimColmin) {
             $this->dimColmin = $col;
         }
+
         if ($col > $this->dimColmax) {
             $this->dimColmax = $col;
         }
-
-        return true;
     }
 
     /**
@@ -1441,34 +1415,14 @@ class Worksheet extends BIFFwriter
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param string $note   The note to write
-     * @return mixed
      */
     public function writeNote($row, $col, $note)
     {
         $noteLength = strlen($note);
         $record = 0x001C; // Record identifier
         $maxLength = 2048; // Maximun length for a NOTE record
-        //$length      = 0x0006 + $note_length;    // Bytes to follow
 
-        // Check that row and col are valid and store max and min values
-        if ($row >= $this->xlsRowmax) {
-            return (-2);
-        }
-        if ($col >= $this->xlsColmax) {
-            return (-2);
-        }
-        if ($row < $this->dimRowmin) {
-            $this->dimRowmin = $row;
-        }
-        if ($row > $this->dimRowmax) {
-            $this->dimRowmax = $row;
-        }
-        if ($col < $this->dimColmin) {
-            $this->dimColmin = $col;
-        }
-        if ($col > $this->dimColmax) {
-            $this->dimColmax = $col;
-        }
+        $this->checkRowCol($row, $col);
 
         // Length for this record is no more than 2048 + 6
         $length = 0x0006 + min($noteLength, 2048);
@@ -1483,8 +1437,6 @@ class Worksheet extends BIFFwriter
             $data = pack("vvv", -1, 0, strlen($chunk));
             $this->append($header . $data . $chunk);
         }
-
-        return 0;
     }
 
     /**
@@ -1495,50 +1447,26 @@ class Worksheet extends BIFFwriter
      * A blank cell without a format serves no purpose. Therefore, we don't write
      * a BLANK record unless a format is specified.
      *
-     * Returns  0 : normal termination (including no format)
-     *         -1 : insufficient number of arguments
-     *         -2 : row or column out of range
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param mixed $format The XF format
-     * @return int
      */
-    public function writeBlank($row, $col, $format)
+    public function writeBlank($row, $col, $format = null)
     {
         // Don't write a blank cell unless it has a format
         if (!$format) {
-            return 0;
+            return;
         }
 
         $record = 0x0201; // Record identifier
         $length = 0x0006; // Number of bytes to follow
         $xf = $this->xf($format); // The cell format
 
-        // Check that row and col are valid and store max and min values
-        if ($row >= $this->xlsRowmax) {
-            return (-2);
-        }
-        if ($col >= $this->xlsColmax) {
-            return (-2);
-        }
-        if ($row < $this->dimRowmin) {
-            $this->dimRowmin = $row;
-        }
-        if ($row > $this->dimRowmax) {
-            $this->dimRowmax = $row;
-        }
-        if ($col < $this->dimColmin) {
-            $this->dimColmin = $col;
-        }
-        if ($col > $this->dimColmax) {
-            $this->dimColmax = $col;
-        }
+        $this->checkRowCol($row, $col);
 
         $header = pack("vv", $record, $length);
         $data = pack("vvv", $row, $col, $xf);
         $this->append($header . $data);
-
-        return 0;
     }
 
     /**
@@ -1546,14 +1474,10 @@ class Worksheet extends BIFFwriter
      * The textual representation of the formula is passed to the formula parser
      * which returns a packed binary string.
      *
-     * Returns  0 : normal termination
-     *         -1 : formula errors (bad formula)
-     *         -2 : row or column out of range
      * @param integer $row     Zero indexed row
      * @param integer $col     Zero indexed column
      * @param string $formula The formula text string
      * @param mixed $format  The optional XF format
-     * @return integer
      */
     public function writeFormula($row, $col, $formula, $format = null)
     {
@@ -1568,10 +1492,7 @@ class Worksheet extends BIFFwriter
         $grbit = 0x03; // Option flags
         $unknown = 0x0000; // Must be zero
 
-        // Check that row and col are valid and store max and min values
-        if (!$this->checkRowCol($row, $col)) {
-            return -2;
-        }
+        $this->checkRowCol($row, $col);
 
         // Strip the '=' or '@' sign at the beginning of the formula string
         if (preg_match("/^=/", $formula)) {
@@ -1581,7 +1502,7 @@ class Worksheet extends BIFFwriter
         } else {
             // Error handling
             $this->writeString($row, $col, 'Unrecognised character for formula');
-            return -1;
+            return;
         }
 
         // Parse the formula using the parser in Parser.php
@@ -1605,8 +1526,6 @@ class Worksheet extends BIFFwriter
         );
 
         $this->append($header . $data . $formula);
-
-        return 0;
     }
 
     /**
@@ -1620,20 +1539,16 @@ class Worksheet extends BIFFwriter
      * The hyperlink can be to a http, ftp, mail, internal sheet (not yet), or external
      * directory url.
      *
-     * Returns  0 : normal termination
-     *         -2 : row or column out of range
-     *         -3 : long string truncated to 255 chars
      * @param integer $row    Row
      * @param integer $col    Column
      * @param string $url    URL string
      * @param string $string Alternative label
      * @param mixed $format The cell format
-     * @return integer
      */
     public function writeUrl($row, $col, $url, $string = '', $format = null)
     {
         // Add start row and col to arg list
-        return $this->writeUrlRange($row, $col, $row, $col, $url, $string, $format);
+        $this->writeUrlRange($row, $col, $row, $col, $url, $string, $format);
     }
 
     /**
@@ -1649,20 +1564,21 @@ class Worksheet extends BIFFwriter
      * @param string $url    URL string
      * @param string $string Alternative label
      * @param mixed $format The cell format
-     * @return integer
      */
     protected function writeUrlRange($row1, $col1, $row2, $col2, $url, $string = '', $format = null)
     {
         // Check for internal/external sheet links or default to web link
         if (preg_match('[^internal:]', $url)) {
-            return ($this->writeUrlInternal($row1, $col1, $row2, $col2, $url, $string, $format));
+            $this->writeUrlInternal($row1, $col1, $row2, $col2, $url, $string, $format);
+            return;
         }
 
         if (preg_match('[^external:]', $url)) {
-            return ($this->writeUrlExternal($row1, $col1, $row2, $col2, $url, $string, $format));
+            $this->writeUrlExternal($row1, $col1, $row2, $col2, $url, $string, $format);
+            return;
         }
 
-        return ($this->writeUrlWeb($row1, $col1, $row2, $col2, $url, $string, $format));
+        $this->writeUrlWeb($row1, $col1, $row2, $col2, $url, $string, $format);
     }
 
     /**
@@ -1677,7 +1593,6 @@ class Worksheet extends BIFFwriter
      * @param string $url    URL string
      * @param string $str    Alternative label
      * @param mixed $format The cell format
-     * @return integer
      */
     protected function writeUrlWeb($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
@@ -1691,16 +1606,11 @@ class Worksheet extends BIFFwriter
         if ($str == '') {
             $str = $url;
         }
-        $strError = is_numeric($str)
-            ? $this->writeNumber($row1, $col1, $str, $format)
-            : $this->writeString(
-                $row1,
-                $col1,
-                $str,
-                $format
-            );
-        if (($strError == -2) || ($strError == -3)) {
-            return $strError;
+
+        if (is_numeric($str)) {
+            $this->writeNumber($row1, $col1, $str, $format);
+        } else {
+            $this->writeString($row1, $col1, $str, $format);
         }
 
         // Pack the undocumented parts of the hyperlink stream
@@ -1730,8 +1640,6 @@ class Worksheet extends BIFFwriter
             $unknown1 . $options .
             $unknown2 . $urlLen . $url
         );
-
-        return ($strError);
     }
 
     /**
@@ -1744,7 +1652,6 @@ class Worksheet extends BIFFwriter
      * @param string $url    URL string
      * @param string $str    Alternative label
      * @param mixed $format The cell format
-     * @return integer
      */
     protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
@@ -1761,16 +1668,11 @@ class Worksheet extends BIFFwriter
         if ($str == '') {
             $str = $url;
         }
-        $strError = is_numeric($str)
-            ? $this->writeNumber($row1, $col1, $str, $format)
-            : $this->writeString(
-                $row1,
-                $col1,
-                $str,
-                $format
-            );
-        if (($strError == -2) || ($strError == -3)) {
-            return $strError;
+
+        if (is_numeric($str)) {
+            $this->writeNumber($row1, $col1, $str, $format);
+        } else {
+            $this->writeString($row1, $col1, $str, $format);
         }
 
         // Pack the undocumented parts of the hyperlink stream
@@ -1799,8 +1701,6 @@ class Worksheet extends BIFFwriter
             $unknown1 . $options .
             $urlLen . $url
         );
-
-        return ($strError);
     }
 
     /**
@@ -1817,7 +1717,6 @@ class Worksheet extends BIFFwriter
      * @param string $url    URL string
      * @param string $str    Alternative label
      * @param mixed $format The cell format
-     * @return integer
      */
     protected function writeUrlExternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
@@ -1842,16 +1741,11 @@ class Worksheet extends BIFFwriter
         if ($str == '') {
             $str = preg_replace('/\#/', ' - ', $url);
         }
-        $strError = is_numeric($str)
-            ? $this->writeNumber($row1, $col1, $str, $format)
-            : $this->writeString(
-                $row1,
-                $col1,
-                $str,
-                $format
-            );
-        if (($strError == -2) || ($strError == -3)) {
-            return $strError;
+
+        if (is_numeric($str)) {
+            $this->writeNumber($row1, $col1, $str, $format);
+        } else {
+            $this->writeString($row1, $col1, $str, $format);
         }
 
         // Determine if the link is relative or absolute:
@@ -1939,8 +1833,6 @@ class Worksheet extends BIFFwriter
 
         // Write the packed data
         $this->append($header . $data);
-
-        return ($strError);
     }
 
     /**
@@ -2482,6 +2374,7 @@ class Worksheet extends BIFFwriter
      * @param integer $y1        Distance to top of object
      * @param integer $width     Width of image frame
      * @param integer $height    Height of image frame
+     * @throws \Exception
      */
     protected function positionImage($colStart, $rowStart, $x1, $y1, $width, $height)
     {
@@ -2513,14 +2406,12 @@ class Worksheet extends BIFFwriter
             $rowEnd++;
         }
 
-        // Bitmap isn't allowed to start or finish in a hidden cell, i.e. a cell
-        // with zero height or width.
         if ($this->sizeCol($colStart) == 0
             || $this->sizeCol($colEnd) == 0
             || $this->sizeRow($rowStart) == 0
             || $this->sizeRow($rowEnd) == 0
         ) {
-            return;
+            throw new \Exception('Bitmap isn\'t allowed to start or finish in a hidden cell');
         }
 
         // Convert the pixel values to the percentage value expected by Excel

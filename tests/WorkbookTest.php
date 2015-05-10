@@ -193,4 +193,49 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', "$path doesn't contain enough data");
         $sheet->insertBitmap(0, 0, $path);
     }
+
+    /**
+     *
+     */
+    public function testWrongRowIndex()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', "Row index is beyond max row number");
+        $sheet->write(100500, 0, 'Test');
+    }
+
+    /**
+     *
+     */
+    public function testWrongColIndex()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', "Col index is beyond max col number");
+        $sheet->write(0, 100500, 'Test');
+    }
+
+    /**
+     *
+     */
+    public function testWrongMergeRange()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', "Invalid merge range");
+        $sheet->mergeCells(5, 5, 0, 0);
+    }
+
+    /**
+     *
+     */
+    public function testBitmapInHiddenCell()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $sheet->setRow(0, 0);
+        $this->setExpectedException('\Exception', "Bitmap isn't allowed to start or finish in a hidden cell");
+        $sheet->insertBitmap(0, 0, TEST_DATA_PATH . '/elephpant.bmp');
+    }
 }

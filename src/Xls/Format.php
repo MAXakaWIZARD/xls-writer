@@ -338,7 +338,7 @@ class Format
         $key .= "$this->fontShadow$this->color$this->italic";
         $key = str_replace(' ', '_', $key);
 
-        return ($key);
+        return $key;
     }
 
     /**

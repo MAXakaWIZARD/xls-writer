@@ -4,6 +4,7 @@ namespace Xls\Record;
 
 use Xls\BIFFwriter;
 use Xls\Biff5;
+use Xls\Format;
 
 abstract class AbstractRecord
 {
@@ -46,5 +47,15 @@ abstract class AbstractRecord
         } else {
             return pack("vvv", static::ID, $length, $extraParam);
         }
+    }
+
+    /**
+     * @param Format $format
+     *
+     * @return int
+     */
+    protected function xf($format)
+    {
+        return (is_object($format)) ? $format->getXfIndex(): 0x0F;
     }
 }
