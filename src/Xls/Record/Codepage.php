@@ -1,5 +1,4 @@
 <?php
-
 namespace Xls\Record;
 
 class Codepage extends AbstractRecord

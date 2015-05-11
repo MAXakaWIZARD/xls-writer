@@ -10,14 +10,41 @@ class Password extends AbstractRecord
 
     /**
      * Generate the PASSWORD biff record
-     * @param $password
+     *
+     * @param $plaintextPassword
      *
      * @return string
      */
-    public function getData($password)
+    public function getData($plaintextPassword)
     {
-        $data = pack("v", $password);
+        $data = pack("v", $this->encode($plaintextPassword));
 
         return $this->getHeader() . $data;
+    }
+
+    /**
+     * Based on the algorithm provided by Daniel Rentz of OpenOffice.
+     * @param string $plaintext The password to be encoded in plaintext.
+     * @return string The encoded password
+     */
+    protected function encode($plaintext)
+    {
+        $password = 0x0000;
+        $i = 1; // char position
+
+        // split the plain text password in its component characters
+        $chars = preg_split('//', $plaintext, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($chars as $char) {
+            $value = ord($char) << $i; // shifted ASCII value
+            $rotatedBits = $value >> 15; // rotated bits beyond bit 15
+            $value &= 0x7fff; // first 15 bits
+            $password ^= ($value | $rotatedBits);
+            $i++;
+        }
+
+        $password ^= strlen($plaintext);
+        $password ^= 0xCE4B;
+
+        return $password;
     }
 }

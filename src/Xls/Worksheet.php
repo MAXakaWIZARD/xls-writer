@@ -606,7 +606,7 @@ class Worksheet extends BIFFwriter
     public function protect($password)
     {
         $this->protect = 1;
-        $this->password = $this->encodePassword($password);
+        $this->password = $password;
     }
 
     /**
@@ -1128,79 +1128,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Substitute an Excel cell reference in A1 notation for  zero based row and
-     * column values in an argument list.
-     *
-     * Ex: ("A4", "Hello") is converted to (3, 0, "Hello").
-     * @param string $cell The cell reference. Or range of cells.
-     * @throws \Exception
-     * @return array
-     */
-    protected function substituteCellref($cell)
-    {
-        $cell = strtoupper($cell);
-
-        // Convert a column range: 'A:A' or 'B:G'
-        if (preg_match("/([A-I]?[A-Z]):([A-I]?[A-Z])/", $cell, $match)) {
-            list($noUse, $col1) = $this->cellToRowcol($match[1] . '1'); // Add a dummy row
-            list($noUse, $col2) = $this->cellToRowcol($match[2] . '1'); // Add a dummy row
-            return array($col1, $col2);
-        }
-
-        // Convert a cell range: 'A1:B7'
-        if (preg_match("/\$?([A-I]?[A-Z]\$?\d+):\$?([A-I]?[A-Z]\$?\d+)/", $cell, $match)) {
-            list($row1, $col1) = $this->cellToRowcol($match[1]);
-            list($row2, $col2) = $this->cellToRowcol($match[2]);
-            return array($row1, $col1, $row2, $col2);
-        }
-
-        // Convert a cell reference: 'A1' or 'AD2000'
-        if (preg_match("/\$?([A-I]?[A-Z]\$?\d+)/", $cell)) {
-            list($row1, $col1) = $this->cellToRowcol($match[1]);
-            return array($row1, $col1);
-        }
-
-        throw new \Exception("Unknown cell reference $cell", 0);
-    }
-
-    /**
-     * Convert an Excel cell reference in A1 notation to a zero based row and column
-     * reference; converts C1 to (0, 2).
-     * @param string $cell The cell reference.
-     * @return array containing (row, column)
-     */
-    protected function cellToRowcol($cell)
-    {
-        return array_slice(Cell::addressToRowCol($cell), 0, 2);
-    }
-
-    /**
-     * Based on the algorithm provided by Daniel Rentz of OpenOffice.
-     * @param string $plaintext The password to be encoded in plaintext.
-     * @return string The encoded password
-     */
-    protected function encodePassword($plaintext)
-    {
-        $password = 0x0000;
-        $i = 1; // char position
-
-        // split the plain text password in its component characters
-        $chars = preg_split('//', $plaintext, -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($chars as $char) {
-            $value = ord($char) << $i; // shifted ASCII value
-            $rotatedBits = $value >> 15; // rotated bits beyond bit 15
-            $value &= 0x7fff; // first 15 bits
-            $password ^= ($value | $rotatedBits);
-            $i++;
-        }
-
-        $password ^= strlen($plaintext);
-        $password ^= 0xCE4B;
-
-        return $password;
-    }
-
-    /**
      * This method sets the properties for outlining and grouping. The defaults
      * correspond to Excel's defaults.
      *
@@ -1268,22 +1195,9 @@ class Worksheet extends BIFFwriter
      */
     public function writeNumber($row, $col, $num, $format = null)
     {
-        $record = 0x0203; // Record identifier
-        $length = 0x000E; // Number of bytes to follow
-
-        $xf = $this->xf($format); // The cell format
-
         $this->checkRowCol($row, $col);
 
-        $header = pack("vv", $record, $length);
-        $data = pack("vvv", $row, $col, $xf);
-
-        $xlDouble = pack("d", $num);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $xlDouble = strrev($xlDouble);
-        }
-
-        $this->append($header . $data . $xlDouble);
+        $this->appendRecord('Number', array($row, $col, $num, $format));
     }
 
     /**
@@ -1305,21 +1219,13 @@ class Worksheet extends BIFFwriter
         $this->checkRowCol($row, $col);
 
         if ($this->isBiff8()) {
-            $this->writeStringBIFF8($row, $col, $str, $format);
+            $this->writeStringSST($row, $col, $str, $format);
             return;
         }
 
-        $record = 0x0204; // Record identifier
-        $xf = $this->xf($format); // The cell format
-
         $str = $this->truncateStringIfNeeded($str);
-        $strlen = strlen($str);
 
-        $length = 0x0008 + $strlen; // Bytes to follow
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $row, $col, $xf, $strlen);
-        $this->append($header . $data . $str);
+        $this->appendRecord('Label', array($row, $col, $str, $format));
     }
 
     /**
@@ -1345,31 +1251,21 @@ class Worksheet extends BIFFwriter
      * @param string $str    The string to write
      * @param mixed $format The XF format for the cell
      */
-    public function writeStringBIFF8($row, $col, $str, $format = null)
+    public function writeStringSST($row, $col, $str, $format = null)
     {
-        if ($this->inputEncoding == 'UTF-16LE') {
-            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
-            $encoding = 0x1;
-        } elseif ($this->inputEncoding != '') {
-            $str = iconv($this->inputEncoding, 'UTF-16LE', $str);
-            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
-            $encoding = 0x1;
-        } else {
-            $strlen = strlen($str);
-            $encoding = 0x0;
-        }
-
-        $record = 0x00FD; // Record identifier
-        $length = 0x000A; // Bytes to follow
-        $xf = $this->xf($format); // The cell format
-
-        $str = pack('vC', $strlen, $encoding) . $str;
-
+        $str = $this->sst->getPackedString($str, $this->inputEncoding);
         $this->sst->add($str);
+        $strIdx = $this->sst->getStrIdx($str);
 
-        $header = pack('vv', $record, $length);
-        $data = pack('vvvV', $row, $col, $xf, $this->sst->getStrIdx($str));
-        $this->append($header . $data);
+        $this->appendRecord(
+            'LabelSst',
+            array(
+                $row,
+                $col,
+                $strIdx,
+                $format
+            )
+        );
     }
 
     /**
@@ -1443,23 +1339,18 @@ class Worksheet extends BIFFwriter
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param mixed $format The XF format
+     * @throws \Exception
      */
     public function writeBlank($row, $col, $format = null)
     {
-        // Don't write a blank cell unless it has a format
         if (!$format) {
+            // Don't write a blank cell unless it has a format
             return;
         }
 
-        $record = 0x0201; // Record identifier
-        $length = 0x0006; // Number of bytes to follow
-        $xf = $this->xf($format); // The cell format
-
         $this->checkRowCol($row, $col);
 
-        $header = pack("vv", $record, $length);
-        $data = pack("vvv", $row, $col, $xf);
-        $this->append($header . $data);
+        $this->appendRecord('Blank', array($row, $col, $format));
     }
 
     /**
@@ -1716,7 +1607,7 @@ class Worksheet extends BIFFwriter
         // Network drives are different. We will handle them separately
         // MS/Novell network drives and shares start with \\
         if (preg_match('[^external:\\\\]', $url)) {
-            return; //($this->writeUrlExternal_net($row1, $col1, $row2, $col2, $url, $str, $format));
+            return;
         }
 
         $record = 0x01B8; // Record identifier
@@ -1726,7 +1617,6 @@ class Worksheet extends BIFFwriter
         }
 
         // Strip URL type and change Unix dir separator to Dos style (if needed)
-        //
         $url = preg_replace('/^external:/', '', $url);
         $url = preg_replace('/\//', "\\", $url);
 
@@ -2069,14 +1959,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintHeaders()
     {
-        $record = 0x002a; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fPrintRwCol = $this->printRowColHeaders; // Boolean flag
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fPrintRwCol);
-        $this->prepend($header . $data);
+        $this->prependRecord('PrintHeaders', array($this->printRowColHeaders));
     }
 
     /**
@@ -2085,14 +1968,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintGridlines()
     {
-        $record = 0x002b; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fPrintGrid = $this->printGridLines; // Boolean flag
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fPrintGrid);
-        $this->prepend($header . $data);
+        $this->prependRecord('PrintGridLines', array($this->printGridLines));
     }
 
     /**
@@ -2101,14 +1977,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGridset()
     {
-        $record = 0x0082; // Record identifier
-        $length = 0x0002; // Bytes to follow
-
-        $fGridSet = !$this->printGridLines; // Boolean flag
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $fGridSet);
-        $this->prepend($header . $data);
+        $this->prependRecord('Gridset', array(!$this->printGridLines));
     }
 
     /**
@@ -2124,8 +1993,6 @@ class Worksheet extends BIFFwriter
     /**
      * Write the WSBOOL BIFF record, mainly for fit-to-page. Used in conjunction
      * with the SETUP record.
-     *
-     *
      */
     protected function storeWsbool()
     {
@@ -2175,12 +2042,9 @@ class Worksheet extends BIFFwriter
      */
     protected function storeProtect()
     {
-        // Exit unless sheet protection has been specified
-        if ($this->protect == 0) {
-            return;
+        if ($this->protect) {
+            $this->prependRecord('Protect', array($this->protect));
         }
-
-        $this->prependRecord('Protect', array($this->protect));
     }
 
     /**
@@ -2188,12 +2052,9 @@ class Worksheet extends BIFFwriter
      */
     protected function storePassword()
     {
-        // Exit unless sheet protection and password have been specified
-        if ($this->protect == 0 || !isset($this->password)) {
-            return;
+        if ($this->protect && isset($this->password)) {
+            $this->prependRecord('Password', array($this->password));
         }
-
-        $this->prependRecord('Password', array($this->password));
     }
 
 

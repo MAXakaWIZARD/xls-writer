@@ -238,4 +238,27 @@ class SharedStringsTable
 
         return $length;
     }
+
+    /**
+     * @param string $str
+     * @param string $inputEncoding
+     *
+     * @return string
+     */
+    public function getPackedString($str, $inputEncoding)
+    {
+        if ($inputEncoding == 'UTF-16LE') {
+            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
+            $encoding = 0x1;
+        } elseif ($inputEncoding != '') {
+            $str = iconv($inputEncoding, 'UTF-16LE', $str);
+            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
+            $encoding = 0x1;
+        } else {
+            $strlen = strlen($str);
+            $encoding = 0x0;
+        }
+
+        return pack('vC', $strlen, $encoding) . $str;
+    }
 }
