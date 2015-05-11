@@ -1,12 +1,11 @@
 <?php
-
 namespace Xls\Record;
 
 class NameLong extends AbstractRecord
 {
     const NAME = 'NAME';
     const ID = 0x0018;
-    const LENGTH = 0x003d;
+    const LENGTH = 0x3D;
 
     /**
      * Store the NAME record in the long format that is used for storing the repeat

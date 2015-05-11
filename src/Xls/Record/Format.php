@@ -1,14 +1,10 @@
 <?php
-
 namespace Xls\Record;
-
-use Xls\Biff8;
 
 class Format extends AbstractRecord
 {
     const NAME = 'FORMAT';
     const ID = 0x041E;
-    const LENGTH = 0x00;
 
     /**
      * Generate FORMAT record for non "built-in" numerical formats.

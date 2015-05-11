@@ -6,7 +6,6 @@ class ContinueRecord extends AbstractRecord
 {
     const NAME = 'CONTINUE';
     const ID = 0x003C;
-    const LENGTH = 0x00;
 
     /**
      * Excel limits the size of BIFF records. In Excel 5 the limit is 2084 bytes. In

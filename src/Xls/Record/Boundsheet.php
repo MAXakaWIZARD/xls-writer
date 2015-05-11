@@ -1,14 +1,10 @@
 <?php
-
 namespace Xls\Record;
-
-use Xls\Biff8;
 
 class Boundsheet extends AbstractRecord
 {
     const NAME = 'BOUNDSHEET';
     const ID = 0x0085;
-    const LENGTH = 0x00;
 
     /**
      * Generate BOUNDSHEET record.

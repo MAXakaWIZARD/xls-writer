@@ -1,15 +1,12 @@
 <?php
-
 namespace Xls\Record;
 
 use Xls\Format as XlsFormat;
-use Xls\Biff5;
 
 class Xf extends AbstractRecord
 {
     const NAME = 'XF';
     const ID = 0x00E0;
-    const LENGTH = 0x00;
 
     /**
      * Generate an Excel BIFF XF record.
@@ -31,7 +28,7 @@ class Xf extends AbstractRecord
         $icv = $format->fgColor; // fg and bg pattern colors
         $icv |= $format->bgColor << 7;
 
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $length = 0x0010;
 
             $fill = $format->pattern; // Fill and border line style
@@ -73,7 +70,7 @@ class Xf extends AbstractRecord
         $align |= $format->textVertAlign << 4;
         $align |= $format->textJustlast << 7;
 
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $flags = $this->getFlags($format);
 
             $align |= $format->rotation << 8;
@@ -114,7 +111,7 @@ class Xf extends AbstractRecord
      */
     protected function getBorder1($format)
     {
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $border1 = $format->top; // Border line style and color
             $border1 |= $format->left << 3;
             $border1 |= $format->right << 6;
@@ -142,7 +139,7 @@ class Xf extends AbstractRecord
      */
     protected function getBorder2($format)
     {
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $border2 = $format->leftColor; // Border color
             $border2 |= $format->rightColor << 7;
         } else {

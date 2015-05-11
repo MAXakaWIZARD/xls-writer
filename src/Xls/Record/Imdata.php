@@ -1,12 +1,10 @@
 <?php
-
 namespace Xls\Record;
 
 class Imdata extends AbstractRecord
 {
     const NAME = 'IMDATA';
     const ID = 0x007f;
-    const LENGTH = 0x00;
 
     /**
      * Generate IMDATA record

@@ -1,12 +1,10 @@
 <?php
-
 namespace Xls\Record;
 
 class Window2 extends AbstractRecord
 {
     const NAME = 'WINDOW2';
     const ID = 0x023E;
-    const LENGTH = 0x00;
 
     /**
      * @param \Xls\Worksheet $worksheet

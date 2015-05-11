@@ -5,8 +5,7 @@ namespace Xls\Record;
 class Dv extends AbstractRecord
 {
     const NAME = 'DV';
-    const ID = 0x01be;
-    const LENGTH = 0x00;
+    const ID = 0x01BE;
 
     /**
      * Generate the DVAL biff record

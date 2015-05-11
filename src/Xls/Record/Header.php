@@ -1,14 +1,10 @@
 <?php
-
 namespace Xls\Record;
-
-use Xls\Biff8;
 
 class Header extends AbstractRecord
 {
     const NAME = 'HEADER';
     const ID = 0x0014;
-    const LENGTH = 0x00;
 
     /**
      * Generate HEADER record

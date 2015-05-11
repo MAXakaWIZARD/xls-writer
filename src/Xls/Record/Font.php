@@ -1,15 +1,12 @@
 <?php
-
 namespace Xls\Record;
 
 use Xls\Format as XlsFormat;
-use Xls\Biff5;
 
 class Font extends AbstractRecord
 {
     const NAME = 'FONT';
     const ID = 0x0031;
-    const LENGTH = 0x00;
 
     /**
      * Generate an Excel BIFF FONT record.
@@ -29,7 +26,7 @@ class Font extends AbstractRecord
         $encoding = 0;
 
         $cch = strlen($format->fontName); // Length of font name
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $length = 0x0F + $cch; // Record length
         } else {
             $length = 0x10 + $cch;
@@ -51,7 +48,7 @@ class Font extends AbstractRecord
             $grbit |= 0x20;
         }
 
-        if ($format->getVersion() === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $data = pack(
                 "vvvvvCCCCC",
                 $dyHeight,

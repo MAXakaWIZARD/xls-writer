@@ -1,8 +1,6 @@
 <?php
-
 namespace Xls;
 
-use Xls\OLE\OLE;
 use Xls\OLE\PpsFile;
 use Xls\OLE\PpsRoot;
 
@@ -127,7 +125,7 @@ class Workbook extends BIFFwriter
 
         $this->palette = Palette::getXl97Palette();
 
-        $this->tmpFormat = new Format($this->version);
+        $this->tmpFormat = new Format($this->version, $this->byteOrder);
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
@@ -370,7 +368,7 @@ class Workbook extends BIFFwriter
      */
     public function addFormat($properties = array())
     {
-        $format = new Format($this->version, $this->xfIndex, $properties);
+        $format = new Format($this->version, $this->byteOrder, $this->xfIndex, $properties);
         $this->xfIndex++;
         $this->formats[] = $format;
 
@@ -693,7 +691,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeExternsheetBiff8()
     {
-        $record = new Record\Externsheet();
+        $record = $this->createRecord('Externsheet');
         $this->append($record->getDataForReferences($this->formulaParser->getReferences()));
     }
 

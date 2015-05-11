@@ -1968,7 +1968,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeExternsheet($sheetName)
     {
-        $record = new Record\Externsheet();
+        $record = $this->createRecord('Externsheet');
         $this->prepend($record->getDataForCurrentSheet($sheetName, $this->name));
     }
 

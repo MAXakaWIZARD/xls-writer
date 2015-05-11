@@ -1,14 +1,10 @@
 <?php
-
 namespace Xls\Record;
-
-use Xls\Biff5;
 
 class Bof extends AbstractRecord
 {
     const NAME = 'BOF';
     const ID = 0x0809;
-    const LENGTH = 0x00;
 
     /**
      * Generate BOF record to indicate the beginning of a stream or

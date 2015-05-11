@@ -1,12 +1,10 @@
 <?php
-
 namespace Xls\Record;
 
 class HorizontalPagebreaks extends AbstractRecord
 {
     const NAME = 'HORIZONTALPAGEBREAKS';
     const ID = 0x001b;
-    const LENGTH = 0x00;
     const COUNT_LIMIT = 0;
 
     /**

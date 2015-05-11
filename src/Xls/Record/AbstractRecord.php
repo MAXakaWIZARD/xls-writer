@@ -1,5 +1,4 @@
 <?php
-
 namespace Xls\Record;
 
 use Xls\BIFFwriter;
@@ -9,6 +8,8 @@ use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
 {
+    const LENGTH = 0x00;
+
     /**
      * @var int
      */
@@ -22,11 +23,11 @@ abstract class AbstractRecord
     /**
      * AbstractRecord constructor.
      *
-     * @param int $version
+     * @param int $version BIFF version
      * @param int $byteOrder
      */
     public function __construct(
-        $version = Biff5::VERSION,
+        $version,
         $byteOrder = BIFFwriter::BYTE_ORDER_LE
     ) {
         $this->version = $version;

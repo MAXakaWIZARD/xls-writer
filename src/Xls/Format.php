@@ -30,6 +30,12 @@ class Format
     protected $version;
 
     /**
+     * The byte order of this architecture. 0 => little endian, 1 => big endian
+     * @var integer
+     */
+    protected $byteOrder;
+
+    /**
      * The index given by the workbook when creating a new format.
      * @var integer
      */
@@ -274,13 +280,15 @@ class Format
 
     /**
      * @param integer $version
+     * @param integer $byteOrder
      * @param integer $index the XF index for the format.
      * @param array $properties array with properties to be set on initialization.
      */
-    public function __construct($version, $index = 0, $properties = array())
+    public function __construct($version, $byteOrder, $index = 0, $properties = array())
     {
         $this->xfIndex = $index;
         $this->version = $version;
+        $this->byteOrder = $byteOrder;
 
         $this->setProperties($properties);
     }
@@ -306,7 +314,7 @@ class Format
      */
     public function getXf($style)
     {
-        $record = new Record\Xf();
+        $record = new Record\Xf($this->version, $this->byteOrder);
         return $record->getData($this, $style);
     }
 
@@ -317,7 +325,7 @@ class Format
      */
     public function getFontRecord()
     {
-        $record = new Record\Font();
+        $record = new Record\Font($this->version, $this->byteOrder);
         return $record->getData($this);
     }
 

@@ -1,12 +1,11 @@
 <?php
-
 namespace Xls\Record;
 
 class NameShort extends AbstractRecord
 {
     const NAME = 'NAME';
     const ID = 0x0018;
-    const LENGTH = 0x0024;
+    const LENGTH = 0x24;
 
     /**
      * Store the NAME record in the short format that is used for storing the print

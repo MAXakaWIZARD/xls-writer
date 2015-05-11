@@ -93,6 +93,22 @@ class FormulaParser
     }
 
     /**
+     *
+     */
+    public function isBiff5()
+    {
+        return $this->version === Biff5::VERSION;
+    }
+
+    /**
+     *
+     */
+    public function isBiff8()
+    {
+        return $this->version === Biff8::VERSION;
+    }
+
+    /**
      * Convert a token to the proper ptg value.
      *
      * @param mixed $token The token to convert.
@@ -168,7 +184,7 @@ class FormulaParser
             throw new \Exception("String is too long");
         }
 
-        if ($this->version == Biff5::VERSION) {
+        if ($this->isBiff5()) {
             return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
         } else {
             $encoding = 0;
@@ -291,7 +307,7 @@ class FormulaParser
         list($extRef, $range) = explode('!', $token);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->version === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -364,7 +380,7 @@ class FormulaParser
         list($extRef, $cell) = explode('!', $cell);
 
         // Convert the external reference part (different for BIFF8)
-        if ($this->version === Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $extRef = $this->packExtRef($extRef);
         } else {
             $extRef = $this->getRefIndex($extRef);
@@ -540,7 +556,7 @@ class FormulaParser
         }
 
         // Set the high bits to indicate if row or col are relative.
-        if ($this->version == Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $row |= $colRel << 14;
             $row |= $rowRel << 15;
             $col = pack('C', $col);
@@ -582,7 +598,7 @@ class FormulaParser
         }
 
         // Set the high bits to indicate if rows are relative.
-        if ($this->version == Biff5::VERSION) {
+        if ($this->isBiff5()) {
             $row1 |= $row1Rel << 14; // TODO: probably a bug
             $row2 |= $row2Rel << 15;
             $col1 = pack('C', $col1);
