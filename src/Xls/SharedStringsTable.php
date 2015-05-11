@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mac
- * Date: 04.05.15
- * Time: 1:00
- */
-
 namespace Xls;
 
 class SharedStringsTable
@@ -115,6 +108,11 @@ class SharedStringsTable
         $data = array();
         $continue = 0;
 
+        if ($returnDataToWrite) {
+            $originalBlocksSizes = $tmpBlockSizes;
+            array_shift($tmpBlockSizes);
+        }
+
         foreach ($this->getStrings() as $string) {
             $info = $this->getStringInfo($string);
             $splitString = 0;
@@ -184,11 +182,11 @@ class SharedStringsTable
                 }
 
                 // Write the CONTINUE block header
-                if (!empty($tmpBlockSizes)) {
+                if (!empty($originalBlocksSizes)) {
                     $length = array_shift($tmpBlockSizes);
                     $header = Record\ContinueRecord::getHeader($length);
                     if ($continue) {
-                        $header .= pack('C', $info['is_unicode']);
+                        $header .= pack('C', intval($info['is_unicode']));
                     }
 
                     $data[] = $header;
@@ -215,28 +213,47 @@ class SharedStringsTable
     }
 
     /**
+     * @return array
+     */
+    public function getDataForWrite()
+    {
+        return $this->getBlocksSizesOrDataToWrite(
+            $this->getBlocksSizes(),
+            true
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function getBlocksSizes()
+    {
+        return $this->getBlocksSizesOrDataToWrite();
+    }
+
+    /**
      * Calculate the total length of the SST and associated CONTINUEs (if any).
      * The SST record will have a length even if it contains no strings.
      * This length is required to set the offsets in the BOUNDSHEET records since
      * they must be written before the SST records
      *
-     * @param $blockSizes
-     *
      * @return int
      */
-    public function calcSharedStringsTableLength($blockSizes)
+    public function calcTableSize()
     {
-        $length = 12;
+        $blockSizes = $this->getBlocksSizes();
+
+        $size = 12;
 
         if (!empty($blockSizes)) {
-            $length += array_shift($blockSizes); // SST
+            $size += array_shift($blockSizes); // SST
         }
 
         while (!empty($blockSizes)) {
-            $length += 4 + array_shift($blockSizes); // CONTINUEs
+            $size += 4 + array_shift($blockSizes); // CONTINUEs
         }
 
-        return $length;
+        return $size;
     }
 
     /**
@@ -247,16 +264,16 @@ class SharedStringsTable
      */
     public function getPackedString($str, $inputEncoding)
     {
-        if ($inputEncoding == 'UTF-16LE') {
-            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
-            $encoding = 0x1;
-        } elseif ($inputEncoding != '') {
+        if ($inputEncoding != '' && $inputEncoding != 'UTF-16LE') {
             $str = iconv($inputEncoding, 'UTF-16LE', $str);
-            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
+        }
+
+        if ($inputEncoding != '') {
             $encoding = 0x1;
+            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
         } else {
-            $strlen = strlen($str);
             $encoding = 0x0;
+            $strlen = strlen($str);
         }
 
         return pack('vC', $strlen, $encoding) . $str;

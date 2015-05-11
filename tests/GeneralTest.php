@@ -556,4 +556,48 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $correctFilePath = $this->getFilePath('thaw_panes', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
+
+    /**
+     * @dataProvider providerBiff5AndBiff8
+     * @param array $params
+     */
+    public function testLongStrings($params)
+    {
+        $workbook = $this->createWorkbook($params);
+
+        $sheet = $workbook->addWorksheet();
+
+        //keep for full test coverage
+        $sheet->write(0, 0, str_repeat('a', 33));
+        $sheet->writeFormula(0, 1, '=LEN(A1)');
+        //keep for full test coverage
+        $sheet->write(5, 0, str_repeat('e', 8200));
+        $sheet->writeFormula(5, 1, '=LEN(A6)');
+
+        $sheet->write(1, 0, str_repeat('b', 2048));
+        $sheet->writeFormula(1, 1, '=LEN(A2)');
+
+        $sheet->write(2, 0, str_repeat('c', 4096));
+        $sheet->writeFormula(2, 1, '=LEN(A3)');
+
+        $sheet->write(3, 0, str_repeat('c', 8192));
+        $sheet->writeFormula(3, 1, '=LEN(A4)');
+
+        $sheet->write(4, 0, str_repeat('d', 10240));
+        $sheet->writeFormula(4, 1, '=LEN(A5)');
+
+        $anotherSheet = $workbook->addWorksheet();
+
+        $anotherSheet->write(0, 0, str_repeat('f', 9216));
+        $anotherSheet->writeFormula(0, 1, '=LEN(A1)');
+
+        $anotherSheet->write(1, 0, str_repeat('g', 10240));
+        $anotherSheet->writeFormula(1, 1, '=LEN(A2)');
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('long_strings', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
 }

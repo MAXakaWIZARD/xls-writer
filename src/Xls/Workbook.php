@@ -100,11 +100,6 @@ class Workbook extends BIFFwriter
     protected $countryCode = self::COUNTRY_NONE;
 
     /**
-     * @var
-     */
-    protected $blockSizes;
-
-    /**
      * @var int
      */
     protected $creationTimestamp;
@@ -457,21 +452,15 @@ class Workbook extends BIFFwriter
      */
     protected function calcSheetOffsets()
     {
-        $boundsheetLength = $this->biff->getBoundsheetLength();
         $eof = 4;
         $offset = $this->datasize;
 
         if ($this->isBiff8()) {
-            // add the length of the SST
-            /* TODO: check if this works for a lot of strings (> 8224 bytes) */
-            $this->blockSizes = $this->sst->getBlocksSizesOrDataToWrite();
-            $offset += $this->sst->calcSharedStringsTableLength($this->blockSizes);
-
-            // add the lenght of SUPBOOK, EXTERNSHEET and NAME records
-            //$offset += 8; // TODO: calculate real value when storing the records
+            $offset += $this->sst->calcTableSize();
         }
 
         // add the length of the BOUNDSHEET records
+        $boundsheetLength = $this->biff->getBoundsheetLength();
         foreach ($this->worksheets as $sheet) {
             $offset += $boundsheetLength + strlen($sheet->getName());
         }
@@ -717,13 +706,13 @@ class Workbook extends BIFFwriter
         $this->appendRecord(
             'SharedStringsTable',
             array(
-                $this->blockSizes,
+                $this->sst->getBlocksSizes(),
                 $this->sst->getTotalCount(),
                 $this->sst->getUniqueCount()
             )
         );
 
-        $data = $this->sst->getBlocksSizesOrDataToWrite($this->blockSizes, true);
+        $data = $this->sst->getDataForWrite();
         foreach ($data as $item) {
             $this->append($item);
         }

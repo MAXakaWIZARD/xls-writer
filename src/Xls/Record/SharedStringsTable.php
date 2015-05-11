@@ -25,7 +25,6 @@ class SharedStringsTable extends AbstractRecord
     {
         // The SST record is required even if it contains no strings. Thus we will
         // always have a length
-        //
         if (!empty($blockSizes)) {
             $extraLength = array_shift($blockSizes);
         } else {
