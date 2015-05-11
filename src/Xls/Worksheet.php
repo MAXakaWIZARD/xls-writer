@@ -1899,37 +1899,15 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDimensions()
     {
-        $record = 0x0200; // Record identifier
-        $rowMin = $this->dimRowmin; // First row
-        $rowMax = $this->dimRowmax + 1; // Last row plus 1
-        $colMin = $this->dimColmin; // First column
-        $colMax = $this->dimColmax + 1; // Last column plus 1
-        $reserved = 0x0000; // Reserved by Excel
-
-        if ($this->isBiff5()) {
-            $length = 0x000A;
-            $data = pack(
-                "vvvvv",
-                $rowMin,
-                $rowMax,
-                $colMin,
-                $colMax,
-                $reserved
-            );
-        } else {
-            $length = 0x000E;
-            $data = pack(
-                "VVvvv",
-                $rowMin,
-                $rowMax,
-                $colMin,
-                $colMax,
-                $reserved
-            );
-        }
-
-        $header = pack("vv", $record, $length);
-        $this->prepend($header . $data);
+        $this->prependRecord(
+            'Dimensions',
+            array(
+                $this->dimRowmin,
+                $this->dimRowmax + 1,
+                $this->dimColmin,
+                $this->dimColmax + 1
+            )
+        );
     }
 
     /**
