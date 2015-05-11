@@ -407,6 +407,17 @@ class Worksheet extends BIFFwriter
     }
 
     /**
+     *
+     */
+    public function __destruct()
+    {
+        if ($this->tmpFile != '') {
+            @unlink($this->tmpFile);
+            $this->tmpFile = '';
+        }
+    }
+
+    /**
      * Open a tmp file to store the majority of the Worksheet data. If this fails,
      * for example due to write permissions, store the data in memory. This can be
      * slow for large files.
@@ -436,60 +447,24 @@ class Worksheet extends BIFFwriter
          * Prepend in reverse order!!
          */
 
-        // Prepend the sheet dimensions
         $this->storeDimensions();
-
-        // Prepend the sheet password
         $this->storePassword();
-
-        // Prepend the sheet protection
         $this->storeProtect();
-
         $this->prependRecord('Setup', array($this));
-
-        // Prepend the margins
         $this->storeMargins();
-
-        // Prepend the page vertical centering
-        $this->prependRecord('Vcenter', array($this->vcenter));
-
-        // Prepend the page horizontal centering
-        $this->prependRecord('Hcenter', array($this->hcenter));
+        $this->storeCentering();
 
         $this->prependRecord('Footer', array($this->footer));
         $this->prependRecord('Header', array($this->header));
 
-        // Prepend page breaks
         $this->storePageBreaks();
-
-        // Prepend WSBOOL
         $this->storeWsbool();
-
-        // Prepend GRIDSET
         $this->storeGridset();
-
-        //  Prepend GUTS
-        if ($this->isBiff5()) {
-            $this->storeGuts();
-        }
-
-        // Prepend PRINTGRIDLINES
+        $this->storeGuts();
         $this->storePrintGridlines();
-
-        // Prepend PRINTHEADERS
         $this->storePrintHeaders();
 
-        if ($this->isBiff5()) {
-            $sheetsCount = count($sheetNames);
-            // Prepend EXTERNSHEET references
-            for ($i = $sheetsCount; $i > 0; $i--) {
-                $sheetName = $sheetNames[$i - 1];
-                $this->storeExternsheet($sheetName);
-            }
-
-            // Prepend the EXTERNCOUNT of external references.
-            $this->prependRecord('Externcount', array($sheetsCount));
-        }
+        $this->storeExternsheets($sheetNames);
 
         $this->storeColinfo();
 
@@ -502,22 +477,16 @@ class Worksheet extends BIFFwriter
         // Append
         $this->appendRecord('Window2', array($this));
         $this->storeZoom();
-        if (!empty($this->panes)) {
-            $this->storePanes($this->panes);
-        }
+
+        $this->storePanes($this->panes);
+
         $this->appendRecord('Selection', array($this->selection, $this->activePane));
+
         $this->storeMergedCells();
 
-        if ($this->isBiff8()) {
-            $this->storeDataValidity();
-        }
+        $this->storeDataValidity();
 
         $this->appendRecord('Eof');
-
-        if ($this->tmpFile != '') {
-            @unlink($this->tmpFile);
-            $this->tmpFile = '';
-        }
     }
 
     /**
@@ -1109,13 +1078,6 @@ class Worksheet extends BIFFwriter
         return ($format) ? $format->getXfIndex(): 0x0F;
     }
 
-    /******************************************************************************
-     *******************************************************************************
-     *
-     * Internal methods
-     */
-
-
     /**
      * Store Worksheet data to a temporary file.
      * @param string $data The binary data to append
@@ -1157,31 +1119,6 @@ class Worksheet extends BIFFwriter
     {
         $this->arabic = ($rtl ? 1 : 0);
     }
-
-    /**
-     * @param $row
-     *
-     * @throws \Exception
-     */
-    protected function validateRowIndex($row)
-    {
-        if ($row >= $this->xlsRowmax) {
-            throw new \Exception('Row index is beyond max row number');
-        }
-    }
-
-    /**
-     * @param $col
-     *
-     * @throws \Exception
-     */
-    protected function validateColIndex($col)
-    {
-        if ($col >= $this->xlsColmax) {
-            throw new \Exception('Col index is beyond max col number');
-        }
-    }
-
 
     /**
      * Write a double to the specified row and column (zero indexed).
@@ -1266,6 +1203,30 @@ class Worksheet extends BIFFwriter
                 $format
             )
         );
+    }
+
+    /**
+     * @param $row
+     *
+     * @throws \Exception
+     */
+    protected function validateRowIndex($row)
+    {
+        if ($row >= $this->xlsRowmax) {
+            throw new \Exception('Row index is beyond max row number');
+        }
+    }
+
+    /**
+     * @param $col
+     *
+     * @throws \Exception
+     */
+    protected function validateColIndex($col)
+    {
+        if ($col >= $this->xlsColmax) {
+            throw new \Exception('Col index is beyond max col number');
+        }
     }
 
     /**
@@ -1362,54 +1323,22 @@ class Worksheet extends BIFFwriter
      * @param integer $col     Zero indexed column
      * @param string $formula The formula text string
      * @param mixed $format  The optional XF format
+     * @throws \Exception
      */
     public function writeFormula($row, $col, $formula, $format = null)
     {
-        $record = 0x0006; // Record identifier
-
-        // Excel normally stores the last calculated value of the formula in $num.
-        // Clearly we are not in a position to calculate this a priori. Instead
-        // we set $num to zero and set the option flags in $grbit to ensure
-        // automatic calculation of the formula when the file is opened.
-        $xf = $this->xf($format); // The cell format
-        $num = 0x00; // Current value of formula
-        $grbit = 0x03; // Option flags
-        $unknown = 0x0000; // Must be zero
-
         $this->checkRowCol($row, $col);
 
         // Strip the '=' or '@' sign at the beginning of the formula string
-        if (preg_match("/^=/", $formula)) {
-            $formula = preg_replace("/(^=)/", "", $formula);
-        } elseif (preg_match("/^@/", $formula)) {
-            $formula = preg_replace("/(^@)/", "", $formula);
+        if (in_array($formula[0], array('=', '@'), true)) {
+            $formula = substr($formula, 1);
         } else {
-            // Error handling
-            $this->writeString($row, $col, 'Unrecognised character for formula');
-            return;
+            throw new \Exception('Invalid formula: should start with = or @');
         }
 
-        // Parse the formula using the parser in Parser.php
-        $this->formulaParser->parse($formula);
+        $formula = $this->formulaParser->getReversePolish($formula);
 
-        $formula = $this->formulaParser->toReversePolish();
-
-        $formlen = strlen($formula); // Length of the binary string
-        $length = 0x16 + $formlen; // Length of the record data
-
-        $header = pack("vv", $record, $length);
-        $data = pack(
-            "vvvdvVv",
-            $row,
-            $col,
-            $xf,
-            $num,
-            $grbit,
-            $unknown,
-            $formlen
-        );
-
-        $this->append($header . $data . $formula);
+        $this->appendRecord('Formula', array($row, $col, $formula, $format));
     }
 
     /**
@@ -1854,6 +1783,10 @@ class Worksheet extends BIFFwriter
      */
     protected function storePanes($panes)
     {
+        if (empty($panes)) {
+            return;
+        }
+
         $y = $panes[0];
         $x = $panes[1];
         $rwTop = $panes[2];
@@ -1929,6 +1862,38 @@ class Worksheet extends BIFFwriter
     }
 
     /**
+     *
+     */
+    protected function storeCentering()
+    {
+        // Prepend the page vertical centering
+        $this->prependRecord('Vcenter', array($this->vcenter));
+
+        // Prepend the page horizontal centering
+        $this->prependRecord('Hcenter', array($this->hcenter));
+    }
+
+    /**
+     * @param $sheetNames
+     */
+    protected function storeExternsheets($sheetNames)
+    {
+        if (!$this->isBiff5()) {
+            return;
+        }
+
+        $sheetsCount = count($sheetNames);
+        // Prepend EXTERNSHEET references
+        for ($i = $sheetsCount; $i > 0; $i--) {
+            $sheetName = $sheetNames[$i - 1];
+            $this->storeExternsheet($sheetName);
+        }
+
+        // Prepend the EXTERNCOUNT of external references.
+        $this->prependRecord('Externcount', array($sheetsCount));
+    }
+
+    /**
      * Merges the area given by its arguments.
      * @param integer $firstRow First row of the area to merge
      * @param integer $firstCol First column of the area to merge
@@ -1987,7 +1952,9 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGuts()
     {
-        $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
+        if ($this->isBiff5()) {
+            $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
+        }
     }
 
     /**
@@ -2299,6 +2266,10 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDataValidity()
     {
+        if (!$this->isBiff8()) {
+            return;
+        }
+
         $this->appendRecord('Dval', array($this->dv));
 
         foreach ($this->dv as $dv) {

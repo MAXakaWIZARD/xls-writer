@@ -238,4 +238,15 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', "Bitmap isn't allowed to start or finish in a hidden cell");
         $sheet->insertBitmap(0, 0, TEST_DATA_PATH . '/elephpant.bmp');
     }
+
+    /**
+     * Valid formula should start with = or @
+     */
+    public function testInvalidFormula()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $this->setExpectedException('\Exception', "Invalid formula: should start with = or @");
+        $sheet->writeFormula(0, 0, 'A1+B1');
+    }
 }

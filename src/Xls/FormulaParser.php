@@ -982,8 +982,9 @@ class FormulaParser
      */
     public function toReversePolish($tree = array())
     {
-        $polish = ""; // the string we are going to return
-        if (empty($tree)) { // If it's the first call use _parse_tree
+        $polish = "";
+
+        if (empty($tree)) {
             $tree = $this->parseTree;
         }
 
@@ -1032,5 +1033,17 @@ class FormulaParser
     public function getReferences()
     {
         return $this->references;
+    }
+
+    /**
+     * @param $formula
+     *
+     * @return string
+     */
+    public function getReversePolish($formula)
+    {
+        $this->parse($formula);
+
+        return $this->toReversePolish();
     }
 }
