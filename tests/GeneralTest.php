@@ -423,8 +423,29 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $workbook->setCountry($workbook::COUNTRY_USA);
 
         $sheet = $workbook->addWorksheet();
-        $sheet->write(0, 0, 'Landscape layout test');
-        $sheet->writeCol(0, 1, range(1, 10));
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Field value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
+        $sheet->repeatRows(0);
+        $sheet->repeatRows(0, 0);
+
+        $sheet->repeatColumns(0);
+        $sheet->repeatColumns(0, 0);
 
         $sheet->setZoom(125);
         $sheet->hideScreenGridlines();
@@ -432,12 +453,12 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $sheet->setLandscape();
 
         //header and footer should be cut to max length (255)
-        $sheet->setHeader('Page header' . str_repeat('.', 255));
-        $sheet->setFooter('Page footer' . str_repeat('.', 255));
+        $sheet->setHeader('Page header ' . str_repeat('.', 255));
+        $sheet->setFooter('Page footer ' . str_repeat('.', 255));
 
         $sheet->centerHorizontally();
         $sheet->centerVertically();
-        $sheet->fitToPages(5, 5);
+        $sheet->fitToPages(999, 999);
         $sheet->setPaper($sheet::PAPER_A4);
         $sheet->printRowColHeaders();
 

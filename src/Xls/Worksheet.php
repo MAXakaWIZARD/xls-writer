@@ -834,12 +834,12 @@ class Worksheet extends BIFFwriter
      */
     public function repeatRows($firstRow, $lastRow = null)
     {
-        $this->titleRowMin = $firstRow;
-        if (isset($lastRow)) { //Second row is optional
-            $this->titleRowMax = $lastRow;
-        } else {
-            $this->titleRowMax = $firstRow;
+        if (!isset($lastRow)) {
+            $lastRow = $firstRow;
         }
+
+        $this->titleRowMin = $firstRow;
+        $this->titleRowMax = $lastRow;
     }
 
     /**
@@ -849,12 +849,12 @@ class Worksheet extends BIFFwriter
      */
     public function repeatColumns($firstCol, $lastCol = null)
     {
-        $this->titleColMin = $firstCol;
-        if (isset($lastCol)) { // Second col is optional
-            $this->titleColMax = $lastCol;
-        } else {
-            $this->titleColMax = $firstCol;
+        if (!isset($lastCol)) {
+            $lastCol = $firstCol;
         }
+
+        $this->titleColMin = $firstCol;
+        $this->titleColMax = $lastCol;
     }
 
     /**
