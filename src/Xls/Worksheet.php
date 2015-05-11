@@ -1686,19 +1686,19 @@ class Worksheet extends BIFFwriter
         $dirShort = preg_replace("/\.\.\\\/", '', $dirLong) . "\0";
 
         // Store the long dir name as a wchar string (non-null terminated)
-        //$dir_long       = join("\0", split('', $dir_long));
-        $dirLong = $dirLong . "\0";
+        //$dirLong       = join("\0", split('', $dir_long));
+        //$dirLong = $dirLong . "\0";
 
         // Pack the lengths of the dir strings
         $dirShortLen = pack("V", strlen($dirShort));
-        $dirLongLen = pack("V", strlen($dirLong));
+        //$dirLongLen = pack("V", strlen($dirLong));
         $streamLen = pack("V", 0); //strlen($dir_long) + 0x06);
 
         // Pack the undocumented parts of the hyperlink stream
         $unknown1 = pack("H*", 'D0C9EA79F9BACE118C8200AA004BA90B02000000');
         $unknown2 = pack("H*", '0303000000000000C000000000000046');
         $unknown3 = pack("H*", 'FFFFADDE000000000000000000000000000000000000000');
-        $unknown4 = pack("v", 0x03);
+        //$unknown4 = pack("v", 0x03);
 
         // Pack the main data stream
         $data = pack("vvvv", $row1, $row2, $col1, $col2) .
@@ -1843,6 +1843,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeExternsheet($sheetName)
     {
+        /** @var Record\Externsheet $record */
         $record = $this->createRecord('Externsheet');
         $this->prepend($record->getDataForCurrentSheet($sheetName, $this->name));
     }

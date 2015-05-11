@@ -8,6 +8,7 @@ use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
 {
+    const ID = 0x00;
     const LENGTH = 0x00;
 
     /**
@@ -52,7 +53,7 @@ abstract class AbstractRecord
     }
 
     /**
-     * @param XlsFormat $format
+     * @param XlsFormat|null $format
      *
      * @return int
      */

@@ -42,7 +42,7 @@ class Colinfo extends AbstractRecord
         if (isset($colArray[3])) {
             $format = $colArray[3];
         } else {
-            $format = 0;
+            $format = null;
         }
 
         if (isset($colArray[4])) {
