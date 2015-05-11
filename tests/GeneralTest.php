@@ -447,6 +447,8 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $sheet->repeatColumns(0);
         $sheet->repeatColumns(0, 0);
 
+        $sheet->freezePanes(array(1, 1));
+
         $sheet->setZoom(125);
         $sheet->hideScreenGridlines();
 
@@ -515,6 +517,43 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
 
         $this->assertFileExists($this->testFilePath);
         $correctFilePath = $this->getFilePath('merge', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
+
+    /**
+     * @dataProvider providerBiff5AndBiff8
+     * @param array $params
+     */
+    public function testThawPanes($params)
+    {
+        $workbook = $this->createWorkbook($params);
+        $workbook->setCountry($workbook::COUNTRY_USA);
+
+        $sheet = $workbook->addWorksheet();
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Field value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
+        $sheet->thawPanes(array(1, 1));
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('thaw_panes', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }

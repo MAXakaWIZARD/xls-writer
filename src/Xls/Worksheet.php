@@ -478,7 +478,7 @@ class Worksheet extends BIFFwriter
         $this->appendRecord('Window2', array($this));
         $this->storeZoom();
 
-        $this->storePanes($this->panes);
+        $this->storePanes();
 
         $this->appendRecord('Selection', array($this->selection, $this->activePane));
 
@@ -663,6 +663,19 @@ class Worksheet extends BIFFwriter
     public function freezePanes($panes)
     {
         $this->frozen = 1;
+
+        if (!isset($panes[2])) {
+            $panes[2] = $panes[0];
+        }
+
+        if (!isset($panes[3])) {
+            $panes[3] = $panes[1];
+        }
+
+        if (!isset($panes[4])) {
+            $panes[4] = null;
+        }
+
         $this->panes = $panes;
     }
 
@@ -679,7 +692,72 @@ class Worksheet extends BIFFwriter
     public function thawPanes($panes)
     {
         $this->frozen = 0;
+
+        // Convert Excel's row and column units to the internal units.
+        // The default row height is 12.75
+        // The default column width is 8.43
+        // The following slope and intersection values were interpolated.
+        //
+        $panes[0] = 20 * $panes[0] + 255;
+        $panes[1] = 113.879 * $panes[1] + 390;
+
+        if (!isset($panes[2])) {
+            $panes[2] = 0;
+        }
+
+        if (!isset($panes[3])) {
+            $panes[3] = 0;
+        }
+
+        if (!isset($panes[4])) {
+            $panes[4] = null;
+        }
+
         $this->panes = $panes;
+    }
+
+    /**
+     * Writes the Excel BIFF PANE record.
+     * The panes can either be frozen or thawed (unfrozen).
+     * Frozen panes are specified in terms of an integer number of rows and columns.
+     * Thawed panes are specified in terms of Excel's units for rows and columns.
+     */
+    protected function storePanes()
+    {
+        if (empty($this->panes)) {
+            return;
+        }
+
+        $this->activePane = $this->panes[4];
+        if (!isset($this->activePane)) {
+            $this->activePane = $this->calculateActivePane($this->panes[0], $this->panes[1]);
+            $this->panes[4] = $this->activePane;
+        }
+
+        $this->appendRecord('Pane', $this->panes);
+    }
+
+    /**
+     * Determine which pane should be active. There is also the undocumented
+     * option to override this should it be necessary: may be removed later.
+     * @param $x
+     * @param $y
+     *
+     * @return int|null
+     */
+    protected function calculateActivePane($x, $y)
+    {
+        if ($x != 0 && $y != 0) {
+            return 0; // Bottom right
+        } elseif ($x != 0 && $y == 0) {
+            return 1; // Top right
+        } elseif ($x == 0 && $y != 0) {
+            return 2; // Bottom left
+        } elseif ($x == 0 && $y == 0) {
+            return 3; // Top left
+        }
+
+        return null;
     }
 
     /**
@@ -1767,87 +1845,6 @@ class Worksheet extends BIFFwriter
     {
         $record = $this->createRecord('Externsheet');
         $this->prepend($record->getDataForCurrentSheet($sheetName, $this->name));
-    }
-
-    /**
-     * Writes the Excel BIFF PANE record.
-     * The panes can either be frozen or thawed (unfrozen).
-     * Frozen panes are specified in terms of an integer number of rows and columns.
-     * Thawed panes are specified in terms of Excel's units for rows and columns.
-     * @param array $panes This is the only parameter received and is composed of the following:
-     *                     0 => Vertical split position,
-     *                     1 => Horizontal split position
-     *                     2 => Top row visible
-     *                     3 => Leftmost column visible
-     *                     4 => Active pane
-     */
-    protected function storePanes($panes)
-    {
-        if (empty($panes)) {
-            return;
-        }
-
-        $y = $panes[0];
-        $x = $panes[1];
-        $rwTop = $panes[2];
-        $colLeft = $panes[3];
-        if (count($panes) > 4) { // if Active pane was received
-            $pnnAct = $panes[4];
-        } else {
-            $pnnAct = null;
-        }
-        $record = 0x0041; // Record identifier
-        $length = 0x000A; // Number of bytes to follow
-
-        // Code specific to frozen or thawed panes.
-        if ($this->isFrozen()) {
-            // Set default values for $rwTop and $colLeft
-            if (!isset($rwTop)) {
-                $rwTop = $y;
-            }
-            if (!isset($colLeft)) {
-                $colLeft = $x;
-            }
-        } else {
-            // Set default values for $rwTop and $colLeft
-            if (!isset($rwTop)) {
-                $rwTop = 0;
-            }
-            if (!isset($colLeft)) {
-                $colLeft = 0;
-            }
-
-            // Convert Excel's row and column units to the internal units.
-            // The default row height is 12.75
-            // The default column width is 8.43
-            // The following slope and intersection values were interpolated.
-            //
-            $y = 20 * $y + 255;
-            $x = 113.879 * $x + 390;
-        }
-
-        // Determine which pane should be active. There is also the undocumented
-        // option to override this should it be necessary: may be removed later.
-        if (!isset($pnnAct)) {
-            if ($x != 0 && $y != 0) {
-                $pnnAct = 0; // Bottom right
-            }
-            if ($x != 0 && $y == 0) {
-                $pnnAct = 1; // Top right
-            }
-            if ($x == 0 && $y != 0) {
-                $pnnAct = 2; // Bottom left
-            }
-            if ($x == 0 && $y == 0) {
-                $pnnAct = 3; // Top left
-            }
-        }
-
-        $this->activePane = $pnnAct; // Used in _storeSelection
-
-        $header = pack("vv", $record, $length);
-        $data = pack("vvvvv", $x, $y, $rwTop, $colLeft, $pnnAct);
-        $this->append($header . $data);
     }
 
     /**
