@@ -189,4 +189,33 @@ class XlsWriterTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists($this->testFilePath);
         $this->assertFileEquals(TEST_DATA_PATH . '/image.xls', $this->testFilePath);
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function testLongStrings()
+    {
+        $workbook = new Writer($this->testFilePath);
+        $workbook->setVersion(8);
+        $workbook->setCreationTimestamp(1429042916);
+
+        $sheet = $workbook->addWorksheet();
+
+        $sheet->write(0, 0, str_repeat('a', 512));
+        $sheet->writeFormula(0, 1, '=LEN(A1)');
+
+        $sheet->write(1, 0, str_repeat('b', 2048));
+        $sheet->writeFormula(1, 1, '=LEN(A2)');
+
+        $sheet->write(2, 0, str_repeat('c', 4096));
+        $sheet->writeFormula(2, 1, '=LEN(A3)');
+
+        $sheet->write(3, 0, str_repeat('c', 8192));
+        $sheet->writeFormula(3, 1, '=LEN(A4)');
+
+        $workbook->close();
+
+        $this->assertFileExists($this->testFilePath);
+        $this->assertFileEquals(TEST_DATA_PATH . '/long_strings.xls', $this->testFilePath);
+    }
 }

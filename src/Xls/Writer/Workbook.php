@@ -253,7 +253,7 @@ class Workbook extends BIFFwriter
             $this->_tmp_format->_BIFF_version = $version;
             $this->_url_format->_BIFF_version = $version;
             $this->_parser->_BIFF_version = $version;
-            $this->_codepage = 0x04B0;
+            $this->_codepage = 0x04E4;
 
             $total_worksheets = count($this->_worksheets);
             // change version for all worksheets too
