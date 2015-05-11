@@ -737,7 +737,7 @@ class Worksheet extends BIFFwriter
     protected function truncateStringIfNeeded($string)
     {
         if (strlen($string) > Biff5::MAX_STR_LENGTH) {
-            $string = substr($string, 0, Biff5::MAX_STR_LENGTH - 1);
+            $string = substr($string, 0, Biff5::MAX_STR_LENGTH);
         }
 
         return $string;
