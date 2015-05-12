@@ -27,10 +27,42 @@ class Setup extends AbstractRecord
         $iVRes = 0x0258; // Vertical print resolution
         $numHdr = $sheet->getMarginHead(); // Header Margin
         $numFtr = $sheet->getMarginFoot(); // Footer Margin
-        $iCopies = 0x01; // Number of copies
 
+        $numHdr = pack("d", $numHdr);
+        $numFtr = pack("d", $numFtr);
+        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
+            $numHdr = strrev($numHdr);
+            $numFtr = strrev($numFtr);
+        }
+
+        $data1 = pack(
+            "vvvvvvvv",
+            $iPaperSize,
+            $iScale,
+            $iPageStart,
+            $iFitWidth,
+            $iFitHeight,
+            $this->calcGrbit($sheet),
+            $iRes,
+            $iVRes
+        );
+        $data2 = $numHdr . $numFtr;
+
+        $iCopies = 0x01; // Number of copies
+        $data3 = pack("v", $iCopies);
+
+        return $this->getHeader() . $data1 . $data2 . $data3;
+    }
+
+    /**
+     * @param Worksheet $worksheet
+     *
+     * @return int
+     */
+    protected function calcGrbit(Worksheet $worksheet)
+    {
         $fLeftToRight = 0x0; // Print over then down
-        $fLandscape = $sheet->getOrientation(); // Page orientation
+        $fLandscape = $worksheet->getOrientation(); // Page orientation
         $fNoPls = 0x0; // Setup not read from printer
         $fNoColor = 0x0; // Print black and white
         $fDraft = 0x0; // Print draft quality
@@ -47,27 +79,6 @@ class Setup extends AbstractRecord
         $grbit |= $fNoOrient << 6;
         $grbit |= $fUsePage << 7;
 
-        $numHdr = pack("d", $numHdr);
-        $numFtr = pack("d", $numFtr);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $numHdr = strrev($numHdr);
-            $numFtr = strrev($numFtr);
-        }
-
-        $data1 = pack(
-            "vvvvvvvv",
-            $iPaperSize,
-            $iScale,
-            $iPageStart,
-            $iFitWidth,
-            $iFitHeight,
-            $grbit,
-            $iRes,
-            $iVRes
-        );
-        $data2 = $numHdr . $numFtr;
-        $data3 = pack("v", $iCopies);
-
-        return $this->getHeader() . $data1 . $data2 . $data3;
+        return $grbit;
     }
 }

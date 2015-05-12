@@ -14,12 +14,6 @@ class Workbook extends BIFFwriter
     const COUNTRY_USA = 1;
 
     /**
-     * Filename for the Workbook
-     * @var string
-     */
-    protected $filename;
-
-    /**
      * Formula parser
      * @var FormulaParser
      */
@@ -85,7 +79,7 @@ class Workbook extends BIFFwriter
      * Array containing the colour palette
      * @var array
      */
-    protected $palette;
+    protected $palette = array();
 
     /**
      * The default format for URLs.
@@ -157,20 +151,12 @@ class Workbook extends BIFFwriter
      */
     public function save($filePath)
     {
-        $this->filename = $filePath;
-
         if ($this->saved) {
             throw new \Exception('Workbook was already saved!');
         }
 
         if (count($this->worksheets) == 0) {
             throw new \Exception('Cannot save workbook with no sheets');
-        }
-
-        // Calculate the number of selected worksheet tabs and call the finalization
-        // methods for each worksheet
-        foreach ($this->worksheets as $sheet) {
-            $sheet->close($this->sheetNames);
         }
 
         $this->appendRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
@@ -196,25 +182,36 @@ class Workbook extends BIFFwriter
         $this->storeAllStyles();
         $this->appendRecord('Palette', array($this->palette));
 
-        $this->calcSheetOffsets();
-        foreach ($this->getWorksheets() as $sheet) {
-            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
-        }
+        $this->saveSheets();
 
         if ($this->isBiff8()) {
-            /* TODO: store external SUPBOOK records and XCT and CRN records
-            * in case of external references for BIFF8
-            */
-            //$this->appendRecord('Supbook', $this->worksheets);
-            //$this->storeExternsheetBiff8();
             $this->storeSharedStringsTable();
         }
 
         $this->appendRecord('Eof');
 
-        $this->saveOleFile();
+        $this->saveOleFile($filePath);
 
         $this->saved = true;
+    }
+
+    /**
+     *
+     */
+    protected function saveSheets()
+    {
+        $sheets = $this->getWorksheets();
+
+        // Calculate the number of selected worksheet tabs and call the finalization
+        // methods for each worksheet
+        foreach ($sheets as $sheet) {
+            $sheet->close($this->sheetNames);
+        }
+
+        $this->calcSheetOffsets();
+        foreach ($sheets as $sheet) {
+            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
+        }
     }
 
     /**
@@ -424,10 +421,9 @@ class Workbook extends BIFFwriter
 
     /**
      * Store the workbook in an OLE container
-     *
-     * @throws \Exception
+     * @param $filePath
      */
-    protected function saveOleFile()
+    protected function saveOleFile($filePath)
     {
         $ole = new PpsFile($this->biff->getWorkbookName());
 
@@ -444,7 +440,7 @@ class Workbook extends BIFFwriter
             array($ole)
         );
 
-        $root->save($this->filename);
+        $root->save($filePath);
     }
 
     /**
@@ -641,7 +637,7 @@ class Workbook extends BIFFwriter
             $recordType,
             array(
                 $sheet->index,
-                0x07, // NAME type
+                0x07,
                 $rowmin,
                 $rowmax,
                 $colmin,

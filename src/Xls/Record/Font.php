@@ -23,62 +23,50 @@ class Font extends AbstractRecord
         $uls = $format->underline; // Underline
         $bFamily = $format->fontFamily; // Font family
         $bCharSet = $format->fontCharset; // Character set
-        $encoding = 0;
 
         $cch = strlen($format->fontName); // Length of font name
-        if ($this->isBiff5()) {
-            $length = 0x0F + $cch; // Record length
-        } else {
-            $length = 0x10 + $cch;
-        }
 
         $reserved = 0x00; // Reserved
 
-        $grbit = 0x00; // Font attributes
-        if ($format->italic) {
-            $grbit |= 0x02;
-        }
-        if ($format->fontStrikeout) {
-            $grbit |= 0x08;
-        }
-        if ($format->fontOutline) {
-            $grbit |= 0x10;
-        }
-        if ($format->fontShadow) {
-            $grbit |= 0x20;
-        }
+        $data = pack(
+            "vvvvvCCCCC",
+            $dyHeight,
+            $this->calcGrbit($format),
+            $icv,
+            $bls,
+            $sss,
+            $uls,
+            $bFamily,
+            $bCharSet,
+            $reserved,
+            $cch
+        );
 
         if ($this->isBiff5()) {
-            $data = pack(
-                "vvvvvCCCCC",
-                $dyHeight,
-                $grbit,
-                $icv,
-                $bls,
-                $sss,
-                $uls,
-                $bFamily,
-                $bCharSet,
-                $reserved,
-                $cch
-            );
+            $length = 0x0F + $cch;
         } else {
-            $data = pack(
-                "vvvvvCCCCCC",
-                $dyHeight,
-                $grbit,
-                $icv,
-                $bls,
-                $sss,
-                $uls,
-                $bFamily,
-                $bCharSet,
-                $reserved,
-                $cch,
-                $encoding
-            );
+            $length = 0x10 + $cch;
+            $encoding = 0;
+            $data .= pack("C", $encoding);
         }
 
         return $this->getHeader($length) . $data . $format->fontName;
+    }
+
+    /**
+     * @param XlsFormat $format
+     *
+     * @return int
+     */
+    protected function calcGrbit(XlsFormat $format)
+    {
+        $grbit = 0x00;
+
+        $grbit |= intval($format->italic) << 1;
+        $grbit |= intval($format->fontStrikeout) << 3;
+        $grbit |= intval($format->fontOutline) << 4;
+        $grbit |= intval($format->fontShadow) << 5;
+
+        return $grbit;
     }
 }
