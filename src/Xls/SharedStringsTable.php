@@ -94,7 +94,7 @@ class SharedStringsTable
      * additional complications that will arise later when/if Rich Strings are
      * supported).
      *
-     * @param null $tmpBlockSizes
+     * @param null|array $tmpBlockSizes
      * @param bool $returnDataToWrite
      *
      * @return array
