@@ -1,7 +1,6 @@
 <?php
 namespace Xls\Tests;
 
-use Xls\Writer;
 use Xls\Biff5;
 use Xls\FormulaParser;
 use Xls\BIFFwriter;
@@ -59,7 +58,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         '$C$2+$D$3',
                         'Sheet1!A1+Sheet1:Sheet2!B1',
                         "'Sheet1'!A1-'Sheet1:Sheet2'!A10",
-                        '2+2*3/4',
+                        '-2+2*3/4',
                         'IF(3>=2,1,0)',
                         'IF(3>2,1,0)',
                         'IF(3<2,1,0)',
@@ -67,6 +66,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         'IF(3=2,"Equal","Not equal")',
                         'IF(3<>2;1;0)',
                         '"Lazy dog " & "jumped over"',
+                        'A3'
                     ),
                     'correct' => true
                 )
@@ -90,6 +90,27 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                     'formula' => '2**3',
                     'correct' => false,
                     'error' => 'Syntax error: *, lookahead: 3, current char: 3'
+                )
+            ),
+            array(
+                array(
+                    'formula' => '(2+3',
+                    'correct' => false,
+                    'error' => "')' token expected."
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'LEN()',
+                    'correct' => false,
+                    'error' => 'Incorrect number of arguments in function LEN()'
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'WHATEVERFUNCTION()',
+                    'correct' => false,
+                    'error' => "Function WHATEVERFUNCTION() doesn't exist"
                 )
             )
         );

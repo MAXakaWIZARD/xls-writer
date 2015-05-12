@@ -150,14 +150,14 @@ class Token
     }
 
     /**
-     * String (of maximum 255 characters)
+     * String
      * @param $token
      *
      * @return boolean
      */
     public static function isString($token)
     {
-        return preg_match("/^\"[^\"]{0,255}\"$/", $token) === 1;
+        return preg_match("/^\"[^\"]*\"$/", $token) === 1;
     }
 
     /**

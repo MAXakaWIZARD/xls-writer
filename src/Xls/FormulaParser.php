@@ -160,8 +160,7 @@ class FormulaParser
             return pack("Cv", $this->ptg['ptgInt'], $num);
         } else {
             // A float
-            if ($this->byteOrder) {
-                // if it's Big Endian
+            if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
                 $num = strrev($num);
             }
 
