@@ -1,5 +1,5 @@
 <?php
-namespace Xls\Tests;
+namespace Test;
 
 use Xls\Workbook;
 use Xls\Biff5;

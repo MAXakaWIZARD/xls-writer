@@ -110,25 +110,25 @@ class Token
     }
 
     /**
-     * Range A1:A2
+     * Range A1:A2 or $A$1:$A$2
      * @param $token
      *
      * @return boolean
      */
     public static function isRangeWithColon($token)
     {
-        return preg_match("/^(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+:(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+$/", $token) === 1;
+        return preg_match('/^(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+:(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+$/', $token) === 1;
     }
 
     /**
-     * Range A1..A2
+     * Range A1..A2 or $A$1..$A$2
      * @param $token
      *
      * @return boolean
      */
     public static function isRangeWithDots($token)
     {
-        return preg_match("/^(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+\.\.(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+$/", $token) === 1;
+        return preg_match('/^(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+\.\.(\$)?[A-Ia-i]?[A-Za-z](\$)?[0-9]+$/', $token) === 1;
     }
 
     /**

@@ -1,5 +1,5 @@
 <?php
-namespace Xls\Tests;
+namespace Test;
 
 use Xls\Workbook;
 use Xls\Biff5;
@@ -27,6 +27,15 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     {
         $this->testFilePath = TEST_DATA_PATH . '/test.xls';
         $this->workbook = new Workbook();
+    }
+
+    /**
+     *
+     */
+    public function testUnsupportedVersion()
+    {
+        $this->setExpectedException('\Exception', 'Unsupported BIFF version');
+        new Workbook(0);
     }
 
     /**

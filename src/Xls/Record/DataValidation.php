@@ -2,9 +2,9 @@
 
 namespace Xls\Record;
 
-class Dv extends AbstractRecord
+class DataValidation extends AbstractRecord
 {
-    const NAME = 'DV';
+    const NAME = 'DATAVALIDATION';
     const ID = 0x01BE;
 
     /**

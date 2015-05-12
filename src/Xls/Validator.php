@@ -20,20 +20,32 @@ class Validator
     const OP_GTE = 0x06;
     const OP_LTE = 0x07;
 
-    protected $type;
-    protected $style;
-    protected $fixedList;
-    protected $blank;
-    protected $incell;
-    protected $showprompt;
-    protected $showerror;
-    protected $titlePrompt;
-    protected $descrPrompt;
-    protected $titleError;
-    protected $descrError;
-    protected $operator;
-    protected $formula1;
-    protected $formula2;
+    const TYPE_ANY = 0x00;
+    const TYPE_INTEGER = 0x01;
+    const TYPE_DECIMAL = 0x02;
+    const TYPE_USER_LIST = 0x03;
+    const TYPE_DATE = 0x04;
+    const TYPE_TIME = 0x05;
+    const TYPE_TEXT_LENGTH = 0x06;
+    const TYPE_FORMULA = 0x07;
+
+    const ERROR_STOP = 0x00;
+    const ERROR_WARNING = 0x01;
+    const ERROR_INFO = 0x02;
+
+    protected $dataType = self::TYPE_INTEGER;
+    protected $errorStyle = self::ERROR_STOP;
+    protected $allowBlank = false;
+    protected $showDropDown = false;
+    protected $showPrompt = false;
+    protected $showError = true;
+    protected $titlePrompt = "\x00";
+    protected $descrPrompt = "\x00";
+    protected $titleError = "\x00";
+    protected $descrError = "\x00";
+    protected $operator = self::OP_BETWEEN;
+    protected $formula1 = '';
+    protected $formula2 = '';
 
     /**
      * The parser from the workbook. Used to parse validation formulas also
@@ -48,20 +60,22 @@ class Validator
     public function __construct(FormulaParser $formulaParser)
     {
         $this->formulaParser = $formulaParser;
-        $this->type = 0x01;
-        $this->style = 0x00;
-        $this->fixedList = false;
-        $this->blank = false;
-        $this->incell = false;
-        $this->showprompt = false;
-        $this->showerror = true;
-        $this->titlePrompt = "\x00";
-        $this->descrPrompt = "\x00";
-        $this->titleError = "\x00";
-        $this->descrError = "\x00";
-        $this->operator = self::OP_BETWEEN;
-        $this->formula1 = '';
-        $this->formula2 = '';
+    }
+
+    /**
+     * @param int $operator
+     */
+    public function setOperator($operator)
+    {
+        $this->operator = $operator;
+    }
+
+    /**
+     * @param int $dataType
+     */
+    public function setDataType($dataType)
+    {
+        $this->dataType = $dataType;
     }
 
     /**
@@ -71,7 +85,7 @@ class Validator
      */
     public function setPrompt($promptTitle = "\x00", $promptDescription = "\x00", $showPrompt = true)
     {
-        $this->showprompt = $showPrompt;
+        $this->showPrompt = $showPrompt;
         $this->titlePrompt = $promptTitle;
         $this->descrPrompt = $promptDescription;
     }
@@ -83,7 +97,7 @@ class Validator
      */
     public function setError($errorTitle = "\x00", $errorDescription = "\x00", $showError = true)
     {
-        $this->showerror = $showError;
+        $this->showError = $showError;
         $this->titleError = $errorTitle;
         $this->descrError = $errorDescription;
     }
@@ -93,7 +107,7 @@ class Validator
      */
     public function allowBlank()
     {
-        $this->blank = true;
+        $this->allowBlank = true;
     }
 
     /**
@@ -101,7 +115,7 @@ class Validator
      */
     public function onInvalidStop()
     {
-        $this->style = 0x00;
+        $this->errorStyle = self::ERROR_STOP;
     }
 
     /**
@@ -109,7 +123,7 @@ class Validator
      */
     public function onInvalidWarn()
     {
-        $this->style = 0x01;
+        $this->errorStyle = self::ERROR_WARNING;
     }
 
     /**
@@ -117,35 +131,25 @@ class Validator
      */
     public function onInvalidInfo()
     {
-        $this->style = 0x02;
+        $this->errorStyle = self::ERROR_INFO;
     }
 
     /**
      * @param $formula
      *
-     * @return bool|string
      */
     public function setFormula1($formula)
     {
-        $this->formulaParser->parse($formula);
-
-        $this->formula1 = $this->formulaParser->toReversePolish();
-
-        return true;
+        $this->formula1 = $formula;
     }
 
     /**
      * @param $formula
      *
-     * @return bool|string
      */
     public function setFormula2($formula)
     {
-        $this->formulaParser->parse($formula);
-
-        $this->formula2 = $this->formulaParser->toReversePolish();
-
-        return true;
+        $this->formula2 = $formula;
     }
 
     /**
@@ -153,49 +157,66 @@ class Validator
      */
     public function getOptions()
     {
-        $options = $this->type;
-        $options |= $this->style << 3;
-        if ($this->fixedList) {
-            $options |= 0x80;
+        $options = 0x00;
+
+        $options |= $this->dataType;
+        $options |= $this->errorStyle << 4;
+
+        if ($this->dataType === self::TYPE_USER_LIST
+            && preg_match('/^\".*\"$/', $this->formula1)
+        ) {
+            //explicit list options, separated by comma
+            $options |= 0x01 << 7;
         }
-        if ($this->blank) {
-            $options |= 0x100;
-        }
-        if (!$this->incell) {
-            $options |= 0x200;
-        }
-        if ($this->showprompt) {
-            $options |= 0x40000;
-        }
-        if ($this->showerror) {
-            $options |= 0x80000;
-        }
+
+        $options |= intval($this->allowBlank) << 8;
+        $options |= intval(!$this->showDropDown) << 9;
+        $options |= intval($this->showPrompt) << 18;
+        $options |= intval($this->showError) << 19;
         $options |= $this->operator << 20;
 
         return $options;
     }
 
     /**
+     * @param boolean $showDropDown
+     */
+    public function setShowDropDown($showDropDown = true)
+    {
+        $this->showDropDown = $showDropDown;
+    }
+
+    /**
+     * @param $row1
+     * @param $col1
+     * @param $row2
+     * @param $col2
+     *
      * @return string
      */
-    public function getData()
+    public function getData($row1, $col1, $row2, $col2)
     {
-        $titlePromptLen = strlen($this->titlePrompt);
-        $descrPromptLen = strlen($this->descrPrompt);
-        $titleErrorLen = strlen($this->titleError);
-        $descrErrorLen = strlen($this->descrError);
-
-        $formula1Size = strlen($this->formula1);
-        $formula2Size = strlen($this->formula2);
-
         $data = pack("V", $this->getOptions());
-        $data .= pack("vC", $titlePromptLen, 0x00) . $this->titlePrompt;
-        $data .= pack("vC", $titleErrorLen, 0x00) . $this->titleError;
-        $data .= pack("vC", $descrPromptLen, 0x00) . $this->descrPrompt;
-        $data .= pack("vC", $descrErrorLen, 0x00) . $this->descrError;
 
-        $data .= pack("vv", $formula1Size, 0x0000) . $this->formula1;
-        $data .= pack("vv", $formula2Size, 0x0000) . $this->formula2;
+        $data .= pack("vC", strlen($this->titlePrompt), 0x00) . $this->titlePrompt;
+        $data .= pack("vC", strlen($this->titleError), 0x00) . $this->titleError;
+        $data .= pack("vC", strlen($this->descrPrompt), 0x00) . $this->descrPrompt;
+        $data .= pack("vC", strlen($this->descrError), 0x00) . $this->descrError;
+
+        $formula1 = $this->formula1;
+        if ($this->dataType === self::TYPE_USER_LIST) {
+            $formula1 = str_replace(',', chr(0), $formula1);
+        }
+        $formula1 = $this->formulaParser->getReversePolish($formula1);
+        $data .= pack("vv", strlen($formula1), 0x00) . $formula1;
+
+        $formula2 = $this->formula2;
+        if ($formula2 != '') {
+            $formula2 = $this->formulaParser->getReversePolish($this->formula2);
+        }
+        $data .= pack("vv", strlen($formula2), 0x00) . $formula2;
+
+        $data .= pack("vvvvv", 1, $row1, $row2, $col1, $col2);
 
         return $data;
     }

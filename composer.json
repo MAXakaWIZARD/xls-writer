@@ -39,6 +39,9 @@
     "autoload": {
         "psr-0": {
             "Xls": "src/"
+        },
+        "psr-4" : {
+            "Test\\": "tests/"
         }
     },
     "extra": {

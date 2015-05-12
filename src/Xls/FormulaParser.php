@@ -618,9 +618,9 @@ class FormulaParser
         $formulaLength = strlen($this->formula);
 
         while ($i < $formulaLength) {
-            $token .= $this->formula{$i};
-            if ($i < ($formulaLength - 1)) {
-                $this->lookahead = $this->formula{$i + 1};
+            $token .= $this->formula[$i];
+            if ($i < $formulaLength - 1) {
+                $this->lookahead = $this->formula[$i + 1];
             } else {
                 $this->lookahead = '';
             }
@@ -632,7 +632,7 @@ class FormulaParser
             }
 
             if ($i < ($formulaLength - 2)) {
-                $this->lookahead = $this->formula{$i + 2};
+                $this->lookahead = $this->formula[$i + 2];
             } else {
                 // if we run out of characters lookahead becomes empty
                 $this->lookahead = '';
@@ -708,7 +708,7 @@ class FormulaParser
             && $isLookaheadNotDotOrColon
         ) {
             return $token;
-        } elseif ((Token::isRange($token) || Token::isExternalRange($token))
+        } elseif (Token::isAnyRange($token)
             && !$lookaheadHasNumber
         ) {
             return $token;
@@ -737,9 +737,11 @@ class FormulaParser
      */
     public function parse($formula)
     {
+        $this->parseTree = array();
         $this->currentChar = 0;
+        $this->currentToken = '';
         $this->formula = $formula;
-        $this->lookahead = $formula[1];
+        $this->lookahead = (isset($formula[1])) ? $formula[1] : '';
         $this->advance();
         $this->parseTree = $this->condition();
     }
@@ -977,6 +979,10 @@ class FormulaParser
 
         if (empty($tree)) {
             $tree = $this->parseTree;
+        }
+
+        if (!is_array($tree)) {
+            return $this->convert($tree);
         }
 
         if (is_array($tree['left'])) {

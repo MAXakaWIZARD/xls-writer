@@ -1,8 +1,9 @@
 <?php
-namespace Xls\Tests;
+namespace Test;
 
 use Xls\Biff5;
 use Xls\FormulaParser;
+use Xls\Token;
 use Xls\BIFFwriter;
 
 /**
@@ -41,7 +42,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
         }
 
         foreach ($params['formula'] as $formula) {
-            $polish = $this->parser->getReversePolish($formula);
+            $this->parser->getReversePolish($formula);
         }
     }
 
@@ -59,6 +60,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         '(A1+A2)*(B1-B5)',
                         'C3/C4',
                         '$C$2+$D$3',
+                        '$F$2:$F$5',
                         'Sheet1!A1+Sheet1:Sheet2!B1',
                         "'Sheet1'!A1-'Sheet1:Sheet2'!A10",
                         '-2+2*3/4',
@@ -70,7 +72,8 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         'IF(3<>2;1;0)',
                         '"Lazy dog " & "jumped over"',
                         'A3',
-                        'SUM(Sheet2:Sheet1!A1:D4)'
+                        'SUM(Sheet2:Sheet1!A1:D4)',
+                        '0',
                     ),
                     'correct' => true
                 )
@@ -160,5 +163,17 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                 )
             ),
         );
+    }
+
+    /**
+     *
+     */
+    public function testToken()
+    {
+        $this->assertEquals(true, Token::isRangeWithColon('F2:F5'), 'F2:F5 is valid range');
+        $this->assertEquals(true, Token::isRangeWithColon('$F$2:$F$5'), '$F$2:$F$5 is valid range');
+
+        $this->assertEquals(true, Token::isRangeWithDots('F2..F5'), 'F2..F5 is valid range');
+        $this->assertEquals(true, Token::isRangeWithDots('$F$2..$F$5'), '$F$2..$F$5 is valid range');
     }
 }

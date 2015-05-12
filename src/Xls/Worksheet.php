@@ -2255,8 +2255,7 @@ class Worksheet extends BIFFwriter
      */
     public function setValidation($row1, $col1, $row2, $col2, $validator)
     {
-        $this->dv[] = $validator->getData() .
-            pack("vvvvv", 1, $row1, $row2, $col1, $col2);
+        $this->dv[] = $validator->getData($row1, $col1, $row2, $col2);
     }
 
     /**
@@ -2268,10 +2267,10 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $this->appendRecord('Dval', array($this->dv));
+        $this->appendRecord('DataValidations', array($this->dv));
 
         foreach ($this->dv as $dv) {
-            $this->appendRecord('Dv', array($dv));
+            $this->appendRecord('DataValidation', array($dv));
         }
     }
 
