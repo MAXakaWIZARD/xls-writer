@@ -101,14 +101,6 @@ class FormulaParser
     }
 
     /**
-     *
-     */
-    public function isBiff8()
-    {
-        return $this->version === Biff8::VERSION;
-    }
-
-    /**
      * Convert a token to the proper ptg value.
      *
      * @param mixed $token The token to convert.
@@ -132,15 +124,8 @@ class FormulaParser
         } elseif (isset($this->ptg[$token])) {
             // operators (including parentheses)
             return pack("C", $this->ptg[$token]);
-
-            // commented so argument number can be processed correctly. See toReversePolish().
-            /*elseif (Token::isFunctionCall($token))
-            {
-                return($this->convertFunction($token,$this->func_args));
-            }*/
-
-            // if it's an argument, ignore the token (the argument remains)
         } elseif ($token == 'arg') {
+            // if it's an argument, ignore the token (the argument remains)
             return '';
         }
 
@@ -155,7 +140,7 @@ class FormulaParser
      */
     protected function convertNumber($num)
     {
-        if ((preg_match("/^\d+$/", $num)) && ($num <= 65535)) {
+        if (preg_match("/^\d+$/", $num) && $num <= 65535) {
             // Integer in the range 0..2**16-1
             return pack("Cv", $this->ptg['ptgInt'], $num);
         } else {
@@ -265,28 +250,26 @@ class FormulaParser
      */
     protected function convertRange2d($range, $class = 0)
     {
-        // Split the range into 2 cell refs
-        if (Token::isRangeWithColon($range)) {
-            list($cell1, $cell2) = explode(':', $range);
-        } elseif (Token::isRangeWithDots($range)) {
-            list($cell1, $cell2) = explode('..', $range);
-        } else {
-            throw new \Exception("Unknown range separator");
-        }
+        $separator = (Token::isRangeWithDots($range)) ? '..' : ':';
+        list($cell1, $cell2) = explode($separator, $range);
 
         // Convert the cell references
         list($row1, $col1) = $this->cellToPackedRowcol($cell1);
         list($row2, $col2) = $this->cellToPackedRowcol($cell2);
 
         // The ptg value depends on the class of the ptg.
-        if ($class == 0) {
-            $ptgArea = pack("C", $this->ptg['ptgArea']);
-        } elseif ($class == 1) {
-            $ptgArea = pack("C", $this->ptg['ptgAreaV']);
-        } elseif ($class == 2) {
-            $ptgArea = pack("C", $this->ptg['ptgAreaA']);
-        } else {
-            throw new \Exception("Unknown class $class", 0);
+        switch ($class) {
+            case 0:
+                $ptgArea = pack("C", $this->ptg['ptgArea']);
+                break;
+            case 1:
+                $ptgArea = pack("C", $this->ptg['ptgAreaV']);
+                break;
+            case 2:
+                $ptgArea = pack("C", $this->ptg['ptgAreaA']);
+                break;
+            default:
+                throw new \Exception("Unknown class $class");
         }
 
         return $ptgArea . $row1 . $row2 . $col1 . $col2;
@@ -325,15 +308,18 @@ class FormulaParser
         }
 
         $class = 2; // as far as I know, this is magick.
-        // The ptg value depends on the class of the ptg.
-        if ($class == 0) {
-            $ptgArea = pack("C", $this->ptg['ptgArea3d']);
-        } elseif ($class == 1) {
-            $ptgArea = pack("C", $this->ptg['ptgArea3dV']);
-        } elseif ($class == 2) {
-            $ptgArea = pack("C", $this->ptg['ptgArea3dA']);
-        } else {
-            throw new \Exception("Unknown class $class", 0);
+        switch ($class) {
+            case 0:
+                $ptgArea = pack("C", $this->ptg['ptgArea3d']);
+                break;
+            case 1:
+                $ptgArea = pack("C", $this->ptg['ptgArea3dV']);
+                break;
+            case 2:
+                $ptgArea = pack("C", $this->ptg['ptgArea3dA']);
+                break;
+            default:
+                throw new \Exception("Unknown class $class");
         }
 
         return $ptgArea . $extRef . $row1 . $row2 . $col1 . $col2;
@@ -351,15 +337,18 @@ class FormulaParser
         list($row, $col) = $this->cellToPackedRowcol($cell);
 
         $class = 2; // as far as I know, this is magick.
-        // The ptg value depends on the class of the ptg.
-        if ($class == 0) {
-            $ptgRef = pack("C", $this->ptg['ptgRef']);
-        } elseif ($class == 1) {
-            $ptgRef = pack("C", $this->ptg['ptgRefV']);
-        } elseif ($class == 2) {
-            $ptgRef = pack("C", $this->ptg['ptgRefA']);
-        } else {
-            throw new \Exception("Unknown class $class");
+        switch ($class) {
+            case 0:
+                $ptgRef = pack("C", $this->ptg['ptgRef']);
+                break;
+            case 1:
+                $ptgRef = pack("C", $this->ptg['ptgRefV']);
+                break;
+            case 2:
+                $ptgRef = pack("C", $this->ptg['ptgRefA']);
+                break;
+            default:
+                throw new \Exception("Unknown class $class");
         }
 
         return $ptgRef . $row . $col;
@@ -389,15 +378,18 @@ class FormulaParser
         list($row, $col) = $this->cellToPackedRowcol($cell);
 
         $class = 2; // as far as I know, this is magick.
-        // The ptg value depends on the class of the ptg.
-        if ($class == 0) {
-            $ptgRef = pack("C", $this->ptg['ptgRef3d']);
-        } elseif ($class == 1) {
-            $ptgRef = pack("C", $this->ptg['ptgRef3dV']);
-        } elseif ($class == 2) {
-            $ptgRef = pack("C", $this->ptg['ptgRef3dA']);
-        } else {
-            throw new \Exception("Unknown class $class", 0);
+        switch ($class) {
+            case 0:
+                $ptgRef = pack("C", $this->ptg['ptgRef3d']);
+                break;
+            case 1:
+                $ptgRef = pack("C", $this->ptg['ptgRef3dV']);
+                break;
+            case 2:
+                $ptgRef = pack("C", $this->ptg['ptgRef3dA']);
+                break;
+            default:
+                throw new \Exception("Unknown class $class");
         }
 
         return $ptgRef . $extRef . $row . $col;
@@ -546,12 +538,12 @@ class FormulaParser
         $cell = strtoupper($cell);
         list($row, $col, $rowRel, $colRel) = Cell::addressToRowCol($cell);
 
-        if ($col >= Biff5::MAX_COLS) {
-            throw new \Exception("Column in: $cell greater than " . Biff5::MAX_COLS);
+        if ($row >= Biff5::MAX_ROWS) {
+            throw new \Exception("Row in: $cell greater than " . (Biff5::MAX_ROWS - 1));
         }
 
-        if ($row >= Biff5::MAX_ROWS) {
-            throw new \Exception("Row in: $cell greater than " . Biff5::MAX_ROWS);
+        if ($col >= Biff5::MAX_COLS) {
+            throw new \Exception("Column in: $cell greater than " . (Biff5::MAX_COLS - 1));
         }
 
         // Set the high bits to indicate if row or col are relative.

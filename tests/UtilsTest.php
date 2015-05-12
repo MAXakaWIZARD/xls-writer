@@ -113,6 +113,8 @@ class UtilsTest extends \PHPUnit_Framework_TestCase
             array('K256', array(255, 10, 1, 1)),
             array('IV256', array(255, 255, 1, 1)),
             array('AB1', array(0, 27, 1, 1)),
+            array('ZZ257', array(256, 701, 1, 1)),
+            array('ZZZ257', array(256, 18277, 1, 1)),
         );
     }
 

@@ -28,6 +28,9 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
      */
     public function testGeneral($params)
     {
+        $this->parser->setExtSheet('Sheet1', 0);
+        $this->parser->setExtSheet('Sheet2', 1);
+
         if (isset($params['correct']) && $params['correct'] === false) {
             $message = (isset($params['error'])) ? $params['error'] : '';
             $this->setExpectedException('\Exception', $message);
@@ -38,7 +41,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
         }
 
         foreach ($params['formula'] as $formula) {
-            $this->parser->parse($formula);
+            $polish = $this->parser->getReversePolish($formula);
         }
     }
 
@@ -66,7 +69,8 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         'IF(3=2,"Equal","Not equal")',
                         'IF(3<>2;1;0)',
                         '"Lazy dog " & "jumped over"',
-                        'A3'
+                        'A3',
+                        'SUM(Sheet2:Sheet1!A1:D4)'
                     ),
                     'correct' => true
                 )
@@ -112,7 +116,49 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                     'correct' => false,
                     'error' => "Function WHATEVERFUNCTION() doesn't exist"
                 )
-            )
+            ),
+            array(
+                array(
+                    'formula' => 'Sheet3!A1+Sheet1:Sheet2!B1',
+                    'correct' => false,
+                    'error' => "Unknown sheet name Sheet3 in formula"
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'Sheet1!A1+Sheet3:Sheet1!B1',
+                    'correct' => false,
+                    'error' => "Unknown sheet name Sheet3 in formula"
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'Sheet1!A1+Sheet1:Sheet4!B1',
+                    'correct' => false,
+                    'error' => "Unknown sheet name Sheet4 in formula"
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'A100500+B100500',
+                    'correct' => false,
+                    'error' => "Row in: A100500 greater than 16383"
+                )
+            ),
+            array(
+                array(
+                    'formula' => 'ZZ1+A1',
+                    'correct' => false,
+                    'error' => "Column in: ZZ1 greater than 255"
+                )
+            ),
+            array(
+                array(
+                    'formula' => '"' . str_repeat('a', 300) . '" & ""',
+                    'correct' => false,
+                    'error' => "String is too long"
+                )
+            ),
         );
     }
 }

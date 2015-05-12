@@ -63,7 +63,7 @@ class Token
      */
     public static function isReference($token)
     {
-        return preg_match('/^\$?[A-Ia-i]?[A-Za-z]\$?[0-9]+$/', $token) === 1;
+        return preg_match('/^\$?[A-Za-z]+\$?[0-9]+$/', $token) === 1;
     }
 
     /**
@@ -74,8 +74,8 @@ class Token
      */
     public static function isExternalReference($token)
     {
-        return preg_match("/^\w+(\:\w+)?\![A-Ia-i]?[A-Za-z][0-9]+$/u", $token) === 1
-            || preg_match("/^'[\w -]+(\:[\w -]+)?'\![A-Ia-i]?[A-Za-z][0-9]+$/u", $token) === 1;
+        return preg_match("/^\w+(\:\w+)?\![A-za-z]+[0-9]+$/u", $token) === 1
+            || preg_match("/^'[\w -]+(\:[\w -]+)?'\![A-za-z]+[0-9]+$/u", $token) === 1;
     }
 
     /**

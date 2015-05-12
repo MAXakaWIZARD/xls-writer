@@ -44,7 +44,7 @@ class Cell
      */
     public static function addressToRowCol($address)
     {
-        preg_match('/(\$)?([A-I]?[A-Z])(\$)?(\d+)/', $address, $match);
+        preg_match('/(\$)?([A-Z]+)(\$)?(\d+)/', $address, $match);
         // return absolute column if there is a $ in the ref
         $colRel = empty($match[1]) ? 1 : 0;
         $colRef = $match[2];
