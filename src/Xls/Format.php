@@ -717,14 +717,6 @@ class Format
     }
 
     /**
-     * @return int
-     */
-    public function getVersion()
-    {
-        return $this->version;
-    }
-
-    /**
      * @return bool
      */
     public function isBuiltInNumFormat()

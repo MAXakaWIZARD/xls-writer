@@ -114,8 +114,7 @@ class BIFFwriter
     }
 
     /**
-     * Determine the byte order and store it as class data to avoid
-     * recalculating it for each call to new().
+     * Determine the byte order and store it
      *
      */
     protected function setByteOrder()
@@ -125,12 +124,8 @@ class BIFFwriter
         $number = pack("C8", 0x8D, 0x97, 0x6E, 0x12, 0x83, 0xC0, 0xF3, 0x3F);
         if ($number == $teststr) {
             $this->byteOrder = self::BYTE_ORDER_LE;
-        } elseif ($number == strrev($teststr)) {
-            $this->byteOrder = self::BYTE_ORDER_BE;
         } else {
-            throw new \Exception(
-                "Required floating point format is not supported on this platform."
-            );
+            $this->byteOrder = self::BYTE_ORDER_BE;
         }
     }
 

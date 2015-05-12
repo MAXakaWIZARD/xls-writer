@@ -600,4 +600,39 @@ class GeneralTest extends \PHPUnit_Framework_TestCase
         $correctFilePath = $this->getFilePath('long_strings', $params['suffix']);
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
+
+    /**
+     * @dataProvider providerBiff5
+     *
+     * @param $params
+     *
+     * @throws \Exception
+     */
+    public function testFill($params)
+    {
+        $workbook = $this->createWorkbook($params);
+
+        $sheet = $workbook->addWorksheet();
+
+        $format = $workbook->addFormat();
+        $format->setColor('red');
+        $format->setAlign('center');
+
+        //intentionally blank string and number bigger than 63
+        $format->setBgColor('');
+        $format->setBgColor(75);
+
+        $format->setFgColor('navy');
+        $format->setPattern(Fill::PATTERN_DIAGONAL_STRIPE);
+
+        $sheet->setRow(0, 75);
+        $sheet->setColumn(0, 0, 50);
+        $sheet->write(0, 0, 'Test', $format);
+
+        $workbook->save($this->testFilePath);
+
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath('fill', $params['suffix']);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+    }
 }

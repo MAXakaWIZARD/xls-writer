@@ -83,14 +83,6 @@ class Bitmap
     /**
      * @return mixed
      */
-    public function getRawData()
-    {
-        return $this->data;
-    }
-
-    /**
-     * @return mixed
-     */
     protected function getIdent()
     {
         $identity = unpack("A2ident", $this->header);

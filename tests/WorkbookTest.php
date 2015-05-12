@@ -249,4 +249,18 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
         $this->setExpectedException('\Exception', "Invalid formula: should start with = or @");
         $sheet->writeFormula(0, 0, 'A1+B1');
     }
+
+    /**
+     *
+     */
+    public function testInvalidTextRotation()
+    {
+        $format = $this->workbook->addFormat();
+
+        $this->setExpectedException(
+            '\Exception',
+            "Invalid value for angle. Possible values are: 0, 90, 270 and -1 for stacking top-to-bottom."
+        );
+        $format->setTextRotation(30);
+    }
 }
