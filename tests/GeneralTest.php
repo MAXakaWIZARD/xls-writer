@@ -10,14 +10,9 @@ use Xls\Cell;
  */
 class GeneralTest extends TestAbstract
 {
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param array $params
-     */
-    public function testGeneral($params)
+    public function testGeneral()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet('My first worksheet');
         $sheet->writeRow(
@@ -32,7 +27,7 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('general', $params['suffix']);
+        $correctFilePath = $this->getFilePath('general');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
 
         $this->setExpectedException('\Exception', 'Workbook was already saved!');
@@ -40,24 +35,11 @@ class GeneralTest extends TestAbstract
     }
 
     /**
-     *
-     */
-    public function testRowColToCellInvalid()
-    {
-        $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
-        Cell::getAddress(0, 256);
-    }
-
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     *
      * @throws \Exception
      */
-    public function testProtected($params)
+    public function testProtected()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
@@ -66,18 +48,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('protected', $params['suffix']);
+        $correctFilePath = $this->getFilePath('protected');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testSelection($params)
+    public function testSelection()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
@@ -86,18 +63,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('selection', $params['suffix']);
+        $correctFilePath = $this->getFilePath('selection');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testMultipleSheets($params)
+    public function testMultipleSheets()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         for ($i = 1; $i <= 4; $i++) {
             $s = $workbook->addWorksheet();
@@ -107,18 +79,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('multiple_sheets', $params['suffix']);
+        $correctFilePath = $this->getFilePath('multiple_sheets');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testDefcolsAndRowsizes($params)
+    public function testDefcolsAndRowsizes()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
         $sheet->writeRow(0, 0, array('Test1', 'Test2', 'Test3'));
@@ -134,18 +101,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('defcols_rowsizes', $params['suffix']);
+        $correctFilePath = $this->getFilePath('defcols_rowsizes');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testCountry($params)
+    public function testCountry()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
         $workbook->setCountry($workbook::COUNTRY_USA);
 
         $sheet = $workbook->addWorksheet();
@@ -154,18 +116,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('country', $params['suffix']);
+        $correctFilePath = $this->getFilePath('country');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testImage($params)
+    public function testImage()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
@@ -174,18 +131,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('image', $params['suffix']);
+        $correctFilePath = $this->getFilePath('image');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     */
-    public function testMergeCells($params)
+    public function testMergeCells()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
         $sheet = $workbook->addWorksheet();
 
         $sheet->writeRow(1, 0, array('Merge1', '', ''));
@@ -203,17 +155,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('merge', $params['suffix']);
+        $correctFilePath = $this->getFilePath('merge');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     * @param array $params
-     */
-    public function testThawPanes($params)
+    public function testThawPanes()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
         $workbook->setCountry($workbook::COUNTRY_USA);
 
         $sheet = $workbook->addWorksheet();
@@ -240,17 +188,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('thaw_panes', $params['suffix']);
+        $correctFilePath = $this->getFilePath('thaw_panes');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5AndBiff8
-     * @param array $params
-     */
-    public function testLongStrings($params)
+    public function testLongStrings()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
 
@@ -284,20 +228,13 @@ class GeneralTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('long_strings', $params['suffix']);
+        $correctFilePath = $this->getFilePath('long_strings');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 
-    /**
-     * @dataProvider providerBiff5
-     *
-     * @param $params
-     *
-     * @throws \Exception
-     */
-    public function testFill($params)
+    public function testFill()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
 
@@ -318,8 +255,6 @@ class GeneralTest extends TestAbstract
 
         $workbook->save($this->testFilePath);
 
-        $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('fill', $params['suffix']);
-        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+        $this->checkTestFileIsEqualTo('fill');
     }
 }

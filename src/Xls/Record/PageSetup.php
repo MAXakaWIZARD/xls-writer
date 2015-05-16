@@ -5,9 +5,9 @@ namespace Xls\Record;
 use Xls\BIFFwriter;
 use Xls\Worksheet;
 
-class Setup extends AbstractRecord
+class PageSetup extends AbstractRecord
 {
-    const NAME = 'SETUP';
+    const NAME = 'PAGESETUP';
     const ID = 0xA1;
     const LENGTH = 0x22;
 

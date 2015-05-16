@@ -106,7 +106,7 @@ class Workbook extends BIFFwriter
     /**
      * @param int $version
      */
-    public function __construct($version = Biff5::VERSION)
+    public function __construct($version = Biff8::VERSION)
     {
         parent::__construct($version);
 
@@ -254,7 +254,7 @@ class Workbook extends BIFFwriter
 
         $name = $this->processSheetName($name);
 
-        if ($this->hasSheet($name)) {
+        if ($this->hasSheetEncoded($name)) {
             throw new \Exception("Worksheet '$name' already exists");
         }
 
@@ -347,6 +347,16 @@ class Workbook extends BIFFwriter
      * @return bool
      */
     public function hasSheet($name)
+    {
+        return in_array($this->processSheetName($name), $this->sheetNames, true);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    protected function hasSheetEncoded($name)
     {
         return in_array($name, $this->sheetNames, true);
     }

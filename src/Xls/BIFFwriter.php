@@ -75,7 +75,7 @@ class BIFFwriter
      *
      * @throws \Exception
      */
-    public function __construct($version = Biff5::VERSION)
+    public function __construct($version = Biff8::VERSION)
     {
         $this->tmpDir = sys_get_temp_dir();
 

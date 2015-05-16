@@ -6,16 +6,9 @@ namespace Test;
  */
 class ValidationTest extends TestAbstract
 {
-    /**
-     * @dataProvider providerBiff8
-     *
-     * @param $params
-     *
-     * @throws \Exception
-     */
-    public function testValidation($params)
+    public function testValidation()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
 
@@ -70,7 +63,7 @@ class ValidationTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('validation', $params['suffix']);
+        $correctFilePath = $this->getFilePath('validation');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }

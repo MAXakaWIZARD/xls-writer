@@ -450,7 +450,7 @@ class Worksheet extends BIFFwriter
         $this->storeDimensions();
         $this->storePassword();
         $this->storeProtect();
-        $this->prependRecord('Setup', array($this));
+        $this->prependRecord('PageSetup', array($this));
         $this->storeMargins();
         $this->storeCentering();
 

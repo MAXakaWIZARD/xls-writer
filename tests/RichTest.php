@@ -10,15 +10,11 @@ use Xls\Fill;
 class RichTest extends TestAbstract
 {
     /**
-     * @dataProvider providerBiff5AndBiff8
-     *
-     * @param $params
-     *
      * @throws \Exception
      */
-    public function testRich($params)
+    public function testRich()
     {
-        $workbook = $this->createWorkbook($params);
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet('New PC');
 
@@ -111,7 +107,7 @@ class RichTest extends TestAbstract
         $workbook->save($this->testFilePath);
 
         $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('rich', $params['suffix']);
+        $correctFilePath = $this->getFilePath('rich');
         $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }

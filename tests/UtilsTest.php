@@ -1,64 +1,21 @@
 <?php
 namespace Test;
 
-use Xls\Workbook;
-use Xls\Biff5;
-use Xls\Biff8;
-use Xls\Format;
-use Xls\Fill;
 use Xls\Cell;
 use Xls\Utils;
 
 /**
  *
  */
-class UtilsTest extends \PHPUnit_Framework_TestCase
+class UtilsTest extends TestAbstract
 {
-    const WORKBOOK_TS = 1429042916;
-
-    /**
-     * @var string
-     */
-    protected $testFilePath;
-
     /**
      *
      */
-    public function setUp()
+    public function testRowColToCellInvalid()
     {
-        $this->testFilePath = TEST_DATA_PATH . '/test.xls';
-    }
-
-    /**
-     *
-     */
-    public function tearDown()
-    {
-        //@unlink($this->testFilePath);
-    }
-
-    /**
-     * @param $prefix
-     * @param $suffix
-     *
-     * @return string
-     */
-    protected function getFilePath($prefix, $suffix)
-    {
-        return TEST_DATA_PATH . '/' . $prefix . $suffix . '.xls';
-    }
-
-    /**
-     * @param $params
-     *
-     * @return Workbook
-     */
-    protected function createWorkbook($params)
-    {
-        $workbook = new Workbook($params['format']);
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
-
-        return $workbook;
+        $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
+        Cell::getAddress(0, 256);
     }
 
     /**

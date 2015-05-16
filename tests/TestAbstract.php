@@ -42,65 +42,41 @@ class TestAbstract extends \PHPUnit_Framework_TestCase
      *
      * @return string
      */
-    protected function getFilePath($prefix, $suffix)
+    protected function getFilePath($prefix, $suffix = '')
     {
         return TEST_DATA_PATH . '/' . $prefix . $suffix . '.xls';
     }
 
     /**
-     * @param $params
-     *
      * @return Workbook
      */
-    protected function createWorkbook($params)
+    protected function createWorkbook()
     {
-        $workbook = new Workbook($params['format']);
+        $workbook = new Workbook();
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         return $workbook;
     }
 
     /**
-     * @return array
+     * @return Workbook
      */
-    public function providerBiff5()
+    protected function createWorkbookBiff5()
     {
-        return array(
-            array(
-                array(
-                    'format' => Biff5::VERSION,
-                    'suffix' => ''
-                )
-            )
-        );
+        $workbook = new Workbook(Biff5::VERSION);
+        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
+
+        return $workbook;
     }
 
     /**
-     * @return array
+     * @param string $name
+     * @param string $suffix
      */
-    public function providerBiff8()
+    protected function checkTestFileIsEqualTo($name, $suffix = '')
     {
-        return array(
-            array(
-                array(
-                    'format' => Biff8::VERSION,
-                    'suffix' => '_biff8'
-                )
-            )
-        );
-    }
-
-    /**
-     * @return array
-     */
-    public function providerBiff5AndBiff8()
-    {
-        $biff5 = $this->providerBiff5();
-        $biff8 = $this->providerBiff8();
-
-        return array(
-            $biff5[0],
-            $biff8[0]
-        );
+        $this->assertFileExists($this->testFilePath);
+        $correctFilePath = $this->getFilePath($name, $suffix);
+        $this->assertFileEquals($correctFilePath, $this->testFilePath);
     }
 }
