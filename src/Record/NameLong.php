@@ -3,7 +3,7 @@ namespace Xls\Record;
 
 class NameLong extends NameShort
 {
-    const NAME = 'NAME';
+    const NAME = 'DEFINEDNAME';
     const ID = 0x0018;
     const LENGTH = 0x3D;
 

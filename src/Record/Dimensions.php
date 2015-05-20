@@ -18,12 +18,7 @@ class Dimensions extends AbstractRecord
     {
         $reserved = 0x00;
 
-        if ($this->isBiff5()) {
-            $data = pack("vv", $rowMin, $rowMax);
-        } else {
-            $data = pack("VV", $rowMin, $rowMax);
-        }
-
+        $data = pack("VV", $rowMin, $rowMax);
         $data .= pack(
             "vvv",
             $colMin,

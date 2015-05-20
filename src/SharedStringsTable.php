@@ -262,7 +262,7 @@ class SharedStringsTable
      *
      * @return string
      */
-    public function getPackedString($str, $inputEncoding)
+    public static function getPackedString($str, $inputEncoding = '')
     {
         if ($inputEncoding != '' && $inputEncoding != 'UTF-16LE') {
             $str = iconv($inputEncoding, 'UTF-16LE', $str);

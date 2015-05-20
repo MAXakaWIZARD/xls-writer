@@ -16,14 +16,9 @@ class Header extends AbstractRecord
     public function getData($text)
     {
         $cch = strlen($text);
-        if ($this->isBiff8()) {
-            $length = 3 + $cch;
-            $encoding = 0x0;
-            $data = pack("vC", $cch, $encoding);
-        } else {
-            $length = 1 + $cch;
-            $data = pack("C", $cch);
-        }
+        $length = 3 + $cch;
+        $encoding = 0x0;
+        $data = pack("vC", $cch, $encoding);
 
         return $this->getHeader($length) . $data . $text;
     }

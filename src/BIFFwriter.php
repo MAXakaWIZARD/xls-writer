@@ -32,7 +32,7 @@ class BIFFwriter
     /**
      * @var integer
      */
-    protected $version;
+    protected $version = Biff8::VERSION;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -66,51 +66,20 @@ class BIFFwriter
     protected $tmpFile = '';
 
     /**
-     * @var BiffInterface
+     * @var Biff8
      */
     protected $biff;
 
     /**
-     * @param int $version
-     *
      * @throws \Exception
      */
-    public function __construct($version = Biff8::VERSION)
+    public function __construct()
     {
         $this->tmpDir = sys_get_temp_dir();
 
-        $this->setVersion($version);
+        $this->biff = new Biff8;
+
         $this->setByteOrder();
-    }
-
-    /**
-     * set BIFF version
-     * @param $version
-     *
-     * @throws \Exception
-     */
-    protected function setVersion($version)
-    {
-        switch ($version) {
-            case Biff5::VERSION:
-                $this->biff = new Biff5;
-                break;
-            case Biff8::VERSION:
-                $this->biff = new Biff8;
-                break;
-            default:
-                throw new \Exception("Unsupported BIFF version");
-        }
-
-        $this->version = $version;
-    }
-
-    /**
-     * @return int
-     */
-    public function getVersion()
-    {
-        return $this->version;
     }
 
     /**
@@ -200,22 +169,6 @@ class BIFFwriter
     }
 
     /**
-     *
-     */
-    public function isBiff5()
-    {
-        return $this->version === Biff5::VERSION;
-    }
-
-    /**
-     *
-     */
-    public function isBiff8()
-    {
-        return $this->version === Biff8::VERSION;
-    }
-
-    /**
      * @return int
      */
     public function getDataSize()
@@ -244,6 +197,6 @@ class BIFFwriter
     protected function createRecord($type)
     {
         $className = "\\Xls\\Record\\$type";
-        return new $className($this->version, $this->byteOrder);
+        return new $className($this->byteOrder);
     }
 }

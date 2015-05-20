@@ -27,7 +27,7 @@ class Format
     /**
      * @var integer
      */
-    protected $version;
+    protected $version = Biff8::VERSION;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -260,34 +260,20 @@ class Format
     );
 
     protected $rotationMap = array(
-        0 => array(
-            Biff5::VERSION => 0,
-            Biff8::VERSION => 0,
-        ),
-        90 => array(
-            Biff5::VERSION => 3,
-            Biff8::VERSION => 180,
-        ),
-        270 => array(
-            Biff5::VERSION => 2,
-            Biff8::VERSION => 90,
-        ),
-        -1 => array(
-            Biff5::VERSION => 1,
-            Biff8::VERSION => 255,
-        )
+        0 => 0,
+        90 => 180,
+        270 => 90,
+        -1 => 255
     );
 
     /**
-     * @param integer $version
      * @param integer $byteOrder
      * @param integer $index the XF index for the format.
      * @param array $properties array with properties to be set on initialization.
      */
-    public function __construct($version, $byteOrder, $index = 0, $properties = array())
+    public function __construct($byteOrder, $index = 0, $properties = array())
     {
         $this->xfIndex = $index;
-        $this->version = $version;
         $this->byteOrder = $byteOrder;
 
         $this->setProperties($properties);
@@ -314,7 +300,7 @@ class Format
      */
     public function getXf($style)
     {
-        $record = new Record\Xf($this->version, $this->byteOrder);
+        $record = new Record\Xf($this->byteOrder);
         return $record->getData($this, $style);
     }
 
@@ -325,7 +311,7 @@ class Format
      */
     public function getFontRecord()
     {
-        $record = new Record\Font($this->version, $this->byteOrder);
+        $record = new Record\Font($this->byteOrder);
         return $record->getData($this);
     }
 
@@ -637,7 +623,7 @@ class Format
             );
         }
 
-        $this->rotation = $this->rotationMap[$angle][$this->version];
+        $this->rotation = $this->rotationMap[$angle];
     }
 
     /**

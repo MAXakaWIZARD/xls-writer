@@ -7,26 +7,6 @@
             "name": "Max Grigorian",
             "homepage": "https://github.com/MAXakaWIZARD",
             "role": "Developer"
-        },
-        {
-            "email": "cschmitz@limesurvey.org",
-            "name": "Carsten Schmitz",
-            "role": "Lead"
-        },
-        {
-            "email": "xnoguer@php.net",
-            "name": "Xavier Noguer",
-            "role": "Lead"
-        },
-        {
-            "email": "progi1984@gmail.com",
-            "name": "Franck Lefevre",
-            "role": "Developer"
-        },
-        {
-            "email": "tuupola@appelsiini.net",
-            "name": "Mika Tuupola",
-            "role": "Developer"
         }
     ],
     "license": "MIT",
@@ -37,10 +17,8 @@
         "satooshi/php-coveralls": "dev-master"
     },
     "autoload": {
-        "psr-0": {
-            "Xls": "src/"
-        },
-        "psr-4" : {
+        "psr-4": {
+            "Xls\\": "src/",
             "Test\\": "tests/"
         }
     },

@@ -16,7 +16,7 @@ class Cell
      */
     public static function getAddress($row, $col)
     {
-        if ($col >= Biff5::MAX_COLS) {
+        if ($col >= Biff8::MAX_COLS) {
             throw new \Exception("Maximum column value exceeded: $col");
         }
 

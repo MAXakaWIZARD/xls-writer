@@ -2,14 +2,6 @@
 
 namespace Xls;
 
-/**
- * Class for parsing Excel formulas
- *
- * @author   Xavier Noguer <xnoguer@rezebra.com>
- * @category FileFormats
- * @package  Spreadsheet_Excel_Writer
- */
-
 class FormulaParser
 {
     /**
@@ -71,33 +63,17 @@ class FormulaParser
     protected $references = array();
 
     /**
-     * The BIFF version for the workbook
-     * @var integer
-     */
-    protected $version;
-
-    /**
      * The class constructor
      *
      * @param integer $byteOrder The byte order (Little endian or Big endian) of the architecture
      * (optional). 1 => big endian, 0 (default) little endian.
-     * @param integer $version
      */
-    public function __construct($byteOrder, $version)
+    public function __construct($byteOrder)
     {
         $this->byteOrder = $byteOrder;
-        $this->version = $version;
 
         $this->ptg = Ptg::getAll();
         $this->functions = Functions::getBuiltIn();
-    }
-
-    /**
-     *
-     */
-    public function isBiff5()
-    {
-        return $this->version === Biff5::VERSION;
     }
 
     /**
@@ -164,17 +140,13 @@ class FormulaParser
     {
         // chop away beggining and ending quotes
         $string = substr($string, 1, strlen($string) - 2);
-        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
+        if (strlen($string) > Biff8::MAX_STR_LENGTH) {
             throw new \Exception("String is too long");
         }
 
-        if ($this->isBiff5()) {
-            return pack("CC", $this->ptg['ptgStr'], strlen($string)) . $string;
-        } else {
-            $encoding = 0;
+        $encoding = 0;
 
-            return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
-        }
+        return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
     }
 
     /**
@@ -288,12 +260,8 @@ class FormulaParser
         // Split the ref at the ! symbol
         list($extRef, $range) = explode('!', $token);
 
-        // Convert the external reference part (different for BIFF8)
-        if ($this->isBiff5()) {
-            $extRef = $this->packExtRef($extRef);
-        } else {
-            $extRef = $this->getRefIndex($extRef);
-        }
+        // Convert the external reference part
+        $extRef = $this->getRefIndex($extRef);
 
         // Split the range into 2 cell refs
         list($cell1, $cell2) = explode(':', $range);
@@ -367,12 +335,8 @@ class FormulaParser
         // Split the ref at the ! symbol
         list($extRef, $cell) = explode('!', $cell);
 
-        // Convert the external reference part (different for BIFF8)
-        if ($this->isBiff5()) {
-            $extRef = $this->packExtRef($extRef);
-        } else {
-            $extRef = $this->getRefIndex($extRef);
-        }
+        // Convert the external reference part
+        $extRef = $this->getRefIndex($extRef);
 
         // Convert the cell reference part
         list($row, $col) = $this->cellToPackedRowcol($cell);
@@ -538,24 +502,19 @@ class FormulaParser
         $cell = strtoupper($cell);
         list($row, $col, $rowRel, $colRel) = Cell::addressToRowCol($cell);
 
-        if ($row >= Biff5::MAX_ROWS) {
-            throw new \Exception("Row in: $cell greater than " . (Biff5::MAX_ROWS - 1));
+        if ($row >= Biff8::MAX_ROWS) {
+            throw new \Exception("Row in: $cell greater than " . (Biff8::MAX_ROWS - 1));
         }
 
-        if ($col >= Biff5::MAX_COLS) {
-            throw new \Exception("Column in: $cell greater than " . (Biff5::MAX_COLS - 1));
+        if ($col >= Biff8::MAX_COLS) {
+            throw new \Exception("Column in: $cell greater than " . (Biff8::MAX_COLS - 1));
         }
 
         // Set the high bits to indicate if row or col are relative.
-        if ($this->isBiff5()) {
-            $row |= $colRel << 14;
-            $row |= $rowRel << 15;
-            $col = pack('C', $col);
-        } else {
-            $col |= $colRel << 14;
-            $col |= $rowRel << 15;
-            $col = pack('v', $col);
-        }
+        $col |= $colRel << 14;
+        $col |= $rowRel << 15;
+        $col = pack('v', $col);
+
         $row = pack('v', $row);
 
         return array($row, $col);
@@ -582,24 +541,18 @@ class FormulaParser
         $row2--;
         // Trick poor innocent Excel
         $col1 = 0;
-        $col2 = Biff5::MAX_COLS - 1;
+        $col2 = Biff8::MAX_COLS - 1;
 
-        if ($row1 >= Biff5::MAX_ROWS || $row2 >= Biff5::MAX_ROWS) {
-            throw new \Exception("Row in: $range greater than " . Biff5::MAX_ROWS);
+        if ($row1 >= Biff8::MAX_ROWS || $row2 >= Biff8::MAX_ROWS) {
+            throw new \Exception("Row in: $range greater than " . Biff8::MAX_ROWS);
         }
 
         // Set the high bits to indicate if rows are relative.
-        if ($this->isBiff5()) {
-            $row1 |= $row1Rel << 14; // TODO: probably a bug
-            $row2 |= $row2Rel << 15;
-            $col1 = pack('C', $col1);
-            $col2 = pack('C', $col2);
-        } else {
-            $col1 |= $row1Rel << 15;
-            $col2 |= $row2Rel << 15;
-            $col1 = pack('v', $col1);
-            $col2 = pack('v', $col2);
-        }
+        $col1 |= $row1Rel << 15;
+        $col2 |= $row2Rel << 15;
+        $col1 = pack('v', $col1);
+        $col2 = pack('v', $col2);
+
         $row1 = pack('v', $row1);
         $row2 = pack('v', $row2);
 

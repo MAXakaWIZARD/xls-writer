@@ -2,11 +2,6 @@
 namespace Test;
 
 use Xls\Workbook;
-use Xls\Biff5;
-use Xls\Biff8;
-use Xls\Format;
-use Xls\Fill;
-use Xls\Cell;
 
 /**
  *
@@ -53,17 +48,6 @@ class TestAbstract extends \PHPUnit_Framework_TestCase
     protected function createWorkbook()
     {
         $workbook = new Workbook();
-        $workbook->setCreationTimestamp(self::WORKBOOK_TS);
-
-        return $workbook;
-    }
-
-    /**
-     * @return Workbook
-     */
-    protected function createWorkbookBiff5()
-    {
-        $workbook = new Workbook(Biff5::VERSION);
         $workbook->setCreationTimestamp(self::WORKBOOK_TS);
 
         return $workbook;

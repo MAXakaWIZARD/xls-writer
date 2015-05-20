@@ -2,7 +2,6 @@
 namespace Xls\Record;
 
 use Xls\BIFFwriter;
-use Xls\Biff5;
 use Xls\Biff8;
 use Xls\Format as XlsFormat;
 
@@ -14,7 +13,7 @@ abstract class AbstractRecord
     /**
      * @var int
      */
-    protected $version;
+    protected $version = Biff8::VERSION;
 
     /**
      * @var int
@@ -24,14 +23,11 @@ abstract class AbstractRecord
     /**
      * AbstractRecord constructor.
      *
-     * @param int $version BIFF version
      * @param int $byteOrder
      */
     public function __construct(
-        $version,
         $byteOrder = BIFFwriter::BYTE_ORDER_LE
     ) {
-        $this->version = $version;
         $this->byteOrder = $byteOrder;
     }
 
@@ -45,11 +41,13 @@ abstract class AbstractRecord
     {
         $length = static::LENGTH + $extraLength;
 
-        if (is_null($extraParam)) {
-            return pack("vv", static::ID, $length);
-        } else {
-            return pack("vvv", static::ID, $length, $extraParam);
+        $header = pack("vv", static::ID, $length);
+
+        if (!is_null($extraParam)) {
+            $header .= pack("v", $extraParam);
         }
+
+        return $header;
     }
 
     /**
@@ -60,21 +58,5 @@ abstract class AbstractRecord
     protected function xf($format)
     {
         return (is_object($format)) ? $format->getXfIndex(): 0x0F;
-    }
-
-    /**
-     *
-     */
-    protected function isBiff5()
-    {
-        return $this->version === Biff5::VERSION;
-    }
-
-    /**
-     *
-     */
-    protected function isBiff8()
-    {
-        return $this->version === Biff8::VERSION;
     }
 }

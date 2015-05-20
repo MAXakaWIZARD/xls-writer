@@ -17,17 +17,10 @@ class Bof extends AbstractRecord
     {
         // According to the SDK $build and $year should be set to zero.
         // However, this throws a warning in Excel 5. So, use magic numbers.
-        if ($this->isBiff5()) {
-            $length = 0x08;
-            $unknown = '';
-            $build = 0x096C;
-            $year = 0x07C9;
-        } else {
-            $length = 0x10;
-            $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
-            $build = 0x0DBB;
-            $year = 0x07CC;
-        }
+        $length = 0x10;
+        $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
+        $build = 0x0DBB;
+        $year = 0x07CC;
 
         $data = pack("vvvv", $this->version, $type, $build, $year);
 

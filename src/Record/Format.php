@@ -16,14 +16,9 @@ class Format extends AbstractRecord
     public function getData($format, $formatIndex)
     {
         $formatLen = strlen($format);
-        if ($this->isBiff8()) {
-            $length = 5 + $formatLen;
-        } else {
-            $length = 3 + $formatLen;
-        }
+        $length = 5 + $formatLen;
 
-        if ($this->isBiff8()
-            && function_exists('iconv')
+        if (function_exists('iconv')
         ) {
             // Encode format String
             if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
@@ -36,11 +31,7 @@ class Format extends AbstractRecord
             $cch = $formatLen;
         }
 
-        if ($this->isBiff8()) {
-            $data = pack("vvC", $formatIndex, $cch, $encoding);
-        } else {
-            $data = pack("vC", $formatIndex, $cch);
-        }
+        $data = pack("vvC", $formatIndex, $cch, $encoding);
 
         return $this->getHeader($length) . $data . $format;
     }

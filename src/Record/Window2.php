@@ -20,17 +20,11 @@ class Window2 extends AbstractRecord
 
         $data = pack("vvv", $this->calcGrbit($worksheet), $rwTop, $colLeft);
 
-        if ($worksheet->isBiff5()) {
-            $length = 0x0A;
-            $rgbHdr = 0x00; // Row/column heading and gridline color
-            $data .= pack("V", $rgbHdr);
-        } else {
-            $length = 0x12;
-            $rgbHdr = 0x0040; // Row/column heading and gridline color index
-            $zoomFactorPageBreak = 0x00;
-            $zoomFactorNormal = 0x00;
-            $data .= pack("vvvvV", $rgbHdr, 0x00, $zoomFactorPageBreak, $zoomFactorNormal, 0x00);
-        }
+        $length = 0x12;
+        $rgbHdr = 0x0040; // Row/column heading and gridline color index
+        $zoomFactorPageBreak = 0x00;
+        $zoomFactorNormal = 0x00;
+        $data .= pack("vvvvV", $rgbHdr, 0x00, $zoomFactorPageBreak, $zoomFactorNormal, 0x00);
 
         return $this->getHeader($length) . $data;
     }

@@ -21,7 +21,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->parser = new FormulaParser(BIFFwriter::BYTE_ORDER_LE, Biff8::VERSION);
+        $this->parser = new FormulaParser(BIFFwriter::BYTE_ORDER_LE);
     }
 
     /**
@@ -145,14 +145,14 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                 array(
                     'formula' => 'A100500+B100500',
                     'correct' => false,
-                    'error' => "Row in: A100500 greater than 16383"
+                    'error' => "Row in: A100500 greater than " . (Biff8::MAX_ROWS - 1)
                 )
             ),
             array(
                 array(
                     'formula' => 'ZZ1+A1',
                     'correct' => false,
-                    'error' => "Column in: ZZ1 greater than 255"
+                    'error' => "Column in: ZZ1 greater than " . (Biff8::MAX_COLS - 1)
                 )
             ),
             array(

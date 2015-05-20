@@ -25,21 +25,13 @@ class HorizontalPagebreaks extends AbstractRecord
         }
 
         $cbrk = count($breaks);
-        if ($this->isBiff8()) {
-            $length = 2 + 6 * $cbrk;
-        } else {
-            $length = 2 + 2 * $cbrk;
-        }
+        $length = 2 + 6 * $cbrk;
 
         $data = pack("v", $cbrk);
 
         // Append each page break
         foreach ($breaks as $break) {
-            if ($this->isBiff8()) {
-                $data .= pack("vvv", $break, 0x00, 0xff);
-            } else {
-                $data .= pack("v", $break);
-            }
+            $data .= pack("vvv", $break, 0x00, 0xff);
         }
 
         return $this->getHeader($length) . $data;

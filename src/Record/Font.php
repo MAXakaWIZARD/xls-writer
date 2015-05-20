@@ -42,13 +42,9 @@ class Font extends AbstractRecord
             $cch
         );
 
-        if ($this->isBiff5()) {
-            $length = 0x0F + $cch;
-        } else {
-            $length = 0x10 + $cch;
-            $encoding = 0;
-            $data .= pack("C", $encoding);
-        }
+        $length = 0x10 + $cch;
+        $encoding = 0;
+        $data .= pack("C", $encoding);
 
         return $this->getHeader($length) . $data . $format->fontName;
     }

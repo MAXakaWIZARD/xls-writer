@@ -3,7 +3,7 @@ namespace Xls\Record;
 
 class NameShort extends AbstractRecord
 {
-    const NAME = 'NAME';
+    const NAME = 'DEFINEDNAME';
     const ID = 0x0018;
     const LENGTH = 0x24;
 

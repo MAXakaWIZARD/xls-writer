@@ -6,10 +6,10 @@ namespace Test;
  */
 class LayoutsTest extends TestAbstract
 {
-    public function testPortrait2Layout()
+    public function testPortraitLayout()
     {
         return;
-        $workbook = $this->createWorkbookBiff5();
+        $workbook = $this->createWorkbook();
         $workbook->setCountry($workbook::COUNTRY_USA);
 
         $sheet = $workbook->addWorksheet();
@@ -32,7 +32,6 @@ class LayoutsTest extends TestAbstract
         $sheet->setPrintScale(90);
         $sheet->setPaper($sheet::PAPER_A3);
 
-        //check for biff8
         $sheet->printArea(0, 0, 10, 10);
 
         $sheet->hideGridlines();
@@ -40,6 +39,7 @@ class LayoutsTest extends TestAbstract
         $sheet->setVPagebreaks(array(5));
 
         $workbook->save($this->testFilePath);
+        exit;
 
         $this->checkTestFileIsEqualTo('layout_portrait');
     }
@@ -93,6 +93,7 @@ class LayoutsTest extends TestAbstract
         $sheet->printRowColHeaders();
 
         $workbook->save($this->testFilePath);
+        exit;
 
         $this->checkTestFileIsEqualTo('layout_landscape');
     }

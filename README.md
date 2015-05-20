@@ -15,11 +15,11 @@
 
 Port of [PEAR Spreadsheet Excel Writer](http://pear.php.net/package/Spreadsheet_Excel_Writer).
 
-This package is compliant with [PSR-0](http://www.php-fig.org/psr/0/), [PSR-1](http://www.php-fig.org/psr/1/), and [PSR-2](http://www.php-fig.org/psr/2/).
+This package is compliant with [PSR-4](http://www.php-fig.org/psr/4/), [PSR-1](http://www.php-fig.org/psr/1/), and [PSR-2](http://www.php-fig.org/psr/2/).
 If you notice compliance oversights, please send a patch via pull request.
 
 ## Known limitations
-* Supports only `XLS` format (BIFF5/7 and BIFF8)
+* Supports only `XLS` format (BIFF8)
 
 ## Usage
 ```php

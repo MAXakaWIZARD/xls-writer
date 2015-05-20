@@ -2,7 +2,7 @@
 
 namespace Xls;
 
-class Biff8 extends Biff5 implements BiffInterface
+class Biff8
 {
     /**
      * BIFF8
@@ -15,6 +15,7 @@ class Biff8 extends Biff5 implements BiffInterface
      */
     const VERSION = 0x0600;
 
+    //const MAX_ROWS = 16384;
     const MAX_ROWS = 65536;
     const MAX_COLS = 256;
 
@@ -25,6 +26,51 @@ class Biff8 extends Biff5 implements BiffInterface
     const BOUNDSHEET_LENGTH = 12;
 
     const WORKBOOK_NAME = 'Workbook';
+
+    /**
+     * The codepage indicates the text encoding used for strings
+     */
+    const CODEPAGE = 0x04E4;
+
+    /**
+     * @inheritdoc
+     */
+    public function getLimit()
+    {
+        return static::LIMIT;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCodepage()
+    {
+        return static::CODEPAGE;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMaxSheetNameLength()
+    {
+        return static::MAX_SHEET_NAME_LENGTH;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getWorkbookName()
+    {
+        return static::WORKBOOK_NAME;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getBoundsheetLength()
+    {
+        return static::BOUNDSHEET_LENGTH;
+    }
 
     /**
      * @return int

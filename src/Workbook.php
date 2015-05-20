@@ -104,17 +104,17 @@ class Workbook extends BIFFwriter
     protected $sst;
 
     /**
-     * @param int $version
+     *
      */
-    public function __construct($version = Biff8::VERSION)
+    public function __construct()
     {
-        parent::__construct($version);
+        parent::__construct();
 
-        $this->formulaParser = new FormulaParser($this->byteOrder, $this->version);
+        $this->formulaParser = new FormulaParser($this->byteOrder);
 
         $this->palette = Palette::getXl97Palette();
 
-        $this->tmpFormat = new Format($this->version, $this->byteOrder);
+        $this->tmpFormat = new Format($this->byteOrder);
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
 
@@ -166,14 +166,8 @@ class Workbook extends BIFFwriter
             $this->appendRecord('Country', array($this->countryCode));
         }
 
-        if ($this->isBiff8()) {
-            $this->storeWindow1();
-            $this->storeNames();
-        } else {
-            $this->storeExterns();
-            $this->storeNames();
-            $this->storeWindow1();
-        }
+        $this->storeWindow1();
+        $this->storeNames();
 
         $this->storeDatemode();
         $this->storeAllFonts();
@@ -184,9 +178,7 @@ class Workbook extends BIFFwriter
 
         $this->saveSheets();
 
-        if ($this->isBiff8()) {
-            $this->storeSharedStringsTable();
-        }
+        $this->storeSharedStringsTable();
 
         $this->appendRecord('Eof');
 
@@ -295,7 +287,7 @@ class Workbook extends BIFFwriter
             );
         }
 
-        if ($this->isBiff8() && function_exists('iconv')) {
+        if (function_exists('iconv')) {
             $name = iconv('UTF-8', 'UTF-16LE', $name);
         }
 
@@ -370,7 +362,7 @@ class Workbook extends BIFFwriter
      */
     public function addFormat($properties = array())
     {
-        $format = new Format($this->version, $this->byteOrder, $this->xfIndex, $properties);
+        $format = new Format($this->byteOrder, $this->xfIndex, $properties);
         $this->xfIndex++;
         $this->formats[] = $format;
 
@@ -460,10 +452,7 @@ class Workbook extends BIFFwriter
     {
         $eof = 4;
         $offset = $this->datasize;
-
-        if ($this->isBiff8()) {
-            $offset += $this->sst->calcTableSize();
-        }
+        $offset += $this->sst->calcTableSize();
 
         // add the length of the BOUNDSHEET records
         $boundsheetLength = $this->biff->getBoundsheetLength();
@@ -577,29 +566,34 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Write the EXTERNCOUNT and EXTERNSHEET records. These are used as indexes for
-     * the NAME records.
-     */
-    protected function storeExterns()
-    {
-        $this->appendRecord('Externcount', array(count($this->worksheets)));
-
-        foreach ($this->sheetNames as $sheetName) {
-            $this->appendRecord('Externsheet', array($sheetName));
-        }
-    }
-
-    /**
      * Create the print area NAME records
      */
     protected function storePrintAreaNames()
     {
         foreach ($this->worksheets as $sheet) {
-            // Write a Name record if the print area has been defined
-            if (isset($sheet->printRowMin)) {
+            if ($sheet->isPrintAreaSet()) {
+                $data = pack(
+                    'Cvvvvv',
+                    0x3B,
+                    $sheet->getIndex(),
+                    $sheet->printRowMin,
+                    $sheet->printRowMax,
+                    $sheet->printColMin,
+                    $sheet->printColMax
+                );
+                $this->appendRecord('DefinedName', array(
+                    Record\DefinedName::BUILTIN_PRINT_AREA,
+                    $sheet->getIndex() + 1,
+                    $data
+                ));
+            }
+        }
+
+        foreach ($this->worksheets as $sheet) {
+            if ($sheet->isPrintAreaSet()) {
                 $this->appendRecord('NameShort', array(
-                    $sheet->index,
-                    0x06, // NAME type
+                    $sheet->getIndex(),
+                    Record\DefinedName::BUILTIN_PRINT_AREA,
                     $sheet->printRowMin,
                     $sheet->printRowMax,
                     $sheet->printColMin,
@@ -647,7 +641,7 @@ class Workbook extends BIFFwriter
             $recordType,
             array(
                 $sheet->index,
-                0x07,
+                Record\DefinedName::BUILTIN_PRINT_TITLES,
                 $rowmin,
                 $rowmax,
                 $colmin,
@@ -684,7 +678,7 @@ class Workbook extends BIFFwriter
      * Writes the Excel BIFF EXTERNSHEET record. These references are used by
      * formulas.
      */
-    protected function storeExternsheetBiff8()
+    protected function storeExternsheet()
     {
         /** @var Record\Externsheet $record */
         $record = $this->createRecord('Externsheet');

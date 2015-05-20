@@ -378,7 +378,7 @@ class Worksheet extends BIFFwriter
         $urlFormat,
         $formulaParser
     ) {
-        parent::__construct($workbook->getVersion());
+        parent::__construct();
 
         $this->name = $name;
         $this->index = $index;
@@ -387,8 +387,8 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->xlsRowmax = Biff5::MAX_ROWS;
-        $this->xlsColmax = Biff5::MAX_COLS;
+        $this->xlsRowmax = Biff8::MAX_ROWS;
+        $this->xlsColmax = Biff8::MAX_COLS;
         $this->dimRowmin = $this->xlsRowmax + 1;
         $this->dimRowmax = 0;
         $this->dimColmin = $this->xlsColmax + 1;
@@ -460,7 +460,6 @@ class Worksheet extends BIFFwriter
         $this->storePageBreaks();
         $this->storeWsbool();
         $this->storeGridset();
-        $this->storeGuts();
         $this->storePrintGridlines();
         $this->storePrintHeaders();
 
@@ -814,8 +813,8 @@ class Worksheet extends BIFFwriter
      */
     protected function truncateStringIfNeeded($string)
     {
-        if (strlen($string) > Biff5::MAX_STR_LENGTH) {
-            $string = substr($string, 0, Biff5::MAX_STR_LENGTH);
+        if (strlen($string) > Biff8::MAX_STR_LENGTH) {
+            $string = substr($string, 0, Biff8::MAX_STR_LENGTH);
         }
 
         return $string;
@@ -1233,14 +1232,7 @@ class Worksheet extends BIFFwriter
 
         $this->checkRowCol($row, $col);
 
-        if ($this->isBiff8()) {
-            $this->writeStringSST($row, $col, $str, $format);
-            return;
-        }
-
-        $str = $this->truncateStringIfNeeded($str);
-
-        $this->appendRecord('Label', array($row, $col, $str, $format));
+        $this->writeStringSST($row, $col, $str, $format);
     }
 
     /**
@@ -1259,8 +1251,6 @@ class Worksheet extends BIFFwriter
 
     /**
      * Write a string to the specified row and column (zero indexed).
-     * This is the BIFF8 version (no 255 chars limit).
-     * $format is optional.
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param string $str    The string to write
@@ -1876,9 +1866,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeExternsheets($sheetNames)
     {
-        if (!$this->isBiff5()) {
-            return;
-        }
+        return;
 
         $sheetsCount = count($sheetNames);
         // Prepend EXTERNSHEET references
@@ -1941,18 +1929,6 @@ class Worksheet extends BIFFwriter
     protected function storeGridset()
     {
         $this->prependRecord('Gridset', array(!$this->printGridLines));
-    }
-
-    /**
-     * Write the GUTS BIFF record. This is used to configure the gutter margins
-     * where Excel outline symbols are displayed. The visibility of the gutters is
-     * controlled by a flag in WSBOOL.
-     */
-    protected function storeGuts()
-    {
-        if ($this->isBiff5()) {
-            $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
-        }
     }
 
     /**
@@ -2263,10 +2239,6 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDataValidity()
     {
-        if (!$this->isBiff8()) {
-            return;
-        }
-
         $this->appendRecord('DataValidations', array($this->dv));
 
         foreach ($this->dv as $dv) {
@@ -2384,5 +2356,21 @@ class Worksheet extends BIFFwriter
     public function getPrintScale()
     {
         return $this->printScale;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPrintAreaSet()
+    {
+        return !is_null($this->printRowMin);
+    }
+
+    /**
+     * @return int
+     */
+    public function getIndex()
+    {
+        return $this->index;
     }
 }
