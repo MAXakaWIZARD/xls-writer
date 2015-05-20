@@ -463,8 +463,6 @@ class Worksheet extends BIFFwriter
         $this->storePrintGridlines();
         $this->storePrintHeaders();
 
-        $this->storeExternsheets($sheetNames);
-
         $this->storeColinfo();
 
         $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
@@ -1859,24 +1857,6 @@ class Worksheet extends BIFFwriter
 
         // Prepend the page horizontal centering
         $this->prependRecord('Hcenter', array($this->hcenter));
-    }
-
-    /**
-     * @param $sheetNames
-     */
-    protected function storeExternsheets($sheetNames)
-    {
-        return;
-
-        $sheetsCount = count($sheetNames);
-        // Prepend EXTERNSHEET references
-        for ($i = $sheetsCount; $i > 0; $i--) {
-            $sheetName = $sheetNames[$i - 1];
-            $this->storeExternsheet($sheetName);
-        }
-
-        // Prepend the EXTERNCOUNT of external references.
-        $this->prependRecord('Externcount', array($sheetsCount));
     }
 
     /**
