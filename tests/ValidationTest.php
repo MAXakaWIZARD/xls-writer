@@ -62,8 +62,6 @@ class ValidationTest extends TestAbstract
 
         $workbook->save($this->testFilePath);
 
-        $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('validation');
-        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+        $this->checkTestFileIsEqualTo('validation');
     }
 }

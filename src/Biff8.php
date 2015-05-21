@@ -15,22 +15,20 @@ class Biff8
      */
     const VERSION = 0x0600;
 
-    //const MAX_ROWS = 16384;
-    const MAX_ROWS = 65536;
+    const MAX_ROWS = 16384;
     const MAX_COLS = 256;
 
     const MAX_STR_LENGTH = 255;
     const MAX_SHEET_NAME_LENGTH = 255;
 
     const LIMIT = 8228;
-    const BOUNDSHEET_LENGTH = 12;
 
     const WORKBOOK_NAME = 'Workbook';
 
     /**
      * The codepage indicates the text encoding used for strings
      */
-    const CODEPAGE = 0x04E4;
+    const CODEPAGE = 0x04B0;
 
     /**
      * @inheritdoc

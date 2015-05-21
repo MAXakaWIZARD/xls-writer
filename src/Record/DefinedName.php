@@ -7,7 +7,6 @@ class DefinedName extends AbstractRecord
 {
     const NAME = 'DEFINEDNAME';
     const ID = 0x18;
-    const LENGTH = 0x00;
 
     const BUILTIN_PRINT_AREA = 0x06;
     const BUILTIN_PRINT_TITLES = 0x07;

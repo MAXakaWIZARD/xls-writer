@@ -187,7 +187,7 @@ class StringUtils
             0x0001 : 0x0000;
 
         // characters
-        $chars = self::ConvertEncoding($value, 'UTF-16LE', 'UTF-8');
+        $chars = self::toUtf16Le($value);
 
         $data = pack('vC', $ln, $opt) . $chars;
 

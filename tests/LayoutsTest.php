@@ -8,9 +8,25 @@ class LayoutsTest extends TestAbstract
 {
     public function testPortraitLayout()
     {
-        return;
         $workbook = $this->createWorkbook();
-        $workbook->setCountry($workbook::COUNTRY_USA);
+
+        $sheet = $workbook->addWorksheet();
+        $row = array(
+            'Portrait layout test'
+        );
+        $sheet->writeRow(0, 0, $row);
+
+        $sheet->setPrintArea(1, 1, 5, 5);
+
+        $workbook->save($this->testFilePath);
+        exit;
+
+        $this->checkTestFileIsEqualTo('layout_portrait');
+    }
+
+    public function ctestPortraitLayout()
+    {
+        $workbook = $this->createWorkbook();
 
         $sheet = $workbook->addWorksheet();
         $row = array(
@@ -32,7 +48,7 @@ class LayoutsTest extends TestAbstract
         $sheet->setPrintScale(90);
         $sheet->setPaper($sheet::PAPER_A3);
 
-        $sheet->printArea(0, 0, 10, 10);
+        $sheet->setPrintArea(0, 0, 10, 10);
 
         $sheet->hideGridlines();
         $sheet->setHPagebreaks(array(1));
@@ -69,11 +85,11 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->repeatRows(0);
-        $sheet->repeatRows(0, 0);
+        //$sheet->repeatRows(0);
+        //$sheet->repeatRows(0, 0);
 
-        $sheet->repeatColumns(0);
-        $sheet->repeatColumns(0, 0);
+        //$sheet->repeatColumns(0);
+        //$sheet->repeatColumns(0, 0);
 
         $sheet->freezePanes(array(1, 1));
 

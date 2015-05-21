@@ -255,27 +255,4 @@ class SharedStringsTable
 
         return $size;
     }
-
-    /**
-     * @param string $str
-     *
-     * @return string
-     */
-    public static function getPackedString($str)
-    {
-        //return StringUtils::UTF8toBIFF8UnicodeLong($str);
-
-        $inputEncoding = '';
-
-        if ($inputEncoding != '') {
-            $str = iconv($inputEncoding, 'UTF-16LE', $str);
-            $encoding = 0x1;
-            $strlen = function_exists('mb_strlen') ? mb_strlen($str, 'UTF-16LE') : (strlen($str) / 2);
-        } else {
-            $encoding = 0x0;
-            $strlen = strlen($str);
-        }
-
-        return pack('vC', $strlen, $encoding) . $str;
-    }
 }

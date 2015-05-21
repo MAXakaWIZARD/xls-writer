@@ -161,24 +161,25 @@ class Workbook extends BIFFwriter
 
         $this->appendRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
         $this->appendRecord('Codepage', array($this->biff->getCodepage()));
-
-        if ($this->countryCode != self::COUNTRY_NONE) {
-            $this->appendRecord('Country', array($this->countryCode));
-        }
-
         $this->storeWindow1();
-        $this->storeNames();
-
         $this->storeDatemode();
+
         $this->storeAllFonts();
         $this->storeAllNumFormats();
         $this->storeAllXfs();
         $this->storeAllStyles();
         $this->appendRecord('Palette', array($this->palette));
 
-        $this->saveSheets();
+        $this->storeCountry();
+        $this->appendRecord('RecalcId');
+        $this->storeSupbookInternal();
+
+        $this->storeExternsheet();
+        $this->storeDefinedNames();
 
         $this->storeSharedStringsTable();
+
+        $this->storeSheets();
 
         $this->appendRecord('Eof');
 
@@ -188,21 +189,34 @@ class Workbook extends BIFFwriter
     }
 
     /**
+     * Write Internal SUPBOOK record
+     */
+    protected function storeSupbookInternal()
+    {
+        $this->appendRecord('ExternalBook', array($this->getSheetsCount()));
+    }
+
+    /**
+     * Calculate the number of selected worksheet tabs and call the finalization
+     * methods for each worksheet
+     */
+    protected function closeSheets()
+    {
+        foreach ($this->getWorksheets() as $sheet) {
+            $sheet->close();
+        }
+    }
+
+    /**
      *
      */
-    protected function saveSheets()
+    protected function storeSheets()
     {
-        $sheets = $this->getWorksheets();
-
-        // Calculate the number of selected worksheet tabs and call the finalization
-        // methods for each worksheet
-        foreach ($sheets as $sheet) {
-            $sheet->close($this->sheetNames);
-        }
+        $this->closeSheets();
 
         $this->calcSheetOffsets();
-        foreach ($sheets as $sheet) {
-            $this->appendRecord('Boundsheet', array($sheet->getName(), $sheet->getOffset()));
+        foreach ($this->getWorksheets() as $sheet) {
+            $this->appendRecord('Sheet', array($sheet->getName(), $sheet->getOffset()));
         }
     }
 
@@ -214,6 +228,14 @@ class Workbook extends BIFFwriter
     public function getWorksheets()
     {
         return $this->worksheets;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSheetsCount()
+    {
+        return count($this->worksheets);
     }
 
     /**
@@ -244,9 +266,9 @@ class Workbook extends BIFFwriter
             $name = 'Sheet' . ($index + 1);
         }
 
-        $name = $this->processSheetName($name);
+        $this->checkSheetName($name);
 
-        if ($this->hasSheetEncoded($name)) {
+        if ($this->hasSheet($name)) {
             throw new \Exception("Worksheet '$name' already exists");
         }
 
@@ -278,7 +300,7 @@ class Workbook extends BIFFwriter
      * @return string
      * @throws \Exception
      */
-    protected function processSheetName($name)
+    protected function checkSheetName($name)
     {
         $maxLen = $this->biff->getMaxSheetNameLength();
         if (strlen($name) > $maxLen) {
@@ -286,10 +308,6 @@ class Workbook extends BIFFwriter
                 "Sheet name must be shorter than $maxLen chars"
             );
         }
-
-        $name = StringUtils::ConvertEncoding($name, 'UTF-16LE', 'UTF-8');
-
-        return $name;
     }
 
     /**
@@ -337,16 +355,6 @@ class Workbook extends BIFFwriter
      * @return bool
      */
     public function hasSheet($name)
-    {
-        return in_array($this->processSheetName($name), $this->sheetNames, true);
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    protected function hasSheetEncoded($name)
     {
         return in_array($name, $this->sheetNames, true);
     }
@@ -448,21 +456,28 @@ class Workbook extends BIFFwriter
      */
     protected function calcSheetOffsets()
     {
-        $eof = 4;
         $offset = $this->datasize;
-        $offset += $this->sst->calcTableSize();
-
-        // add the length of the BOUNDSHEET records
-        $boundsheetLength = $this->biff->getBoundsheetLength();
-        foreach ($this->worksheets as $sheet) {
-            $offset += $boundsheetLength + strlen($sheet->getName());
-        }
-        $offset += $eof;
+        $offset += Record\Eof::HEADER_SIZE;
+        $offset += $this->calcSheetRecordsTotalSize();
 
         foreach ($this->worksheets as $sheet) {
             $sheet->setOffset($offset);
             $offset += $sheet->getDataSize();
         }
+    }
+
+    /**
+     * @return int
+     */
+    protected function calcSheetRecordsTotalSize()
+    {
+        $size = 0;
+        foreach ($this->worksheets as $sheet) {
+            $recordData = $this->getRecord('Sheet', array($sheet->getName()));
+            $size += strlen($recordData);
+        }
+
+        return $size;
     }
 
     /**
@@ -564,6 +579,25 @@ class Workbook extends BIFFwriter
     }
 
     /**
+     *
+     */
+    protected function storeCountry()
+    {
+        if ($this->countryCode != self::COUNTRY_NONE) {
+            $this->appendRecord('Country', array($this->countryCode));
+        }
+    }
+
+    /**
+     * Write the NAME record to define the print area and the repeat rows and cols.
+     */
+    protected function storeDefinedNames()
+    {
+        $this->storePrintTitleNames();
+        $this->storePrintAreaNames();
+    }
+
+    /**
      * Create the print area NAME records
      */
     protected function storePrintAreaNames()
@@ -583,19 +617,6 @@ class Workbook extends BIFFwriter
                     Record\DefinedName::BUILTIN_PRINT_AREA,
                     $sheet->getIndex() + 1,
                     $data
-                ));
-            }
-        }
-
-        foreach ($this->worksheets as $sheet) {
-            if ($sheet->isPrintAreaSet()) {
-                $this->appendRecord('NameShort', array(
-                    $sheet->getIndex(),
-                    Record\DefinedName::BUILTIN_PRINT_AREA,
-                    $sheet->printRowMin,
-                    $sheet->printRowMax,
-                    $sheet->printColMin,
-                    $sheet->printColMax
                 ));
             }
         }
@@ -625,12 +646,12 @@ class Workbook extends BIFFwriter
             $recordType = 'NameLong';
         } elseif (isset($colmin)) {
             $recordType = 'NameShort';
-            $rowmin = 0x00;
-            $rowmax = 0x3fff;
+            $rowmin = 0;
+            $rowmax = Biff8::MAX_ROWS - 1;
         } elseif (isset($rowmin)) {
             $recordType = 'NameShort';
-            $colmin = 0x00;
-            $colmax = 0xff;
+            $colmin = 0;
+            $colmax = Biff8::MAX_COLS - 1;
         } else {
             return;
         }
@@ -646,15 +667,6 @@ class Workbook extends BIFFwriter
                 $colmax
             )
         );
-    }
-
-    /**
-     * Write the NAME record to define the print area and the repeat rows and cols.
-     */
-    protected function storeNames()
-    {
-        $this->storePrintAreaNames();
-        $this->storePrintTitleNames();
     }
 
     /**

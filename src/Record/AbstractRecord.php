@@ -9,6 +9,7 @@ abstract class AbstractRecord
 {
     const ID = 0x00;
     const LENGTH = 0x00;
+    const HEADER_SIZE = 4;
 
     /**
      * @var int

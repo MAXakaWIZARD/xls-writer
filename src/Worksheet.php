@@ -21,6 +21,14 @@ class Worksheet extends BIFFwriter
     const PAPER_A4 = 9;
     const PAPER_A5 = 11;
 
+    const STATE_VISIBLE = 0x00;
+    const STATE_HIDDEN = 0x01;
+    const STATE_VERYHIDDEN = 0x02;
+
+    const TYPE_SHEET = 0x00;
+    const TYPE_CHART = 0x02;
+    const TYPE_VB_MODULE = 0x06;
+
     /**
      * Name of the Worksheet
      * @var string
@@ -432,10 +440,8 @@ class Worksheet extends BIFFwriter
      *
      * @see Workbook::save()
      *
-     * @param array $sheetNames The array of sheetnames from the Workbook this
-     *                          worksheet belongs to
      */
-    public function close($sheetNames)
+    public function close()
     {
         /***********************************************
          * Prepend in reverse order!!
@@ -933,7 +939,7 @@ class Worksheet extends BIFFwriter
      * @param integer $lastRow  Last row of the area to print
      * @param integer $lastCol  Last column of the area to print
      */
-    public function printArea($firstRow, $firstCol, $lastRow, $lastCol)
+    public function setPrintArea($firstRow, $firstCol, $lastRow, $lastCol)
     {
         $this->printRowMin = $firstRow;
         $this->printColMin = $firstCol;
@@ -1236,7 +1242,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeStringSST($row, $col, $str, $format = null)
     {
-        $str = $this->sst->getPackedString($str);
+        $str = StringUtils::UTF8toBIFF8UnicodeLong($str);
         $this->sst->add($str);
         $strIdx = $this->sst->getStrIdx($str);
 

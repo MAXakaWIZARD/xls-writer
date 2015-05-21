@@ -99,15 +99,13 @@ class RichTest extends TestAbstract
         $discountFormat->setSize(14);
         $discountFormat->setFgColor('white');
         $discountFormat->setBgColor('black');
-        $sheet->write(11, 4, '20% discount!', $discountFormat);
+        $sheet->write(11, 4, '20% скидка!', $discountFormat);
 
-        $anotherSheet = $workbook->addWorksheet('Another sheet');
-        $anotherSheet->write(0, 0, 'Test');
+        $anotherSheet = $workbook->addWorksheet('Лист2');
+        $anotherSheet->write(0, 0, 'Тест');
 
         $workbook->save($this->testFilePath);
 
-        $this->assertFileExists($this->testFilePath);
-        $correctFilePath = $this->getFilePath('rich');
-        $this->assertFileEquals($correctFilePath, $this->testFilePath);
+        $this->checkTestFileIsEqualTo('rich');
     }
 }

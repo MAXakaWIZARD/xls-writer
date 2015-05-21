@@ -444,6 +444,20 @@ class FormulaParser
     {
         list($sheet1, $sheet2) = $this->getRangeSheets($extRef);
 
+        $index = $this->addRef($sheet1, $sheet2);
+
+        return pack('v', $index);
+    }
+
+    /**
+     * Add reference and return its index
+     * @param $sheet1
+     * @param $sheet2
+     *
+     * @return int
+     */
+    public function addRef($sheet1, $sheet2)
+    {
         // assume all references belong to this document
         $supbookIndex = 0x00;
         $ref = pack('vvv', $supbookIndex, $sheet1, $sheet2);
@@ -455,7 +469,7 @@ class FormulaParser
             $index = count($this->references);
         }
 
-        return pack('v', $index);
+        return $index;
     }
 
     /**

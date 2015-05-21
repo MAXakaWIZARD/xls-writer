@@ -2,21 +2,21 @@
 
 namespace Xls\Record;
 
-class Supbook extends AbstractRecord
+class ExternalBook extends AbstractRecord
 {
-    const NAME = 'SUPBOOK';
+    const NAME = 'EXTERNALBOOK';
     const ID = 0x01AE;
     const LENGTH = 0x04;
 
     /**
      * Generate Internal SUPBOOK record
-     * @param $worksheets
+     * @param int $worksheetsCount
      *
      * @return string
      */
-    public function getData($worksheets)
+    public function getData($worksheetsCount)
     {
-        $data = pack("vv", count($worksheets), 0x0104);
+        $data = pack("vv", $worksheetsCount, 0x0401);
 
         return $this->getHeader() . $data;
     }
