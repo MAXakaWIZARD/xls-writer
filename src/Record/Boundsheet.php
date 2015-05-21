@@ -1,6 +1,8 @@
 <?php
 namespace Xls\Record;
 
+use Xls\StringUtils;
+
 class Boundsheet extends AbstractRecord
 {
     const NAME = 'BOUNDSHEET';
@@ -18,7 +20,7 @@ class Boundsheet extends AbstractRecord
         $grbit = 0x0000;
 
         $length = 0x08 + strlen($sheetName);
-        $cch = mb_strlen($sheetName, 'UTF-16LE');
+        $cch = StringUtils::countCharacters($sheetName, 'UTF-16LE');
         $data = pack("VvCC", $offset, $grbit, $cch, 0x1);
 
         return $this->getHeader($length) . $data . $sheetName;

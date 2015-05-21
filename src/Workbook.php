@@ -287,9 +287,7 @@ class Workbook extends BIFFwriter
             );
         }
 
-        if (function_exists('iconv')) {
-            $name = iconv('UTF-8', 'UTF-16LE', $name);
-        }
+        $name = StringUtils::ConvertEncoding($name, 'UTF-16LE', 'UTF-8');
 
         return $name;
     }

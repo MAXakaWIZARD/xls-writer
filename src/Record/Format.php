@@ -1,6 +1,8 @@
 <?php
 namespace Xls\Record;
 
+use Xls\StringUtils;
+
 class Format extends AbstractRecord
 {
     const NAME = 'FORMAT';
@@ -18,18 +20,14 @@ class Format extends AbstractRecord
         $formatLen = strlen($format);
         $length = 5 + $formatLen;
 
-        if (function_exists('iconv')
-        ) {
-            // Encode format String
-            if (mb_detect_encoding($format, 'auto') !== 'UTF-16LE') {
-                $format = iconv(mb_detect_encoding($format, 'auto'), 'UTF-16LE', $format);
-            }
+        if (StringUtils::isIconvEnabled() && StringUtils::isMbstringEnabled()) {
+            $format = StringUtils::toUtf16Le($format);
             $encoding = 1;
-            $cch = function_exists('mb_strlen') ? mb_strlen($format, 'UTF-16LE') : ($formatLen / 2);
         } else {
             $encoding = 0;
-            $cch = $formatLen;
         }
+
+        $cch = StringUtils::countCharacters($format);
 
         $data = pack("vvC", $formatIndex, $cch, $encoding);
 

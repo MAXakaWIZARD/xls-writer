@@ -24,7 +24,7 @@ class StringUtils
      *
      * @return boolean
      */
-    public static function getIsMbstringEnabled()
+    public static function isMbstringEnabled()
     {
         if (isset(self::$isMbstringEnabled)) {
             return self::$isMbstringEnabled;
@@ -40,7 +40,7 @@ class StringUtils
      *
      * @return boolean
      */
-    public static function getIsIconvEnabled()
+    public static function isIconvEnabled()
     {
         if (isset(self::$isIconvEnabled)) {
             return self::$isIconvEnabled;
@@ -91,12 +91,12 @@ class StringUtils
      */
     public static function sanitizeUTF8($value)
     {
-        if (self::getIsIconvEnabled()) {
+        if (self::isIconvEnabled()) {
             $value = @iconv('UTF-8', 'UTF-8', $value);
             return $value;
         }
 
-        if (self::getIsMbstringEnabled()) {
+        if (self::isMbstringEnabled()) {
             $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
             return $value;
         }
@@ -148,7 +148,7 @@ class StringUtils
         $ln = self::CountCharacters($value, 'UTF-8');
         // option flags
         if (empty($arrcRuns)) {
-            $opt = (self::getIsIconvEnabled() || self::getIsMbstringEnabled()) ?
+            $opt = (self::isIconvEnabled() || self::isMbstringEnabled()) ?
                 0x0001 : 0x0000;
             $data = pack('CC', $ln, $opt);
             // characters
@@ -183,7 +183,7 @@ class StringUtils
         $ln = self::CountCharacters($value, 'UTF-8');
 
         // option flags
-        $opt = (self::getIsIconvEnabled() || self::getIsMbstringEnabled()) ?
+        $opt = (self::isIconvEnabled() || self::isMbstringEnabled()) ?
             0x0001 : 0x0000;
 
         // characters
@@ -204,18 +204,17 @@ class StringUtils
      */
     public static function convertEncoding($value, $to, $from)
     {
-        if (self::getIsIconvEnabled()) {
+        if (self::isIconvEnabled()) {
             return iconv($from, $to, $value);
         }
 
-        if (self::getIsMbstringEnabled()) {
+        if (self::isMbstringEnabled()) {
             return mb_convert_encoding($value, $to, $from);
         }
 
-        if ($from == 'UTF-16LE') {
-            return self::utf16Decode($value, false);
-        } elseif ($from == 'UTF-16BE') {
-            return self::utf16Decode($value);
+        if ($from == 'UTF-16LE' || $from == 'UTF-16BE') {
+            $isBigEndian = $from == 'UTF-16BE';
+            return self::utf16Decode($value, $isBigEndian);
         }
 
         return $value;
@@ -273,11 +272,11 @@ class StringUtils
      */
     public static function countCharacters($value, $enc = 'UTF-8')
     {
-        if (self::getIsMbstringEnabled()) {
+        if (self::isMbstringEnabled()) {
             return mb_strlen($value, $enc);
         }
 
-        if (self::getIsIconvEnabled()) {
+        if (self::isIconvEnabled()) {
             return iconv_strlen($value, $enc);
         }
 
@@ -295,11 +294,11 @@ class StringUtils
      */
     public static function substring($pValue = '', $pStart = 0, $pLength = 0)
     {
-        if (self::getIsMbstringEnabled()) {
+        if (self::isMbstringEnabled()) {
             return mb_substr($pValue, $pStart, $pLength, 'UTF-8');
         }
 
-        if (self::getIsIconvEnabled()) {
+        if (self::isIconvEnabled()) {
             return iconv_substr($pValue, $pStart, $pLength, 'UTF-8');
         }
 
@@ -374,7 +373,7 @@ class StringUtils
      */
     public static function strCaseReverse($pValue = '')
     {
-        if (self::getIsMbstringEnabled()) {
+        if (self::isMbstringEnabled()) {
             $characters = self::mbStrSplit($pValue);
             foreach ($characters as &$character) {
                 if (self::mbIsUpper($character)) {
@@ -406,5 +405,36 @@ class StringUtils
         $v = floatval($value);
 
         return (is_numeric(substr($value, 0, strlen($v)))) ? $v : $value;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    public static function toUtf16Le($value)
+    {
+        if (!self::isIconvEnabled() || !self::isMbstringEnabled()) {
+            return $value;
+        }
+
+        $encoding = mb_detect_encoding($value, 'auto');
+        if ($encoding !== 'UTF-16LE') {
+            $value = iconv($encoding, 'UTF-16LE', $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param $encoding
+     *
+     * @throws \Exception
+     */
+    public static function checkEncoding($encoding)
+    {
+        if ($encoding != 'UTF-16LE' && !self::isIconvEnabled()) {
+            throw new \Exception("Using an input encoding other than UTF-16LE requires PHP support for iconv");
+        }
     }
 }

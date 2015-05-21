@@ -328,12 +328,6 @@ class Worksheet extends BIFFwriter
     public $mergedRanges = array();
 
     /**
-     * Charset encoding currently used when calling writeString()
-     * @var string
-     */
-    public $inputEncoding = '';
-
-    /**
      * @var int
      */
     protected $offset;
@@ -1234,20 +1228,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Sets Input Encoding for writing strings
-     * @param string $encoding The encoding. Ex: 'UTF-16LE', 'utf-8', 'ISO-859-7'
-     * @throws \Exception
-     */
-    public function setInputEncoding($encoding)
-    {
-        if ($encoding != 'UTF-16LE' && !function_exists('iconv')) {
-            throw new \Exception("Using an input encoding other than UTF-16LE requires PHP support for iconv");
-        }
-
-        $this->inputEncoding = $encoding;
-    }
-
-    /**
      * Write a string to the specified row and column (zero indexed).
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
@@ -1256,7 +1236,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeStringSST($row, $col, $str, $format = null)
     {
-        $str = $this->sst->getPackedString($str, $this->inputEncoding);
+        $str = $this->sst->getPackedString($str);
         $this->sst->add($str);
         $strIdx = $this->sst->getStrIdx($str);
 
