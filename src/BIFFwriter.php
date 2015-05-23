@@ -41,6 +41,19 @@ class BIFFwriter
     protected $byteOrder;
 
     /**
+     * This flag indicates write to temporary buffer mode
+     * instead of $data
+     * @var bool
+     */
+    protected $bufferedWrite = false;
+
+    /**
+     * Temporary buffer
+     * @var string
+     */
+    protected $buffer = '';
+
+    /**
      * The string containing the data of the BIFF stream
      * @var string
      */
@@ -54,18 +67,6 @@ class BIFFwriter
     protected $datasize = 0;
 
     /**
-     * The temporary dir for storing the OLE file
-     * @var string
-     */
-    protected $tmpDir;
-
-    /**
-     * The temporary file for storing the OLE file
-     * @var string
-     */
-    protected $tmpFile = '';
-
-    /**
      * @var Biff8
      */
     protected $biff;
@@ -75,8 +76,6 @@ class BIFFwriter
      */
     public function __construct()
     {
-        $this->tmpDir = sys_get_temp_dir();
-
         $this->biff = new Biff8;
 
         $this->setByteOrder();
@@ -118,9 +117,20 @@ class BIFFwriter
     protected function prepend($data)
     {
         $data = $this->addContinueIfNeeded($data);
+        $this->prependRaw($data);
+    }
 
-        $this->data = $data . $this->data;
-        $this->datasize += strlen($data);
+    /**
+     * @param string $data binary data to prepend
+     */
+    protected function prependRaw($data)
+    {
+        if ($this->isBufferedWriteOn()) {
+            $this->buffer = $data . $this->buffer;
+        } else {
+            $this->data = $data . $this->data;
+            $this->datasize += strlen($data);
+        }
     }
 
     /**
@@ -129,9 +139,20 @@ class BIFFwriter
     protected function append($data)
     {
         $data = $this->addContinueIfNeeded($data);
+        $this->appendRaw($data);
+    }
 
-        $this->data .= $data;
-        $this->datasize += strlen($data);
+    /**
+     * @param string $data binary data to append
+     */
+    protected function appendRaw($data)
+    {
+        if ($this->isBufferedWriteOn()) {
+            $this->buffer .= $data;
+        } else {
+            $this->data .= $data;
+            $this->datasize += strlen($data);
+        }
     }
 
     /**
@@ -198,5 +219,31 @@ class BIFFwriter
     {
         $className = "\\Xls\\Record\\$type";
         return new $className($this->byteOrder);
+    }
+
+    protected function isBufferedWriteOn()
+    {
+        return $this->bufferedWrite;
+    }
+
+    protected function startBufferedWrite()
+    {
+        $this->bufferedWrite = true;
+        $this->buffer = '';
+    }
+
+    protected function endBufferedWrite()
+    {
+        $this->bufferedWrite = false;
+    }
+
+    protected function getBuffer()
+    {
+        return $this->buffer;
+    }
+
+    protected function getBufferSize()
+    {
+        return strlen($this->buffer);
     }
 }

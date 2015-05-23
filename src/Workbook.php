@@ -170,18 +170,19 @@ class Workbook extends BIFFwriter
         $this->storeAllStyles();
         $this->appendRecord('Palette', array($this->palette));
 
+        $this->startBufferedWrite();
         $this->storeCountry();
         $this->appendRecord('RecalcId');
         $this->storeSupbookInternal();
-
         $this->storeExternsheet();
         $this->storeDefinedNames();
-
         $this->storeSharedStringsTable();
+        $this->appendRecord('Eof');
+        $this->endBufferedWrite();
 
         $this->storeSheets();
 
-        $this->appendRecord('Eof');
+        $this->appendRaw($this->getBuffer());
 
         $this->saveOleFile($filePath);
 
@@ -214,10 +215,28 @@ class Workbook extends BIFFwriter
     {
         $this->closeSheets();
 
-        $this->calcSheetOffsets();
+        $offset = $this->datasize;
+        $offset += $this->calcSheetRecordsTotalSize();
+        $offset += $this->getBufferSize();
+
         foreach ($this->getWorksheets() as $sheet) {
-            $this->appendRecord('Sheet', array($sheet->getName(), $sheet->getOffset()));
+            $this->appendRecord('Sheet', array($sheet->getName(), $offset));
+            $offset += $sheet->getDataSize();
         }
+    }
+
+    /**
+     * @return int
+     */
+    protected function calcSheetRecordsTotalSize()
+    {
+        $size = 0;
+        foreach ($this->worksheets as $sheet) {
+            $recordData = $this->getRecord('Sheet', array($sheet->getName()));
+            $size += strlen($recordData);
+        }
+
+        return $size;
     }
 
     /**
@@ -290,6 +309,7 @@ class Workbook extends BIFFwriter
 
         // Register worksheet name with parser
         $this->formulaParser->setExtSheet($name, $index);
+        $this->formulaParser->addRef($index, $index);
 
         return $worksheet;
     }
@@ -434,13 +454,10 @@ class Workbook extends BIFFwriter
     protected function saveOleFile($filePath)
     {
         $ole = new PpsFile($this->biff->getWorkbookName());
-
         $ole->append($this->data);
 
         foreach ($this->worksheets as $sheet) {
-            while ($tmp = $sheet->getData()) {
-                $ole->append($tmp);
-            }
+            $ole->append($sheet->getData());
         }
 
         $root = new PpsRoot(
@@ -449,35 +466,6 @@ class Workbook extends BIFFwriter
         );
 
         $root->save($filePath);
-    }
-
-    /**
-     * Calculate offsets for Worksheet BOF records.
-     */
-    protected function calcSheetOffsets()
-    {
-        $offset = $this->datasize;
-        $offset += Record\Eof::HEADER_SIZE;
-        $offset += $this->calcSheetRecordsTotalSize();
-
-        foreach ($this->worksheets as $sheet) {
-            $sheet->setOffset($offset);
-            $offset += $sheet->getDataSize();
-        }
-    }
-
-    /**
-     * @return int
-     */
-    protected function calcSheetRecordsTotalSize()
-    {
-        $size = 0;
-        foreach ($this->worksheets as $sheet) {
-            $recordData = $this->getRecord('Sheet', array($sheet->getName()));
-            $size += strlen($recordData);
-        }
-
-        return $size;
     }
 
     /**
@@ -593,8 +581,8 @@ class Workbook extends BIFFwriter
      */
     protected function storeDefinedNames()
     {
-        $this->storePrintTitleNames();
         $this->storePrintAreaNames();
+        $this->storePrintTitleNames();
     }
 
     /**
@@ -642,31 +630,32 @@ class Workbook extends BIFFwriter
         $colmin = $sheet->titleColMin;
         $colmax = $sheet->titleColMax;
 
-        if (isset($rowmin) && isset($colmin)) {
-            $recordType = 'NameLong';
-        } elseif (isset($colmin)) {
-            $recordType = 'NameShort';
-            $rowmin = 0;
-            $rowmax = Biff8::MAX_ROWS - 1;
-        } elseif (isset($rowmin)) {
-            $recordType = 'NameShort';
-            $colmin = 0;
-            $colmax = Biff8::MAX_COLS - 1;
-        } else {
+        if (!isset($rowmin) && !isset($colmin)) {
             return;
         }
 
-        $this->appendRecord(
-            $recordType,
-            array(
-                $sheet->index,
-                Record\DefinedName::BUILTIN_PRINT_TITLES,
-                $rowmin,
-                $rowmax,
-                $colmin,
-                $colmax
-            )
-        );
+        if (isset($rowmin) && isset($colmin)) {
+            $data = pack('Cv', 0x29, 0x17); // tMemFunc
+            $data .= pack('Cvvvvv', 0x3B, $sheet->getIndex(), 0, 65535, $colmin, $colmax); // tArea3d
+            $data .= pack('Cvvvvv', 0x3B, $sheet->getIndex(), $rowmin, $rowmax, 0, Biff8::MAX_COLS - 1); // tArea3d
+            $data .= pack('C', 0x10); // tList
+        } else {
+            if (isset($colmin)) {
+                $rowmin = 0;
+                $rowmax = 65535;
+            } else {
+                $colmin = 0;
+                $colmax = Biff8::MAX_COLS - 1;
+            }
+
+            $data = pack('Cvvvvv', 0x3B, $sheet->getIndex(), $rowmin, $rowmax, $colmin, $colmax);
+        }
+
+        $this->appendRecord('DefinedName', array(
+            Record\DefinedName::BUILTIN_PRINT_TITLES,
+            $sheet->getIndex() + 1,
+            $data
+        ));
     }
 
     /**

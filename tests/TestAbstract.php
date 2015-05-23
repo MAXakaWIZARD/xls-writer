@@ -11,6 +11,11 @@ class TestAbstract extends \PHPUnit_Framework_TestCase
     const WORKBOOK_TS = 1429042916;
 
     /**
+     * @var Workbook
+     */
+    protected $workbook;
+
+    /**
      * @var string
      */
     protected $testFilePath;
@@ -21,6 +26,7 @@ class TestAbstract extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         $this->testFilePath = TEST_DATA_PATH . '/test.xls';
+        $this->workbook = $this->createWorkbook();
     }
 
     /**
@@ -57,7 +63,7 @@ class TestAbstract extends \PHPUnit_Framework_TestCase
      * @param string $name
      * @param string $suffix
      */
-    protected function checkTestFileIsEqualTo($name, $suffix = '')
+    protected function assertTestFileEqualsTo($name, $suffix = '')
     {
         $this->assertFileExists($this->testFilePath);
         $correctFilePath = $this->getFilePath($name, $suffix);

@@ -8,33 +8,13 @@ class LayoutsTest extends TestAbstract
 {
     public function testPortraitLayout()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
-        $row = array(
-            'Portrait layout test'
-        );
-        $sheet->writeRow(0, 0, $row);
-
-        $sheet->setPrintArea(1, 1, 5, 5);
-
-        $workbook->save($this->testFilePath);
-        exit;
-
-        $this->checkTestFileIsEqualTo('layout_portrait');
-    }
-
-    public function ctestPortraitLayout()
-    {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $row = array(
             'Portrait layout test',
-            '',
-            '',
-            '',
-            '',
+            '1',
+            '2',
+            '3',
+            '4',
             'Test2'
         );
         $sheet->writeRow(0, 0, $row);
@@ -48,32 +28,76 @@ class LayoutsTest extends TestAbstract
         $sheet->setPrintScale(90);
         $sheet->setPaper($sheet::PAPER_A3);
 
-        $sheet->setPrintArea(0, 0, 10, 10);
+        $sheet->setPrintArea(0, 0, 5, 5);
 
-        $sheet->hideGridlines();
+        $sheet->hidePrintGridlines();
         $sheet->setHPagebreaks(array(1));
         $sheet->setVPagebreaks(array(5));
 
-        $workbook->save($this->testFilePath);
-        exit;
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('layout_portrait');
+        $this->assertTestFileEqualsTo('layout_portrait');
     }
 
-    public function testLandscapeLayout()
+    public function testPrintRepeatRow()
     {
-        return;
-        $workbook = $this->createWorkbook();
-        $workbook->setCountry($workbook::COUNTRY_USA);
+        $sheet = $this->workbook->addWorksheet();
 
-        $sheet = $workbook->addWorksheet();
+        $sheet->writeRow(0, 0, array('ID', 'Name'));
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+        }
+
+        $sheet->printRepeatRows(0);
+        $sheet->printRepeatRows(0, 0);
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('print_repeat_row');
+    }
+
+    public function testPrintRepeatCol()
+    {
+        $sheet = $this->workbook->addWorksheet();
 
         $fields = range(1, 15);
         $fieldValues = array();
         $headers = array('ID', 'Name');
         foreach ($fields as $idx) {
             $headers[] = 'Field' . $idx;
-            $fieldValues[] = 'Field value ' . $idx;
+            $fieldValues[] = 'Value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 10);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
+        $sheet->printRepeatColumns(0);
+        $sheet->printRepeatColumns(0, 0);
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('print_repeat_col');
+    }
+
+    public function testPrintRepeatRowCol()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Value ' . $idx;
         }
 
         $sheet->writeRow(0, 0, $headers);
@@ -85,15 +109,35 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        //$sheet->repeatRows(0);
-        //$sheet->repeatRows(0, 0);
+        $sheet->printRepeatRows(0);
+        $sheet->printRepeatColumns(0);
 
-        //$sheet->repeatColumns(0);
-        //$sheet->repeatColumns(0, 0);
+        $this->workbook->save($this->testFilePath);
 
-        $sheet->freezePanes(array(1, 1));
+        $this->assertTestFileEqualsTo('print_repeat_rowcol');
+    }
 
-        $sheet->setZoom(125);
+    public function testLandscapeLayout()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
         $sheet->hideScreenGridlines();
 
         $sheet->setLandscape();
@@ -108,9 +152,8 @@ class LayoutsTest extends TestAbstract
         $sheet->setPaper($sheet::PAPER_A4);
         $sheet->printRowColHeaders();
 
-        $workbook->save($this->testFilePath);
-        exit;
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('layout_landscape');
+        $this->assertTestFileEqualsTo('layout_landscape');
     }
 }

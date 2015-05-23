@@ -14,11 +14,9 @@ class RichTest extends TestAbstract
      */
     public function testRich()
     {
-        $workbook = $this->createWorkbook();
+        $sheet = $this->workbook->addWorksheet('New PC');
 
-        $sheet = $workbook->addWorksheet('New PC');
-
-        $headerFormat = $workbook->addFormat();
+        $headerFormat = $this->workbook->addFormat();
         $headerFormat->setBold();
         $headerFormat->setBorder(Format::BORDER_THIN);
         $headerFormat->setBorderColor('navy');
@@ -27,16 +25,16 @@ class RichTest extends TestAbstract
         $headerFormat->setPattern(Fill::PATTERN_GRAY50);
 
         //#ccc
-        $workbook->setCustomColor(12, 204, 204, 204);
+        $this->workbook->setCustomColor(12, 204, 204, 204);
         $headerFormat->setFgColor(12);
 
-        $cellFormat = $workbook->addFormat();
+        $cellFormat = $this->workbook->addFormat();
         $cellFormat->setNormal();
         $cellFormat->setBorder(Format::BORDER_THIN);
         $cellFormat->setBorderColor('navy');
         $cellFormat->setUnLocked();
 
-        $priceFormat = $workbook->addFormat();
+        $priceFormat = $this->workbook->addFormat();
         $priceFormat->setBorder(Format::BORDER_THIN);
         $priceFormat->setBorderColor('navy');
         $priceFormat->setNumFormat(2);
@@ -60,7 +58,7 @@ class RichTest extends TestAbstract
             $sheet->writeRow($i, 0, $emptyRow, $cellFormat);
         }
 
-        $oldPriceFormat = $workbook->addFormat();
+        $oldPriceFormat = $this->workbook->addFormat();
         $oldPriceFormat->setBorder(Format::BORDER_THIN);
         $oldPriceFormat->setBorderColor('navy');
         $oldPriceFormat->setSize(12);
@@ -73,7 +71,7 @@ class RichTest extends TestAbstract
         $oldPriceFormat->setTextWrap();
         $oldPriceFormat->setTextRotation(0);
 
-        $grandFormat = $workbook->addFormat();
+        $grandFormat = $this->workbook->addFormat();
         $grandFormat->setBold();
         $grandFormat->setBorder(Format::BORDER_THIN);
         $grandFormat->setBorderColor('navy');
@@ -93,7 +91,7 @@ class RichTest extends TestAbstract
         $sheet->write(11, 3, '=ROUND(D11-D11*0.2, 2)', $grandFormat);
 
         //
-        $discountFormat = $workbook->addFormat();
+        $discountFormat = $this->workbook->addFormat();
         $discountFormat->setColor('red');
         $discountFormat->setScript(Format::SCRIPT_SUPER);
         $discountFormat->setSize(14);
@@ -101,11 +99,11 @@ class RichTest extends TestAbstract
         $discountFormat->setBgColor('black');
         $sheet->write(11, 4, '20% скидка!', $discountFormat);
 
-        $anotherSheet = $workbook->addWorksheet('Лист2');
+        $anotherSheet = $this->workbook->addWorksheet('Лист2');
         $anotherSheet->write(0, 0, 'Тест');
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('rich');
+        $this->assertTestFileEqualsTo('rich');
     }
 }

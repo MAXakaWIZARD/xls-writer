@@ -2,6 +2,7 @@
 namespace Test;
 
 use Xls\Fill;
+use Xls\Workbook;
 
 /**
  *
@@ -10,10 +11,9 @@ class GeneralTest extends TestAbstract
 {
     public function testGeneral()
     {
-        $workbook = $this->createWorkbook();
-        $workbook->setCountry($workbook::COUNTRY_USA);
+        $this->workbook->setCountry(Workbook::COUNTRY_USA);
 
-        $sheet = $workbook->addWorksheet('My first worksheet');
+        $sheet = $this->workbook->addWorksheet('My first worksheet');
         $sheet->writeRow(
             0,
             0,
@@ -23,12 +23,12 @@ class GeneralTest extends TestAbstract
             )
         );
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('general');
+        $this->assertTestFileEqualsTo('general');
 
         $this->setExpectedException('\Exception', 'Workbook was already saved!');
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
     }
 
     /**
@@ -36,34 +36,28 @@ class GeneralTest extends TestAbstract
      */
     public function testProtected()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
         $sheet->protect('1234');
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('protected');
+        $this->assertTestFileEqualsTo('protected');
     }
 
     public function testSelection()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
         $sheet->setSelection(0, 0, 5, 5);
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('selection');
+        $this->assertTestFileEqualsTo('selection');
     }
 
     public function testMultipleSheets()
     {
-        $workbook = $this->createWorkbook();
-
         $sheetNames = array(
             'First sheet',
             'Второй лист',
@@ -72,20 +66,18 @@ class GeneralTest extends TestAbstract
         );
 
         for ($i = 1; $i <= 4; $i++) {
-            $s = $workbook->addWorksheet($sheetNames[$i - 1]);
+            $s = $this->workbook->addWorksheet($sheetNames[$i - 1]);
             $s->write(0, 0, 'Test' . $i);
         }
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('multiple_sheets');
+        $this->assertTestFileEqualsTo('multiple_sheets');
     }
 
     public function testDefcolsAndRowsizes()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $sheet->writeRow(0, 0, array('Test1', 'Test2', 'Test3'));
 
         $sheet->setColumn(0, 0, 25);
@@ -96,28 +88,25 @@ class GeneralTest extends TestAbstract
         $sheet->setRow(1, 15);
         $sheet->setRow(2, 10, null, 1);
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('defcols_rowsizes');
+        $this->assertTestFileEqualsTo('defcols_rowsizes');
     }
 
     public function testImage()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
         $sheet->insertBitmap(2, 2, TEST_DATA_PATH . '/elephpant.bmp');
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('image');
+        $this->assertTestFileEqualsTo('image');
     }
 
     public function testMergeCells()
     {
-        $workbook = $this->createWorkbook();
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
 
         $sheet->writeRow(1, 0, array('Merge1', '', ''));
         $sheet->mergeCells(1, 0, 1, 4);
@@ -126,22 +115,19 @@ class GeneralTest extends TestAbstract
         $sheet->writeRow(3, 2, array('Merge3', '', ''));
         $sheet->mergeCells(3, 2, 3, 4);
 
-        $format = $workbook->addFormat();
+        $format = $this->workbook->addFormat();
         $format->setAlign('center');
         $sheet->writeRow(4, 3, array('Merge4', '', ''), $format);
         $sheet->mergeCells(4, 3, 5, 4);
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('merge');
+        $this->assertTestFileEqualsTo('merge');
     }
 
     public function testThawPanes()
     {
-        $workbook = $this->createWorkbook();
-        $workbook->setCountry($workbook::COUNTRY_USA);
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
 
         $fields = range(1, 15);
         $fieldValues = array();
@@ -162,16 +148,42 @@ class GeneralTest extends TestAbstract
 
         $sheet->thawPanes(array(1, 1));
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('thaw_panes');
+        $this->assertTestFileEqualsTo('thaw_panes');
+    }
+
+    public function testFreezePanes()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Field value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
+        $sheet->freezePanes(array(1, 1));
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('freeze_panes');
     }
 
     public function testLongStrings()
     {
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
 
         //keep for full test coverage
         $sheet->write(0, 0, str_repeat('a', 33));
@@ -192,7 +204,7 @@ class GeneralTest extends TestAbstract
         $sheet->write(4, 0, str_repeat('д', 10240));
         $sheet->writeFormula(4, 1, '=LEN(A5)');
 
-        $anotherSheet = $workbook->addWorksheet();
+        $anotherSheet = $this->workbook->addWorksheet();
 
         $anotherSheet->write(0, 0, str_repeat('f', 9216));
         $anotherSheet->writeFormula(0, 1, '=LEN(A1)');
@@ -200,19 +212,16 @@ class GeneralTest extends TestAbstract
         $anotherSheet->write(1, 0, str_repeat('g', 10240));
         $anotherSheet->writeFormula(1, 1, '=LEN(A2)');
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('long_strings');
+        $this->assertTestFileEqualsTo('long_strings');
     }
 
     public function testFill()
     {
-        $workbook = $this->createWorkbook();
-        $workbook->setCountry($workbook::COUNTRY_NONE);
+        $sheet = $this->workbook->addWorksheet();
 
-        $sheet = $workbook->addWorksheet();
-
-        $format = $workbook->addFormat();
+        $format = $this->workbook->addFormat();
         $format->setColor('red');
         $format->setAlign('center');
 
@@ -227,25 +236,21 @@ class GeneralTest extends TestAbstract
         $sheet->setColumn(0, 0, 50);
         $sheet->write(0, 0, 'Test', $format);
 
-        $workbook->save($this->testFilePath);
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('fill');
+        $this->assertTestFileEqualsTo('fill');
     }
 
     public function testMultipleSheetsFormulas()
     {
-        return;
-        $workbook = $this->createWorkbook();
-
-        $sheet = $workbook->addWorksheet();
+        $sheet = $this->workbook->addWorksheet();
         $sheet->write(0, 0, 5);
 
-        $anotherSheet = $workbook->addWorksheet();
-        $anotherSheet->writeFormula(0, 0, '=Sheet1!A1');
+        $anotherSheet = $this->workbook->addWorksheet();
+        $anotherSheet->writeFormula(0, 0, '=Sheet1!A1 * 5');
 
-        $workbook->save($this->testFilePath);
-        exit;
+        $this->workbook->save($this->testFilePath);
 
-        $this->checkTestFileIsEqualTo('multiple_sheets_formulas');
+        $this->assertTestFileEqualsTo('cross_sheets_formulas');
     }
 }

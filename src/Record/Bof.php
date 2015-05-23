@@ -15,10 +15,8 @@ class Bof extends AbstractRecord
      */
     public function getData($type)
     {
-        // According to the SDK $build and $year should be set to zero.
-        // However, this throws a warning in Excel 5. So, use magic numbers.
         $length = 0x10;
-        $unknown = pack("VV", 0x00000041, 0x00000006); //unknown last 8 bytes for BIFF8
+        $unknown = pack("VV", 0x000100D1, 0x00000406);
         $build = 0x0DBB;
         $year = 0x07CC;
 

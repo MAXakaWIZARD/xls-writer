@@ -54,22 +54,16 @@ class Worksheet extends BIFFwriter
     protected $formulaParser;
 
     /**
-     * Filehandle to the temporary file for storing data
-     * @var resource
-     */
-    public $fileHandle;
-
-    /**
-     * Maximum number of rows for an Excel spreadsheet (BIFF5)
+     * Maximum number of rows for an Excel spreadsheet
      * @var integer
      */
-    public $xlsRowmax;
+    public $xlsRowmax = Biff8::MAX_ROWS;
 
     /**
-     * Maximum number of columns for an Excel spreadsheet (BIFF5)
+     * Maximum number of columns for an Excel spreadsheet
      * @var integer
      */
-    public $xlsColmax;
+    public $xlsColmax = Biff8::MAX_COLS;
 
     /**
      * First row for the DIMENSIONS record
@@ -81,7 +75,7 @@ class Worksheet extends BIFFwriter
      * Last row for the DIMENSIONS record
      * @var integer
      */
-    public $dimRowmax;
+    public $dimRowmax = 0;
 
     /**
      * First column for the DIMENSIONS record
@@ -93,7 +87,7 @@ class Worksheet extends BIFFwriter
      * Last column for the DIMENSIONS record
      * @var integer
      */
-    public $dimColmax;
+    public $dimColmax = 0;
 
     /**
      * Array containing format information for columns
@@ -117,7 +111,7 @@ class Worksheet extends BIFFwriter
      * The active pane for the worksheet
      * @var integer
      */
-    public $activePane;
+    public $activePane = 3;
 
     /**
      * Bit specifying if panes are frozen
@@ -141,7 +135,7 @@ class Worksheet extends BIFFwriter
      * Bit specifying paper orientation (for printing). 0 => landscape, 1 => portrait
      * @var integer
      */
-    public $orientation;
+    public $orientation = self::ORIENTATION_PORTRAIT;
 
     /**
      * The page header caption
@@ -171,37 +165,37 @@ class Worksheet extends BIFFwriter
      * The margin for the header
      * @var float
      */
-    public $marginHead;
+    public $marginHead = 0.50;
 
     /**
      * The margin for the footer
      * @var float
      */
-    public $marginFoot;
+    public $marginFoot = 0.50;
 
     /**
      * The left margin for the worksheet in inches
      * @var float
      */
-    public $marginLeft;
+    public $marginLeft = 0.75;
 
     /**
      * The right margin for the worksheet in inches
      * @var float
      */
-    public $marginRight;
+    public $marginRight = 0.75;
 
     /**
      * The top margin for the worksheet in inches
      * @var float
      */
-    public $marginTop;
+    public $marginTop = 1.00;
 
     /**
      * The bottom margin for the worksheet in inches
      * @var float
      */
-    public $marginBottom;
+    public $marginBottom = 1.00;
 
     /**
      * First row to reapeat on each printed page
@@ -335,11 +329,6 @@ class Worksheet extends BIFFwriter
      */
     public $mergedRanges = array();
 
-    /**
-     * @var int
-     */
-    protected $offset;
-
     protected $printGridLines = 1;
     protected $screenGridLines = 1;
     protected $printRowColHeaders = 0;
@@ -389,49 +378,8 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->xlsRowmax = Biff8::MAX_ROWS;
-        $this->xlsColmax = Biff8::MAX_COLS;
-        $this->dimRowmin = $this->xlsRowmax + 1;
-        $this->dimRowmax = 0;
-        $this->dimColmin = $this->xlsColmax + 1;
-        $this->dimColmax = 0;
-        $this->activePane = 3;
-
-        $this->orientation = self::ORIENTATION_PORTRAIT;
-        $this->marginHead = 0.50;
-        $this->marginFoot = 0.50;
-        $this->marginLeft = 0.75;
-        $this->marginRight = 0.75;
-        $this->marginTop = 1.00;
-        $this->marginBottom = 1.00;
-
-        $this->init();
-    }
-
-    /**
-     *
-     */
-    public function __destruct()
-    {
-        if ($this->tmpFile != '') {
-            @unlink($this->tmpFile);
-            $this->tmpFile = '';
-        }
-    }
-
-    /**
-     * Open a tmp file to store the majority of the Worksheet data. If this fails,
-     * for example due to write permissions, store the data in memory. This can be
-     * slow for large files.
-     */
-    protected function init()
-    {
-        $this->tmpFile = tempnam($this->tmpDir, "Spreadsheet_Excel_Writer");
-        $this->fileHandle = @fopen($this->tmpFile, "w+b");
-
-        if ($this->fileHandle === false) {
-            throw new \Exception('Unable to create temporary file');
-        }
+        $this->dimRowmin = Biff8::MAX_ROWS + 1;
+        $this->dimColmin = Biff8::MAX_COLS + 1;
     }
 
     /**
@@ -459,11 +407,13 @@ class Worksheet extends BIFFwriter
 
         $this->storePageBreaks();
         $this->storeWsbool();
+        $this->storeGuts();
         $this->storeGridset();
         $this->storePrintGridlines();
         $this->storePrintHeaders();
 
         $this->storeColinfo();
+        $this->prependRecord('Defcolwidth');
 
         $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
 
@@ -498,28 +448,13 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Retrieves data from memory in one chunk (prepended data),
-     * or from disk in chunks (appended data).
+     * Retrieves data from memory in one chunk
      *
      * @return string The data
      */
     public function getData()
     {
-        // Return data stored in memory
-        if (isset($this->data)) {
-            $tmp = $this->data;
-            $this->data = null;
-
-            fseek($this->fileHandle, 0);
-
-            return $tmp;
-        }
-
-        if ($tmp = fread($this->fileHandle, 4096)) {
-            return $tmp;
-        }
-
-        return '';
+        return $this->data;
     }
 
     /**
@@ -907,7 +842,7 @@ class Worksheet extends BIFFwriter
      * @param integer $firstRow First row to repeat
      * @param integer $lastRow  Last row to repeat. Optional.
      */
-    public function repeatRows($firstRow, $lastRow = null)
+    public function printRepeatRows($firstRow, $lastRow = null)
     {
         if (!isset($lastRow)) {
             $lastRow = $firstRow;
@@ -922,7 +857,7 @@ class Worksheet extends BIFFwriter
      * @param integer $firstCol First column to repeat
      * @param integer $lastCol  Last column to repeat. Optional.
      */
-    public function repeatColumns($firstCol, $lastCol = null)
+    public function printRepeatColumns($firstCol, $lastCol = null)
     {
         if (!isset($lastCol)) {
             $lastCol = $firstCol;
@@ -951,7 +886,7 @@ class Worksheet extends BIFFwriter
     /**
      * Set the option to hide gridlines on the printed page.
      */
-    public function hideGridlines()
+    public function hidePrintGridlines()
     {
         $this->printGridLines = 0;
     }
@@ -1151,17 +1086,6 @@ class Worksheet extends BIFFwriter
     public function xf($format)
     {
         return ($format) ? $format->getXfIndex(): 0x0F;
-    }
-
-    /**
-     * Store Worksheet data to a temporary file.
-     * @param string $data The binary data to append
-     */
-    protected function append($data)
-    {
-        $data = $this->addContinueIfNeeded($data);
-        fwrite($this->fileHandle, $data);
-        $this->datasize += strlen($data);
     }
 
     /**
@@ -1793,8 +1717,6 @@ class Worksheet extends BIFFwriter
         foreach ($this->colInfo as $item) {
             $this->prependRecord('Colinfo', array($item));
         }
-
-        $this->prependRecord('Defcolwidth');
     }
 
     /**
@@ -1942,6 +1864,11 @@ class Worksheet extends BIFFwriter
         if (!empty($this->hbreaks)) {
             $this->prependRecord('HorizontalPagebreaks', array($this->hbreaks));
         }
+    }
+
+    protected function storeGuts()
+    {
+        $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
     }
 
     /**
@@ -2205,27 +2132,15 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDataValidity()
     {
+        if (count($this->dv) == 0) {
+            return;
+        }
+
         $this->appendRecord('DataValidations', array($this->dv));
 
         foreach ($this->dv as $dv) {
             $this->appendRecord('DataValidation', array($dv));
         }
-    }
-
-    /**
-     * @return int
-     */
-    public function getOffset()
-    {
-        return $this->offset;
-    }
-
-    /**
-     * @param int $offset
-     */
-    public function setOffset($offset)
-    {
-        $this->offset = $offset;
     }
 
     /**
