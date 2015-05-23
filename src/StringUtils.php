@@ -53,25 +53,25 @@ class StringUtils
         }
 
         // Sometimes iconv is not working, and e.g. iconv('UTF-8', 'UTF-16LE', 'x') just returns false,
-        if (!@iconv('UTF-8', 'UTF-16LE', 'x')) {
+        if (!iconv('UTF-8', 'UTF-16LE', 'x')) {
             self::$isIconvEnabled = false;
             return false;
         }
 
         // Sometimes iconv_substr('A', 0, 1, 'UTF-8') just returns false in PHP 5.2.0
         // we cannot use iconv in that case either (http://bugs.php.net/bug.php?id=37773)
-        if (!@iconv_substr('A', 0, 1, 'UTF-8')) {
+        if (!iconv_substr('A', 0, 1, 'UTF-8')) {
             self::$isIconvEnabled = false;
             return false;
         }
 
         // CUSTOM: IBM AIX iconv() does not work
         if (defined('PHP_OS')
-            && @stristr(PHP_OS, 'AIX')
+            && stristr(PHP_OS, 'AIX')
             && defined('ICONV_IMPL')
-            && (@strcasecmp(ICONV_IMPL, 'unknown') == 0)
+            && (strcasecmp(ICONV_IMPL, 'unknown') == 0)
             && defined('ICONV_VERSION')
-            && (@strcasecmp(ICONV_VERSION, 'unknown') == 0)
+            && (strcasecmp(ICONV_VERSION, 'unknown') == 0)
         ) {
             self::$isIconvEnabled = false;
             return false;
@@ -92,7 +92,7 @@ class StringUtils
     public static function sanitizeUTF8($value)
     {
         if (self::isIconvEnabled()) {
-            $value = @iconv('UTF-8', 'UTF-8', $value);
+            $value = iconv('UTF-8', 'UTF-8', $value);
             return $value;
         }
 
