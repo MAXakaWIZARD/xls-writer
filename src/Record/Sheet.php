@@ -22,7 +22,7 @@ class Sheet extends AbstractRecord
         $sheetType = Worksheet::TYPE_SHEET;
 
         $data = pack("VCC", $offset, $sheetState, $sheetType);
-        $data .= StringUtils::UTF8toBIFF8UnicodeShort($sheetName);
+        $data .= StringUtils::toBiff8UnicodeShort($sheetName);
 
         $length = strlen($data);
 

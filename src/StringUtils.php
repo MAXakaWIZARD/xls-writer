@@ -142,7 +142,7 @@ class StringUtils
      * @param mixed[] $arrcRuns Details of rich text runs in $value
      * @return string
      */
-    public static function UTF8toBIFF8UnicodeShort($value, $arrcRuns = array())
+    public static function toBiff8UnicodeShort($value, $arrcRuns = array())
     {
         // character count
         $ln = self::CountCharacters($value, 'UTF-8');
@@ -177,7 +177,7 @@ class StringUtils
      * @param string $value UTF-8 encoded string
      * @return string
      */
-    public static function UTF8toBIFF8UnicodeLong($value)
+    public static function toBiff8UnicodeLong($value)
     {
         // character count
         $ln = self::CountCharacters($value, 'UTF-8');

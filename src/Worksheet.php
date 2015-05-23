@@ -1166,7 +1166,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeStringSST($row, $col, $str, $format = null)
     {
-        $str = StringUtils::UTF8toBIFF8UnicodeLong($str);
+        $str = StringUtils::toBiff8UnicodeLong($str);
         $this->sst->add($str);
         $strIdx = $this->sst->getStrIdx($str);
 
