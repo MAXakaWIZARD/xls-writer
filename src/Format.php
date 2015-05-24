@@ -123,7 +123,13 @@ class Format
      * An index (2 bytes) to a FORMAT record (number format).
      * @var integer
      */
-    public $numFormat = 0;
+    protected $numFormat = NumberFormat::TYPE_GENERAL;
+
+    /**
+     * number format index
+     * @var integer
+     */
+    protected $numFormatIndex;
 
     /**
      * Bit specifying if formulas are hidden.
@@ -627,17 +633,6 @@ class Format
     }
 
     /**
-     * Sets the numeric format.
-     * It can be date, time, currency, etc...
-     *
-     * @param integer $numFormat The numeric format.
-     */
-    public function setNumFormat($numFormat)
-    {
-        $this->numFormat = $numFormat;
-    }
-
-    /**
      * Sets font as strikeout.
      *
      */
@@ -703,18 +698,37 @@ class Format
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function isBuiltInNumFormat()
+    public function getNumFormat()
     {
-        return preg_match("/^\d+$/", $this->numFormat) === 1;
+        return $this->numFormat;
     }
 
     /**
-     * @return bool
+     * Sets the numeric format.
+     * It can be date, time, currency, etc...
+     *
+     * @param integer $numFormat The numeric format.
      */
-    public function isZeroStringNumFormat()
+    public function setNumFormat($numFormat)
     {
-        return preg_match("/^0+\d/", $this->numFormat) === 1;
+        $this->numFormat = $numFormat;
+    }
+
+    /**
+     * @return int
+     */
+    public function getNumFormatIndex()
+    {
+        return $this->numFormatIndex;
+    }
+
+    /**
+     * @param int $numFormatIndex
+     */
+    public function setNumFormatIndex($numFormatIndex)
+    {
+        $this->numFormatIndex = $numFormatIndex;
     }
 }

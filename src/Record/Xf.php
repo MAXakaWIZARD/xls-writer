@@ -2,6 +2,7 @@
 namespace Xls\Record;
 
 use Xls\Format as XlsFormat;
+use Xls\NumberFormat;
 
 class Xf extends AbstractRecord
 {
@@ -31,7 +32,7 @@ class Xf extends AbstractRecord
         $length = 0x0014;
 
         $options = 0x00;
-        $data = pack("vvvC", $format->fontIndex, $format->numFormat, $style, $this->getAlignment($format));
+        $data = pack("vvvC", $format->fontIndex, $format->getNumFormatIndex(), $style, $this->getAlignment($format));
         $data .= pack("CCC", $format->rotation, $options, $this->getUsedAttr($format));
         $data .= pack("VVv", $border1, $border2, $icv);
 
@@ -163,7 +164,7 @@ class Xf extends AbstractRecord
     protected function getFlags($format)
     {
         return array(
-            'Num' => ($format->numFormat != 0) ? 1 : 0,
+            'Num' => ($format->getNumFormat() != NumberFormat::TYPE_GENERAL) ? 1 : 0,
             'Fnt' => ($format->fontIndex != 0) ? 1 : 0,
             'Alc' => ($format->textWrap) ? 1 : 0,
             'Bdr' => ($format->bottom

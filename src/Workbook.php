@@ -515,21 +515,17 @@ class Workbook extends BIFFwriter
         // Iterate through the XF objects and write a FORMAT record if it isn't a
         // built-in format type and if the FORMAT string hasn't already been used.
         foreach ($this->formats as $format) {
-            $numFormat = $format->numFormat;
+            $numFormat = $format->getNumFormat();
 
-            if (!$format->isZeroStringNumFormat()
-                || $format->isBuiltInNumFormat()
-            ) {
+            if (NumberFormat::isBuiltIn($numFormat)) {
+                $format->setNumFormatIndex($numFormat);
                 continue;
             }
 
-            if (isset($map[$numFormat])) {
-                // FORMAT has already been used
-                $format->numFormat = $map[$numFormat];
-            } else {
+            if (!isset($map[$numFormat])) {
                 // Add a new FORMAT
-                $map[$numFormat] = $index;
-                $format->numFormat = $index;
+                $map[$numFormat] = 1;
+                $format->setNumFormatIndex($index);
                 $this->appendRecord('Format', array($numFormat, $index));
                 $index++;
             }

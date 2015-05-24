@@ -32,7 +32,7 @@ class RichTest extends TestAbstract
         $sheet->writeCol(1, 3, array('=B2*C2', '=B3*C3', '=B4*C4'), $priceFormat);
 
         $grandFormat = $this->getGrandTotalFormat();
-        $this->assertTrue($grandFormat->isBuiltInNumFormat());
+        $this->assertTrue(NumberFormat::isBuiltIn($grandFormat->getNumFormat()));
 
         $sheet->writeRow(10, 0, array('Total', '', ''), $grandFormat);
         $sheet->mergeCells(10, 0, 10, 2);
@@ -151,7 +151,7 @@ class RichTest extends TestAbstract
         $format->setOutLine();
         $format->setItalic();
         $format->setShadow();
-        $format->setNumFormat(NumberFormat::TYPE_CURRENCY_3);
+        $format->setNumFormat('$0.00');
         $format->setLocked();
         $format->setTextWrap();
         $format->setTextRotation(0);

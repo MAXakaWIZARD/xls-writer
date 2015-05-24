@@ -183,4 +183,14 @@ class NumberFormat
      * Text: @
      */
     const TYPE_TEXT = 49;
+
+    /**
+     * @param $format
+     *
+     * @return bool
+     */
+    public static function isBuiltIn($format)
+    {
+        return preg_match("/^\d+$/", $format) === 1;
+    }
 }

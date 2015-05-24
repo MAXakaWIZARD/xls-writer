@@ -17,20 +17,9 @@ class Format extends AbstractRecord
      */
     public function getData($format, $formatIndex)
     {
-        $formatLen = strlen($format);
-        $length = 5 + $formatLen;
+        $data = pack("v", $formatIndex);
+        $data .= StringUtils::toBiff8UnicodeLong($format);
 
-        if (StringUtils::isIconvEnabled() && StringUtils::isMbstringEnabled()) {
-            $format = StringUtils::toUtf16Le($format);
-            $encoding = 1;
-        } else {
-            $encoding = 0;
-        }
-
-        $cch = StringUtils::countCharacters($format);
-
-        $data = pack("vvC", $formatIndex, $cch, $encoding);
-
-        return $this->getHeader($length) . $data . $format;
+        return $this->getHeader(strlen($data)) . $data;
     }
 }
