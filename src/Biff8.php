@@ -63,14 +63,6 @@ class Biff8
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getBoundsheetLength()
-    {
-        return static::BOUNDSHEET_LENGTH;
-    }
-
-    /**
      * @return int
      */
     public static function getContinueLimit()

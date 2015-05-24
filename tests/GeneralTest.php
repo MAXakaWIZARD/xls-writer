@@ -49,6 +49,9 @@ class GeneralTest extends TestAbstract
     {
         $sheet = $this->workbook->addWorksheet();
         $sheet->write(0, 0, 'Test');
+
+        $sheet->setSelection(0, 0);
+        $sheet->setSelection(5, 5, 0, 0);
         $sheet->setSelection(0, 0, 5, 5);
 
         $this->workbook->save($this->testFilePath);
@@ -186,7 +189,7 @@ class GeneralTest extends TestAbstract
         $sheet = $this->workbook->addWorksheet();
 
         //keep for full test coverage
-        $sheet->write(0, 0, str_repeat('a', 33));
+        $sheet->write(0, 0, str_repeat('a', 41));
         $sheet->writeFormula(0, 1, '=LEN(A1)');
         //keep for full test coverage
         $sheet->write(5, 0, str_repeat('e', 8200));

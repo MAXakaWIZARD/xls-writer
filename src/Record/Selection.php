@@ -24,22 +24,6 @@ class Selection extends AbstractRecord
         $irefAct = 0; // Active cell ref
         $cref = 1; // Number of refs
 
-        if (!isset($rwLast)) {
-            $rwLast = $rwFirst; // Last row in reference
-        }
-        if (!isset($colLast)) {
-            $colLast = $colFirst; // Last col in reference
-        }
-
-        // Swap last row/col for first row/col as necessary
-        if ($rwFirst > $rwLast) {
-            list($rwFirst, $rwLast) = array($rwLast, $rwFirst);
-        }
-
-        if ($colFirst > $colLast) {
-            list($colFirst, $colLast) = array($colLast, $colFirst);
-        }
-
         $data = pack(
             "CvvvvvvCC",
             $activePane,

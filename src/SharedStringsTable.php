@@ -46,29 +46,21 @@ class SharedStringsTable
     }
 
     /**
+     * Add string to table. Returns string index
      * @param $str
+     * @return integer
      */
     public function add($str)
     {
+        $str = StringUtils::toBiff8UnicodeLong($str);
+
         if (!isset($this->data[$str])) {
             $this->data[$str] = $this->uniqueCount++;
         }
+
         $this->totalCount++;
-    }
 
-    /**
-     * @param $str
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    public function getStrIdx($str)
-    {
-        if (isset($this->data[$str])) {
-            return $this->data[$str];
-        }
-
-        throw new \Exception('String "'. $str . '" not found in Shared Strings Table');
+        return $this->data[$str];
     }
 
     /**
@@ -229,30 +221,5 @@ class SharedStringsTable
     public function getBlocksSizes()
     {
         return $this->getBlocksSizesOrDataToWrite();
-    }
-
-    /**
-     * Calculate the total length of the SST and associated CONTINUEs (if any).
-     * The SST record will have a length even if it contains no strings.
-     * This length is required to set the offsets in the BOUNDSHEET records since
-     * they must be written before the SST records
-     *
-     * @return int
-     */
-    public function calcTableSize()
-    {
-        $blockSizes = $this->getBlocksSizes();
-
-        $size = 12;
-
-        if (!empty($blockSizes)) {
-            $size += array_shift($blockSizes); // SST
-        }
-
-        while (!empty($blockSizes)) {
-            $size += 4 + array_shift($blockSizes); // CONTINUEs
-        }
-
-        return $size;
     }
 }

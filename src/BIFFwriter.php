@@ -112,28 +112,6 @@ class BIFFwriter
     }
 
     /**
-     * @param string $data binary data to prepend
-     */
-    protected function prepend($data)
-    {
-        $data = $this->addContinueIfNeeded($data);
-        $this->prependRaw($data);
-    }
-
-    /**
-     * @param string $data binary data to prepend
-     */
-    protected function prependRaw($data)
-    {
-        if ($this->isBufferedWriteOn()) {
-            $this->buffer = $data . $this->buffer;
-        } else {
-            $this->data = $data . $this->data;
-            $this->datasize += strlen($data);
-        }
-    }
-
-    /**
      * @param string $data binary data to append
      */
     protected function append($data)
@@ -164,17 +142,6 @@ class BIFFwriter
     protected function appendRecord($type, array $params = array())
     {
         $this->append($this->getRecord($type, $params));
-    }
-
-    /**
-     * @param string $type
-     * @param array $params
-     *
-     * @return mixed
-     */
-    protected function prependRecord($type, array $params = array())
-    {
-        $this->prepend($this->getRecord($type, $params));
     }
 
     /**
@@ -245,5 +212,17 @@ class BIFFwriter
     protected function getBufferSize()
     {
         return strlen($this->buffer);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getDataAndFlush()
+    {
+        $data = $this->data;
+        $this->data = '';
+        $this->datasize = 0;
+
+        return $data;
     }
 }

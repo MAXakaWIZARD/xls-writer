@@ -215,7 +215,7 @@ class Workbook extends BIFFwriter
     {
         $this->closeSheets();
 
-        $offset = $this->datasize;
+        $offset = $this->getDataSize();
         $offset += $this->calcSheetRecordsTotalSize();
         $offset += $this->getBufferSize();
 

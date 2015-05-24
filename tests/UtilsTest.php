@@ -3,6 +3,7 @@ namespace Test;
 
 use Xls\Cell;
 use Xls\Utils;
+use Xls\Token;
 
 /**
  *
@@ -95,6 +96,54 @@ class UtilsTest extends TestAbstract
         return array(
             array('FF 00', pack('v', 255)),
             array('01 00 00 00', pack('V', 1)),
+        );
+    }
+
+    /**
+     * @dataProvider providerTokenGetPtg
+     * @param string $expected
+     * @param string $value
+     *
+     * @throws \Exception
+     */
+    public function testTokenGetPtg($expected, $value)
+    {
+        $this->assertSame($expected, Token::getPtg($value));
+    }
+
+    /**
+     * @return array
+     */
+    public function providerTokenGetPtg()
+    {
+        return array(
+            array(null, 'UNKNOWN_TOKEN'),
+            array('ptgAdd', Token::TOKEN_ADD),
+        );
+    }
+
+    /**
+     * @dataProvider providerTokenPossibleLookahead
+     * @param string $expected
+     * @param string $token
+     * @param string $lookahead
+     *
+     * @throws \Exception
+     */
+    public function testTokenPossibleLookahead($expected, $token, $lookahead)
+    {
+        $this->assertSame($expected, Token::isPossibleLookahead($token, $lookahead));
+    }
+
+    /**
+     * @return array
+     */
+    public function providerTokenPossibleLookahead()
+    {
+        return array(
+            array(true, Token::TOKEN_GT, '='),
+            array(false, Token::TOKEN_GT, '<'),
+            array(true, Token::TOKEN_MUL, '5'),
         );
     }
 }

@@ -391,37 +391,36 @@ class Worksheet extends BIFFwriter
      */
     public function close()
     {
-        /***********************************************
-         * Prepend in reverse order!!
-         */
+        //save previously written data
+        $data = $this->getDataAndFlush();
+
+        $this->appendRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
+
+        $this->appendRecord('Defcolwidth');
+        $this->storeColinfo();
+
+        $this->storePrintHeaders();
+        $this->storePrintGridlines();
+        $this->storeGridset();
+        $this->storeGuts();
+        $this->storeWsbool();
+        $this->storePageBreaks();
+
+        $this->appendRecord('Header', array($this->header));
+        $this->appendRecord('Footer', array($this->footer));
+
+        $this->storeCentering();
+        $this->storeMargins();
+
+        $this->appendRecord('PageSetup', array($this));
+
+        $this->storeProtect();
+        $this->storePassword();
 
         $this->storeDimensions();
-        $this->storePassword();
-        $this->storeProtect();
-        $this->prependRecord('PageSetup', array($this));
-        $this->storeMargins();
-        $this->storeCentering();
 
-        $this->prependRecord('Footer', array($this->footer));
-        $this->prependRecord('Header', array($this->header));
+        $this->appendRaw($data);
 
-        $this->storePageBreaks();
-        $this->storeWsbool();
-        $this->storeGuts();
-        $this->storeGridset();
-        $this->storePrintGridlines();
-        $this->storePrintHeaders();
-
-        $this->storeColinfo();
-        $this->prependRecord('Defcolwidth');
-
-        $this->prependRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
-
-        /*
-        * End of prepend. Read upwards from here.
-        ***********************************************/
-
-        // Append
         $this->appendRecord('Window2', array($this));
         $this->storeZoom();
 
@@ -577,8 +576,25 @@ class Worksheet extends BIFFwriter
      * @param integer $lastRow     last row in the selected quadrant
      * @param integer $lastColumn  last column in the selected quadrant
      */
-    public function setSelection($firstRow, $firstColumn, $lastRow, $lastColumn)
+    public function setSelection($firstRow, $firstColumn, $lastRow = null, $lastColumn = null)
     {
+        if (!isset($lastRow)) {
+            $lastRow = $firstRow; // Last row in reference
+        }
+
+        if (!isset($lastColumn)) {
+            $lastColumn = $firstColumn; // Last col in reference
+        }
+
+        // Swap last row/col for first row/col as necessary
+        if ($firstRow > $lastRow) {
+            list($firstRow, $lastRow) = array($lastRow, $firstRow);
+        }
+
+        if ($firstColumn > $lastColumn) {
+            list($firstColumn, $lastColumn) = array($lastColumn, $firstColumn);
+        }
+
         $this->selection = array($firstRow, $firstColumn, $lastRow, $lastColumn);
     }
 
@@ -1166,9 +1182,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeStringSST($row, $col, $str, $format = null)
     {
-        $str = StringUtils::toBiff8UnicodeLong($str);
-        $this->sst->add($str);
-        $strIdx = $this->sst->getStrIdx($str);
+        $strIdx = $this->sst->add($str);
 
         $this->appendRecord(
             'LabelSst',
@@ -1664,7 +1678,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDimensions()
     {
-        $this->prependRecord(
+        $this->appendRecord(
             'Dimensions',
             array(
                 $this->dimRowmin,
@@ -1676,16 +1690,12 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Prepend the COLINFO records if they exist
+     * Append the COLINFO records if they exist
      */
     protected function storeColinfo()
     {
-        if (count($this->colInfo) == 0) {
-            return;
-        }
-
         foreach ($this->colInfo as $item) {
-            $this->prependRecord('Colinfo', array($item));
+            $this->appendRecord('Colinfo', array($item));
         }
     }
 
@@ -1700,29 +1710,14 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Writes the Excel BIFF EXTERNSHEET record. These references are used by
-     * formulas. A formula references a sheet name via an index. Since we store a
-     * reference to all of the external worksheets the EXTERNSHEET index is the same
-     * as the worksheet index.
-     *
-     * @param string $sheetName The name of a external worksheet
-     */
-    protected function storeExternsheet($sheetName)
-    {
-        /** @var Record\Externsheet $record */
-        $record = $this->createRecord('Externsheet');
-        $this->prepend($record->getDataForCurrentSheet($sheetName, $this->name));
-    }
-
-    /**
      * Store the margins records
      */
     protected function storeMargins()
     {
-        $this->prependRecord('BottomMargin', array($this->marginBottom));
-        $this->prependRecord('TopMargin', array($this->marginTop));
-        $this->prependRecord('RightMargin', array($this->marginRight));
-        $this->prependRecord('LeftMargin', array($this->marginLeft));
+        $this->appendRecord('LeftMargin', array($this->marginLeft));
+        $this->appendRecord('RightMargin', array($this->marginRight));
+        $this->appendRecord('TopMargin', array($this->marginTop));
+        $this->appendRecord('BottomMargin', array($this->marginBottom));
     }
 
     /**
@@ -1730,11 +1725,8 @@ class Worksheet extends BIFFwriter
      */
     protected function storeCentering()
     {
-        // Prepend the page vertical centering
-        $this->prependRecord('Vcenter', array($this->vcenter));
-
-        // Prepend the page horizontal centering
-        $this->prependRecord('Hcenter', array($this->hcenter));
+        $this->appendRecord('Hcenter', array($this->hcenter));
+        $this->appendRecord('Vcenter', array($this->vcenter));
     }
 
     /**
@@ -1768,7 +1760,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintHeaders()
     {
-        $this->prependRecord('PrintHeaders', array($this->printRowColHeaders));
+        $this->appendRecord('PrintHeaders', array($this->printRowColHeaders));
     }
 
     /**
@@ -1777,7 +1769,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintGridlines()
     {
-        $this->prependRecord('PrintGridLines', array($this->printGridLines));
+        $this->appendRecord('PrintGridLines', array($this->printGridLines));
     }
 
     /**
@@ -1786,7 +1778,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGridset()
     {
-        $this->prependRecord('Gridset', array(!$this->printGridLines));
+        $this->appendRecord('Gridset', array(!$this->printGridLines));
     }
 
     /**
@@ -1819,7 +1811,7 @@ class Worksheet extends BIFFwriter
 
         $header = pack("vv", $record, $length);
         $data = pack("v", $grbit);
-        $this->prepend($header . $data);
+        $this->append($header . $data);
     }
 
     /**
@@ -1827,18 +1819,18 @@ class Worksheet extends BIFFwriter
      */
     protected function storePageBreaks()
     {
-        if (!empty($this->vbreaks)) {
-            $this->prependRecord('VerticalPagebreaks', array($this->vbreaks));
+        if (!empty($this->hbreaks)) {
+            $this->appendRecord('HorizontalPagebreaks', array($this->hbreaks));
         }
 
-        if (!empty($this->hbreaks)) {
-            $this->prependRecord('HorizontalPagebreaks', array($this->hbreaks));
+        if (!empty($this->vbreaks)) {
+            $this->appendRecord('VerticalPagebreaks', array($this->vbreaks));
         }
     }
 
     protected function storeGuts()
     {
-        $this->prependRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
+        $this->appendRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
     }
 
     /**
@@ -1847,7 +1839,7 @@ class Worksheet extends BIFFwriter
     protected function storeProtect()
     {
         if ($this->protect) {
-            $this->prependRecord('Protect', array($this->protect));
+            $this->appendRecord('Protect', array($this->protect));
         }
     }
 
@@ -1857,7 +1849,7 @@ class Worksheet extends BIFFwriter
     protected function storePassword()
     {
         if ($this->protect && isset($this->password)) {
-            $this->prependRecord('Password', array($this->password));
+            $this->appendRecord('Password', array($this->password));
         }
     }
 
