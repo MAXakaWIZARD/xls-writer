@@ -10,7 +10,7 @@ class ValidationTest extends TestAbstract
     {
         $sheet = $this->workbook->addWorksheet();
 
-        $sheet->setColumn(0, 0, 20);
+        $sheet->setColumnWidth(0, 0, 20);
 
         //positive number
         $validator = $this->workbook->addValidator();

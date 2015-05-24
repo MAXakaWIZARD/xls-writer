@@ -520,7 +520,7 @@ class Worksheet extends BIFFwriter
      * @param integer $hidden   The optional hidden atribute
      * @param integer $level    The optional outline level
      */
-    public function setColumn($firstcol, $lastcol, $width, $format = null, $hidden = 0, $level = 0)
+    public function setColumnWidth($firstcol, $lastcol, $width, $format = null, $hidden = 0, $level = 0)
     {
         // look for any ranges this might overlap and remove, size or split where necessary
         foreach ($this->colInfo as $key => $colinfo) {
@@ -1602,7 +1602,7 @@ class Worksheet extends BIFFwriter
      * @param bool $hidden The optional hidden attribute
      * @param integer $level  The optional outline level for row, in range [0,7]
      */
-    public function setRow($row, $height, $format = null, $hidden = false, $level = 0)
+    public function setRowHeight($row, $height, $format = null, $hidden = false, $level = 0)
     {
         $record = 0x0208; // Record identifier
         $length = 0x0010; // Number of bytes to follow

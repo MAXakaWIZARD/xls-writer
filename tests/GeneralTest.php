@@ -80,13 +80,13 @@ class GeneralTest extends TestAbstract
         $sheet = $this->workbook->addWorksheet();
         $sheet->writeRow(0, 0, array('Test1', 'Test2', 'Test3'));
 
-        $sheet->setColumn(0, 0, 25);
-        $sheet->setColumn(1, 1, 50);
-        $sheet->setColumn(2, 3, 10, null, 1);
+        $sheet->setColumnWidth(0, 0, 25);
+        $sheet->setColumnWidth(1, 1, 50);
+        $sheet->setColumnWidth(2, 3, 10, null, 1);
 
-        $sheet->setRow(0, 30);
-        $sheet->setRow(1, 15);
-        $sheet->setRow(2, 10, null, 1);
+        $sheet->setRowHeight(0, 30);
+        $sheet->setRowHeight(1, 15);
+        $sheet->setRowHeight(2, 10, null, 1);
 
         $this->workbook->save($this->testFilePath);
 
@@ -232,8 +232,8 @@ class GeneralTest extends TestAbstract
         $format->setFgColor('navy');
         $format->setPattern(Fill::PATTERN_DIAGONAL_STRIPE);
 
-        $sheet->setRow(0, 75);
-        $sheet->setColumn(0, 0, 50);
+        $sheet->setRowHeight(0, 75);
+        $sheet->setColumnWidth(0, 0, 50);
         $sheet->write(0, 0, 'Test', $format);
 
         $this->workbook->save($this->testFilePath);

@@ -221,7 +221,7 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     {
         $sheet = $this->workbook->addWorksheet();
 
-        $sheet->setRow(0, 0);
+        $sheet->setRowHeight(0, 0);
         $this->setExpectedException('\Exception', "Bitmap isn't allowed to start or finish in a hidden cell");
         $sheet->insertBitmap(0, 0, TEST_DATA_PATH . '/elephpant.bmp');
     }
