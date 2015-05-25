@@ -19,7 +19,8 @@ class GeneralTest extends TestAbstract
             0,
             array(
                 array('Name', 'John Smith', 'Johann Schmidt', 'Иван Иванов'),
-                array('Age', 30, 31, 32)
+                array('Age', 30, 31, 32),
+                array('URL', 'mailto:jsmith@server.com', 'http://google.com', '')
             )
         );
 

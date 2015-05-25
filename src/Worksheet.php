@@ -1081,16 +1081,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Returns an index to the XF record in the workbook
-     * @param mixed $format The optional XF format
-     * @return integer The XF record index
-     */
-    public function xf($format)
-    {
-        return ($format) ? $format->getXfIndex(): 0x0F;
-    }
-
-    /**
      * This method sets the properties for outlining and grouping. The defaults
      * correspond to Excel's defaults.
      *
