@@ -10,11 +10,6 @@ class FormulaParser
     protected $ptg;
 
     /**
-     * @var array
-     */
-    protected $functions;
-
-    /**
      * The index of the character we are currently looking at
      * @var integer
      */
@@ -71,9 +66,6 @@ class FormulaParser
     public function __construct($byteOrder)
     {
         $this->byteOrder = $byteOrder;
-
-        $this->ptg = Ptg::getAll();
-        $this->functions = Functions::getBuiltIn();
     }
 
     /**
@@ -97,10 +89,10 @@ class FormulaParser
             return $this->convertRange2d($token);
         } elseif (Token::isExternalRange($token)) {
             return $this->convertRange3d($token);
-        } elseif (isset($this->ptg[$token])) {
+        } elseif (Ptg::exists($token)) {
             // operators (including parentheses)
-            return pack("C", $this->ptg[$token]);
-        } elseif ($token == 'arg') {
+            return pack("C", Ptg::get($token));
+        } elseif (Token::isArg($token)) {
             // if it's an argument, ignore the token (the argument remains)
             return '';
         }
@@ -118,14 +110,14 @@ class FormulaParser
     {
         if (preg_match("/^\d+$/", $num) && $num <= 65535) {
             // Integer in the range 0..2**16-1
-            return pack("Cv", $this->ptg['ptgInt'], $num);
+            return pack("Cv", Ptg::get('ptgInt'), $num);
         } else {
             // A float
             if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
                 $num = strrev($num);
             }
 
-            return pack("Cd", $this->ptg['ptgNum'], $num);
+            return pack("Cd", Ptg::get('ptgNum'), $num);
         }
     }
 
@@ -146,7 +138,7 @@ class FormulaParser
 
         $encoding = 0;
 
-        return pack("CCC", $this->ptg['ptgStr'], strlen($string), $encoding) . $string;
+        return pack("CCC", Ptg::get('ptgStr'), strlen($string), $encoding) . $string;
     }
 
     /**
@@ -160,56 +152,16 @@ class FormulaParser
      */
     protected function convertFunction($token, $numArgs)
     {
-        $ptg = $this->getFunctionPtg($token);
-        $args = $this->getFunctionArgsNumber($token);
+        $ptg = Functions::getPtg($token);
+        $args = Functions::getArgsNumber($token);
 
         // Fixed number of args eg. TIME($i,$j,$k).
         if ($args >= 0) {
-            return pack("Cv", $this->ptg['ptgFuncV'], $ptg);
+            return pack("Cv", Ptg::get('ptgFuncV'), $ptg);
         }
 
         // Variable number of args eg. SUM($i,$j,$k, ..).
-        return pack("CCv", $this->ptg['ptgFuncVarV'], $numArgs, $ptg);
-    }
-
-    /**
-     * @param $function
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function getFunctionArgsNumber($function)
-    {
-        $function = $this->getFunction($function);
-
-        return $function[1];
-    }
-
-    /**
-     * @param $function
-     *
-     * @return mixed
-     */
-    protected function getFunctionPtg($function)
-    {
-        $function = $this->getFunction($function);
-
-        return $function[0];
-    }
-
-    /**
-     * @param $function
-     *
-     * @return mixed
-     * @throws \Exception
-     */
-    protected function getFunction($function)
-    {
-        if (!isset($this->functions[$function])) {
-            throw new \Exception("Function $function() doesn't exist");
-        }
-
-        return $this->functions[$function];
+        return pack("CCv", Ptg::get('ptgFuncVarV'), $numArgs, $ptg);
     }
 
     /**
@@ -232,13 +184,13 @@ class FormulaParser
         // The ptg value depends on the class of the ptg.
         switch ($class) {
             case 0:
-                $ptgArea = pack("C", $this->ptg['ptgArea']);
+                $ptgArea = pack("C", Ptg::get('ptgArea'));
                 break;
             case 1:
-                $ptgArea = pack("C", $this->ptg['ptgAreaV']);
+                $ptgArea = pack("C", Ptg::get('ptgAreaV'));
                 break;
             case 2:
-                $ptgArea = pack("C", $this->ptg['ptgAreaA']);
+                $ptgArea = pack("C", Ptg::get('ptgAreaA'));
                 break;
             default:
                 throw new \Exception("Unknown class $class");
@@ -278,13 +230,13 @@ class FormulaParser
         $class = 2; // as far as I know, this is magick.
         switch ($class) {
             case 0:
-                $ptgArea = pack("C", $this->ptg['ptgArea3d']);
+                $ptgArea = pack("C", Ptg::get('ptgArea3d'));
                 break;
             case 1:
-                $ptgArea = pack("C", $this->ptg['ptgArea3dV']);
+                $ptgArea = pack("C", Ptg::get('ptgArea3dV'));
                 break;
             case 2:
-                $ptgArea = pack("C", $this->ptg['ptgArea3dA']);
+                $ptgArea = pack("C", Ptg::get('ptgArea3dA'));
                 break;
             default:
                 throw new \Exception("Unknown class $class");
@@ -307,13 +259,13 @@ class FormulaParser
         $class = 2; // as far as I know, this is magick.
         switch ($class) {
             case 0:
-                $ptgRef = pack("C", $this->ptg['ptgRef']);
+                $ptgRef = pack("C", Ptg::get('ptgRef'));
                 break;
             case 1:
-                $ptgRef = pack("C", $this->ptg['ptgRefV']);
+                $ptgRef = pack("C", Ptg::get('ptgRefV'));
                 break;
             case 2:
-                $ptgRef = pack("C", $this->ptg['ptgRefA']);
+                $ptgRef = pack("C", Ptg::get('ptgRefA'));
                 break;
             default:
                 throw new \Exception("Unknown class $class");
@@ -344,13 +296,13 @@ class FormulaParser
         $class = 2; // as far as I know, this is magick.
         switch ($class) {
             case 0:
-                $ptgRef = pack("C", $this->ptg['ptgRef3d']);
+                $ptgRef = pack("C", Ptg::get('ptgRef3d'));
                 break;
             case 1:
-                $ptgRef = pack("C", $this->ptg['ptgRef3dV']);
+                $ptgRef = pack("C", Ptg::get('ptgRef3dV'));
                 break;
             case 2:
-                $ptgRef = pack("C", $this->ptg['ptgRef3dA']);
+                $ptgRef = pack("C", Ptg::get('ptgRef3dA'));
                 break;
             default:
                 throw new \Exception("Unknown class $class");
@@ -884,7 +836,7 @@ class FormulaParser
             $numArgs++;
         }
 
-        $args = $this->getFunctionArgsNumber($function);
+        $args = Functions::getArgsNumber($function);
         if ($args >= 0 && $args != $numArgs) {
             // If fixed number of args eg. TIME($i,$j,$k). Check that the number of args is valid.
             throw new \Exception("Incorrect number of arguments in function $function() ");
@@ -973,7 +925,7 @@ class FormulaParser
             && !Token::isReference($tree['value'])
             && !Token::isRangeWithDots($tree['value'])
             && !is_numeric($tree['value'])
-            && !isset($this->ptg[$tree['value']])
+            && !Ptg::exists($tree['value'])
         ) {
             // left subtree for a function is always an array.
             if ($tree['left'] != '') {

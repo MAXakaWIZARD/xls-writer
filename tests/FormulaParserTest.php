@@ -74,6 +74,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                         'A3',
                         'SUM(Sheet2:Sheet1!A1:D4)',
                         '0',
+                        'sum(D2:D9)'
                     ),
                     'correct' => true
                 )
@@ -175,5 +176,53 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(true, Token::isRangeWithDots('F2..F5'), 'F2..F5 is valid range');
         $this->assertEquals(true, Token::isRangeWithDots('$F$2..$F$5'), '$F$2..$F$5 is valid range');
+    }
+
+    /**
+     * @dataProvider providerTokenGetPtg
+     * @param string $expected
+     * @param string $value
+     *
+     * @throws \Exception
+     */
+    public function testTokenGetPtg($expected, $value)
+    {
+        $this->assertSame($expected, Token::getPtg($value));
+    }
+
+    /**
+     * @return array
+     */
+    public function providerTokenGetPtg()
+    {
+        return array(
+            array(null, 'UNKNOWN_TOKEN'),
+            array('ptgAdd', Token::TOKEN_ADD),
+        );
+    }
+
+    /**
+     * @dataProvider providerTokenPossibleLookahead
+     * @param string $expected
+     * @param string $token
+     * @param string $lookahead
+     *
+     * @throws \Exception
+     */
+    public function testTokenPossibleLookahead($expected, $token, $lookahead)
+    {
+        $this->assertSame($expected, Token::isPossibleLookahead($token, $lookahead));
+    }
+
+    /**
+     * @return array
+     */
+    public function providerTokenPossibleLookahead()
+    {
+        return array(
+            array(true, Token::TOKEN_GT, '='),
+            array(false, Token::TOKEN_GT, '<'),
+            array(true, Token::TOKEN_MUL, '5'),
+        );
     }
 }

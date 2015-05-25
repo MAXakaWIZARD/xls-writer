@@ -5,6 +5,45 @@ namespace Xls;
 class Ptg
 {
     /**
+     * @var null|array
+     */
+    protected static $ptgs = null;
+
+    /**
+     * @param $ptg
+     *
+     * @return bool
+     */
+    public static function exists($ptg)
+    {
+        self::cache();
+
+        return isset(self::$ptgs[$ptg]);
+    }
+
+    /**
+     * @param $ptg
+     *
+     * @return bool
+     */
+    public static function get($ptg)
+    {
+        self::cache();
+
+        return isset(self::$ptgs[$ptg]) ? self::$ptgs[$ptg] : null;
+    }
+
+    /**
+     *
+     */
+    protected static function cache()
+    {
+        if (is_null(self::$ptgs)) {
+            self::$ptgs = self::getAll();
+        }
+    }
+
+    /**
      * @return array
      */
     public static function getAll()

@@ -36,7 +36,7 @@ class RichTest extends TestAbstract
 
         $sheet->writeRow(10, 0, array('Total', '', ''), $grandFormat);
         $sheet->mergeCells(10, 0, 10, 2);
-        $sheet->writeFormula(10, 3, '=SUM(D2:D10)', $this->getOldPriceFormat());
+        $sheet->writeFormula(10, 3, '=sum(D2:D10)', $this->getOldPriceFormat());
 
         $sheet->writeRow(11, 0, array('Grand total', '', ''), $grandFormat);
         $sheet->mergeCells(11, 0, 11, 2);

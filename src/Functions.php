@@ -5,6 +5,55 @@ namespace Xls;
 class Functions
 {
     /**
+     * @var null|array
+     */
+    protected static $functions = null;
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function getFunction($function)
+    {
+        if (is_null(self::$functions)) {
+            self::$functions = self::getBuiltIn();
+        }
+
+        if (isset(self::$functions[$function])) {
+            return self::$functions[$function];
+        }
+
+        throw new \Exception("Function $function() doesn't exist");
+    }
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public static function getArgsNumber($function)
+    {
+        $function = self::getFunction($function);
+
+        return $function[1];
+    }
+
+    /**
+     * @param $function
+     *
+     * @return mixed
+     */
+    public static function getPtg($function)
+    {
+        $function = self::getFunction($function);
+
+        return $function[0];
+    }
+
+    /**
      * The array elements are as follow:
      *  ptg:   The Excel function ptg code.
      *  args:  The number of arguments that the function takes:

@@ -19,6 +19,7 @@ class Token
     const TOKEN_EQ = "=";
     const TOKEN_NE = "<>";
     const TOKEN_CONCAT = "&";
+    const TOKEN_ARG = "arg";
 
     protected static $ptgMap = array(
         self::TOKEN_MUL => 'ptgMul',
@@ -167,7 +168,11 @@ class Token
      */
     public static function isFunctionCall($token)
     {
-        return preg_match("/^[A-Z0-9\xc0-\xdc\.]+$/", $token) === 1;
+        if (self::isArg($token)) {
+            return false;
+        }
+
+        return preg_match("/^[A-Za-z0-9\xc0-\xdc\.]+$/", $token) === 1;
     }
 
     /**
@@ -273,5 +278,15 @@ class Token
         }
 
         return in_array($lookahead, self::$lookaheadMap[$token], true);
+    }
+
+    /**
+     * @param $token
+     *
+     * @return bool
+     */
+    public static function isArg($token)
+    {
+        return $token == self::TOKEN_ARG;
     }
 }
