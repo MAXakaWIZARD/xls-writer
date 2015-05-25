@@ -396,40 +396,26 @@ class Worksheet extends BIFFwriter
 
         $this->appendRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
 
-        $this->appendRecord('Defcolwidth');
         $this->storeColinfo();
-
         $this->storePrintHeaders();
-        $this->storePrintGridlines();
-        $this->storeGridset();
-        $this->storeGuts();
-        $this->storeWsbool();
+        $this->storeGrid();
+        $this->appendRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
+        $this->appendRecord('WsBool', array($this));
         $this->storePageBreaks();
-
-        $this->appendRecord('Header', array($this->header));
-        $this->appendRecord('Footer', array($this->footer));
-
+        $this->storeHeaderAndFooter();
         $this->storeCentering();
         $this->storeMargins();
-
         $this->appendRecord('PageSetup', array($this));
-
-        $this->storeProtect();
-        $this->storePassword();
-
+        $this->storeProtection();
         $this->storeDimensions();
 
         $this->appendRaw($data);
 
         $this->appendRecord('Window2', array($this));
         $this->storeZoom();
-
         $this->storePanes();
-
         $this->appendRecord('Selection', array($this->selection, $this->activePane));
-
         $this->storeMergedCells();
-
         $this->storeDataValidity();
 
         $this->appendRecord('Eof');
@@ -1618,58 +1604,12 @@ class Worksheet extends BIFFwriter
      */
     public function setRowHeight($row, $height, $format = null, $hidden = false, $level = 0)
     {
-        $record = 0x0208; // Record identifier
-        $length = 0x0010; // Number of bytes to follow
-
-        $colMic = 0x0000; // First defined column
-        $colMac = 0x0000; // Last defined column
-        $irwMac = 0x0000; // Used by Excel to optimise loading
-        $reserved = 0x0000; // Reserved
-        $grbit = 0x0000; // Option flags
-        $ixfe = $this->xf($format); // XF index
-
-        // set _row_sizes so _sizeRow() can use it
         $this->rowSizes[$row] = $height;
-
-        // Use setRow($row, null, $XF) to set XF format without setting height
-        if (!is_null($height)) {
-            $miyRw = $height * 20; // row height
-        } else {
-            $miyRw = 0xff; // default row height is 256
-        }
 
         $level = max(0, min($level, 7)); // level should be between 0 and 7
         $this->outlineRowLevel = max($level, $this->outlineRowLevel);
 
-        // Set the options flags. fUnsynced is used to show that the font and row
-        // heights are not compatible. This is usually the case for WriteExcel.
-        // The collapsed flag 0x10 doesn't seem to be used to indicate that a row
-        // is collapsed. Instead it is used to indicate that the previous row is
-        // collapsed. The zero height flag, 0x20, is used to collapse a row.
-
-        $grbit |= $level;
-        if ($hidden) {
-            $grbit |= 0x0020;
-        }
-        $grbit |= 0x0040; // fUnsynced
-        if ($format) {
-            $grbit |= 0x0080;
-        }
-        $grbit |= 0x0100;
-
-        $header = pack("vv", $record, $length);
-        $data = pack(
-            "vvvvvvvv",
-            $row,
-            $colMic,
-            $colMac,
-            $miyRw,
-            $irwMac,
-            $reserved,
-            $grbit,
-            $ixfe
-        );
-        $this->append($header . $data);
+        $this->appendRecord('Row', array($row, $height, $format, $hidden, $level));
     }
 
     /**
@@ -1694,6 +1634,8 @@ class Worksheet extends BIFFwriter
      */
     protected function storeColinfo()
     {
+        $this->appendRecord('Defcolwidth');
+
         foreach ($this->colInfo as $item) {
             $this->appendRecord('Colinfo', array($item));
         }
@@ -1718,6 +1660,12 @@ class Worksheet extends BIFFwriter
         $this->appendRecord('RightMargin', array($this->marginRight));
         $this->appendRecord('TopMargin', array($this->marginTop));
         $this->appendRecord('BottomMargin', array($this->marginBottom));
+    }
+
+    protected function storeHeaderAndFooter()
+    {
+        $this->appendRecord('Header', array($this->header));
+        $this->appendRecord('Footer', array($this->footer));
     }
 
     /**
@@ -1767,51 +1715,10 @@ class Worksheet extends BIFFwriter
      * Write the PRINTGRIDLINES BIFF record. Must be used in conjunction with the
      * GRIDSET record.
      */
-    protected function storePrintGridlines()
+    protected function storeGrid()
     {
         $this->appendRecord('PrintGridLines', array($this->printGridLines));
-    }
-
-    /**
-     * Write the GRIDSET BIFF record. Must be used in conjunction with the
-     * PRINTGRIDLINES record.
-     */
-    protected function storeGridset()
-    {
         $this->appendRecord('Gridset', array(!$this->printGridLines));
-    }
-
-    /**
-     * Write the WSBOOL BIFF record, mainly for fit-to-page. Used in conjunction
-     * with the SETUP record.
-     */
-    protected function storeWsbool()
-    {
-        $record = 0x0081; // Record identifier
-        $length = 0x0002; // Bytes to follow
-        $grbit = 0x0000;
-
-        // Set the option flags
-        $grbit |= 0x0001; // Auto page breaks visible
-        if ($this->outlineStyle) {
-            $grbit |= 0x0020; // Auto outline styles
-        }
-        if ($this->outlineBelow) {
-            $grbit |= 0x0040; // Outline summary below
-        }
-        if ($this->outlineRight) {
-            $grbit |= 0x0080; // Outline summary right
-        }
-        if ($this->fitPage) {
-            $grbit |= 0x0100; // Page setup fit to page
-        }
-        if ($this->isOutlineOn()) {
-            $grbit |= 0x0400; // Outline symbols displayed
-        }
-
-        $header = pack("vv", $record, $length);
-        $data = pack("v", $grbit);
-        $this->append($header . $data);
     }
 
     /**
@@ -1828,31 +1735,21 @@ class Worksheet extends BIFFwriter
         }
     }
 
-    protected function storeGuts()
-    {
-        $this->appendRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
-    }
-
     /**
-     * Set the Biff PROTECT record to indicate that the worksheet is protected.
+     * Write sheet protection
      */
-    protected function storeProtect()
+    protected function storeProtection()
     {
-        if ($this->protect) {
-            $this->appendRecord('Protect', array($this->protect));
+        if (!$this->protect) {
+            return;
         }
-    }
 
-    /**
-     * Write the worksheet PASSWORD record.
-     */
-    protected function storePassword()
-    {
-        if ($this->protect && isset($this->password)) {
+        $this->appendRecord('Protect', array($this->protect));
+
+        if (isset($this->password)) {
             $this->appendRecord('Password', array($this->password));
         }
     }
-
 
     /**
      * Insert a 24bit bitmap image in a worksheet.
