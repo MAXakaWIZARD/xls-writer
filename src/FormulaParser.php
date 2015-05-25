@@ -168,11 +168,9 @@ class FormulaParser
      * Convert an Excel range such as A1:D4 to a ptgRefV.
      *
      * @param string $range An Excel range in the A1:A2 or A1..A2 format.
-     * @param int $class Possible values: 0,1,2
-     * @throws \Exception
      * @return mixed
      */
-    protected function convertRange2d($range, $class = 0)
+    protected function convertRange2d($range)
     {
         $separator = (Token::isRangeWithDots($range)) ? '..' : ':';
         list($cell1, $cell2) = explode($separator, $range);
@@ -181,20 +179,7 @@ class FormulaParser
         list($row1, $col1) = $this->cellToPackedRowcol($cell1);
         list($row2, $col2) = $this->cellToPackedRowcol($cell2);
 
-        // The ptg value depends on the class of the ptg.
-        switch ($class) {
-            case 0:
-                $ptgArea = pack("C", Ptg::get('ptgArea'));
-                break;
-            case 1:
-                $ptgArea = pack("C", Ptg::get('ptgAreaV'));
-                break;
-            case 2:
-                $ptgArea = pack("C", Ptg::get('ptgAreaA'));
-                break;
-            default:
-                throw new \Exception("Unknown class $class");
-        }
+        $ptgArea = pack("C", Ptg::get('ptgArea'));
 
         return $ptgArea . $row1 . $row2 . $col1 . $col2;
     }
@@ -204,7 +189,6 @@ class FormulaParser
      * a ptgArea3d.
      *
      * @param string $token An Excel range in the Sheet1!A1:A2 format.
-     * @throws \Exception
      * @return mixed The packed ptgArea3d token on success
      */
     protected function convertRange3d($token)
@@ -219,28 +203,10 @@ class FormulaParser
         list($cell1, $cell2) = explode(':', $range);
 
         // Convert the cell references
-        if (Token::isReference($cell1)) {
-            list($row1, $col1) = $this->cellToPackedRowcol($cell1);
-            list($row2, $col2) = $this->cellToPackedRowcol($cell2);
-        } else {
-            // It's a rows range (like 26:27)
-            list($row1, $col1, $row2, $col2) = $this->rangeToPackedRange($cell1 . ':' . $cell2);
-        }
+        list($row1, $col1) = $this->cellToPackedRowcol($cell1);
+        list($row2, $col2) = $this->cellToPackedRowcol($cell2);
 
-        $class = 2; // as far as I know, this is magick.
-        switch ($class) {
-            case 0:
-                $ptgArea = pack("C", Ptg::get('ptgArea3d'));
-                break;
-            case 1:
-                $ptgArea = pack("C", Ptg::get('ptgArea3dV'));
-                break;
-            case 2:
-                $ptgArea = pack("C", Ptg::get('ptgArea3dA'));
-                break;
-            default:
-                throw new \Exception("Unknown class $class");
-        }
+        $ptgArea = pack("C", Ptg::get('ptgArea3dA'));
 
         return $ptgArea . $extRef . $row1 . $row2 . $col1 . $col2;
     }
@@ -249,27 +215,13 @@ class FormulaParser
      * Convert an Excel reference such as A1, $B2, C$3 or $D$4 to a ptgRefV.
      *
      * @param string $cell An Excel cell reference
-     * @throws \Exception
      * @return string The cell in packed() format with the corresponding ptg
      */
     protected function convertRef2d($cell)
     {
         list($row, $col) = $this->cellToPackedRowcol($cell);
 
-        $class = 2; // as far as I know, this is magick.
-        switch ($class) {
-            case 0:
-                $ptgRef = pack("C", Ptg::get('ptgRef'));
-                break;
-            case 1:
-                $ptgRef = pack("C", Ptg::get('ptgRefV'));
-                break;
-            case 2:
-                $ptgRef = pack("C", Ptg::get('ptgRefA'));
-                break;
-            default:
-                throw new \Exception("Unknown class $class");
-        }
+        $ptgRef = pack("C", Ptg::get('ptgRefA'));
 
         return $ptgRef . $row . $col;
     }
@@ -279,7 +231,6 @@ class FormulaParser
      * ptgRef3d.
      *
      * @param string $cell An Excel cell reference
-     * @throws \Exception
      * @return mixed The packed ptgRef3d token on success
      */
     protected function convertRef3d($cell)
@@ -293,20 +244,7 @@ class FormulaParser
         // Convert the cell reference part
         list($row, $col) = $this->cellToPackedRowcol($cell);
 
-        $class = 2; // as far as I know, this is magick.
-        switch ($class) {
-            case 0:
-                $ptgRef = pack("C", Ptg::get('ptgRef3d'));
-                break;
-            case 1:
-                $ptgRef = pack("C", Ptg::get('ptgRef3dV'));
-                break;
-            case 2:
-                $ptgRef = pack("C", Ptg::get('ptgRef3dA'));
-                break;
-            default:
-                throw new \Exception("Unknown class $class");
-        }
+        $ptgRef = pack("C", Ptg::get('ptgRef3dA'));
 
         return $ptgRef . $extRef . $row . $col;
     }
@@ -361,25 +299,6 @@ class FormulaParser
         }
 
         return array($sheet1, $sheet2);
-    }
-
-    /**
-     * Convert the sheet name part of an external reference, for example "Sheet1" or
-     * "Sheet1:Sheet2", to a packed structure.
-     *
-     * @param string $extRef The name of the external reference
-     *
-     * @throws \Exception
-     * @return string The reference index in packed() format
-     */
-    protected function packExtRef($extRef)
-    {
-        list($sheet1, $sheet2) = $this->getRangeSheets($extRef);
-
-        // References are stored relative to 0xFFFF.
-        $offset = -1 - $sheet1;
-
-        return pack('vdvv', $offset, 0x00, $sheet1, $sheet2);
     }
 
     /**
@@ -484,45 +403,6 @@ class FormulaParser
         $row = pack('v', $row);
 
         return array($row, $col);
-    }
-
-    /**
-     * pack() row range into the required 3 or 4 byte format.
-     * Just using maximum col/rows, which is probably not the correct solution
-     *
-     * @param string $range The Excel range to be packed
-     * @throws \Exception
-     * @return array Array containing (row1,col1,row2,col2) in packed() format
-     */
-    protected function rangeToPackedRange($range)
-    {
-        preg_match('/(\$)?(\d+)\:(\$)?(\d+)/', $range, $match);
-        // return absolute rows if there is a $ in the ref
-        $row1Rel = empty($match[1]) ? 1 : 0;
-        $row1 = $match[2];
-        $row2Rel = empty($match[3]) ? 1 : 0;
-        $row2 = $match[4];
-        // Convert 1-index to zero-index
-        $row1--;
-        $row2--;
-        // Trick poor innocent Excel
-        $col1 = 0;
-        $col2 = Biff8::MAX_COLS - 1;
-
-        if ($row1 >= Biff8::MAX_ROWS || $row2 >= Biff8::MAX_ROWS) {
-            throw new \Exception("Row in: $range greater than " . Biff8::MAX_ROWS);
-        }
-
-        // Set the high bits to indicate if rows are relative.
-        $col1 |= $row1Rel << 15;
-        $col2 |= $row2Rel << 15;
-        $col1 = pack('v', $col1);
-        $col2 = pack('v', $col2);
-
-        $row1 = pack('v', $row1);
-        $row2 = pack('v', $row2);
-
-        return array($row1, $col1, $row2, $col2);
     }
 
     /**
