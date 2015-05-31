@@ -93,7 +93,7 @@ class SharedStringsTable
      */
     public function getBlocksSizesOrDataToWrite($tmpBlockSizes = null, $returnDataToWrite = false)
     {
-        $continueLimit = Biff8::getContinueLimit();
+        $continueLimit = Biff8::CONTINUE_LIMIT;
         $blockLength = 0;
         $written = 0;
         $blockSizes = array();

@@ -32,6 +32,21 @@ class GeneralTest extends TestAbstract
         $this->workbook->save($this->testFilePath);
     }
 
+    public function testNotes()
+    {
+        $this->workbook->setCountry(Workbook::COUNTRY_USA);
+
+        $sheet = $this->workbook->addWorksheet('My first worksheet');
+        $sheet->write(0, 0, 'Test');
+
+        $guid = 'B6020B033DC620542490010B48699DD1';
+        $sheet->writeNote(0, 0, 'Note for cell', $guid);
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('notes');
+    }
+
     /**
      * @throws \Exception
      */

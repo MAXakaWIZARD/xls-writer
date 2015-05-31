@@ -2,14 +2,6 @@
 
 namespace Xls;
 
-/**
- * Class for generating Excel Spreadsheets
- *
- * @author   Xavier Noguer <xnoguer@rezebra.com>
- * @category FileFormats
- * @package  Spreadsheet_Excel_Writer
- */
-
 class Worksheet extends BIFFwriter
 {
     const ORIENTATION_PORTRAIT = 1;
@@ -350,6 +342,14 @@ class Worksheet extends BIFFwriter
     protected $printScale = 100;
 
     protected $dv = array();
+
+    /**
+     * Holds last OBJ record id
+     * @var int
+     */
+    protected $lastObjectId = 0;
+
+    protected $drawings = array();
 
     /**
      * Constructor
@@ -1231,28 +1231,22 @@ class Worksheet extends BIFFwriter
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
      * @param string $note   The note to write
+     * @param string $guid comment guid (only for tests)
      */
-    public function writeNote($row, $col, $note)
+    public function writeNote($row, $col, $note, $guid = null)
     {
-        $noteLength = strlen($note);
-        $record = 0x001C; // Record identifier
-        $maxLength = 2048; // Maximun length for a NOTE record
-
         $this->checkRowCol($row, $col);
 
-        // Length for this record is no more than 2048 + 6
-        $length = 0x0006 + min($noteLength, 2048);
-        $header = pack("vv", $record, $length);
-        $data = pack("vvv", $row, $col, $noteLength);
-        $this->append($header . $data . substr($note, 0, 2048));
+        $objId = $this->getNewObjectId();
+        $this->drawings[] = $objId;
 
-        for ($i = $maxLength; $i < $noteLength; $i += $maxLength) {
-            $chunk = substr($note, $i, $maxLength);
-            $length = 0x0006 + strlen($chunk);
-            $header = pack("vv", $record, $length);
-            $data = pack("vvv", -1, 0, strlen($chunk));
-            $this->append($header . $data . $chunk);
-        }
+        $drawing = '0F 00 02 F0 D4 00 00 00 10 00 08 F0 08 00 00 00 02 00 00 00 01 04 00 00 0F 00 03 F0 BC 00 00 00 0F 00 04 F0 28 00 00 00 01 00 09 F0 10 00 00 00 78 FF 77 A0 00 00 00 00 00 00 00 00 88 FF 77 A0 02 00 0A F0 08 00 00 00 00 04 00 00 05 00 00 00 0F 00 04 F0 84 00 00 00 A2 0C 0A F0 08 00 00 00 01 04 00 00 00 0A 00 00 B3 00 0B F0 42 00 00 00 80 00 98 2C C4 7D BF 00 00 00 08 00 58 01 00 00 00 00 80 01 04 00 00 00 81 01 FB F6 D6 00 83 01 FB FE 82 00 8B 01 00 00 4C FF BF 01 10 00 11 00 C0 01 ED EA A1 00 3F 02 03 00 03 00 BF 03 02 00 0A 00 00 00 10 F0 12 00 00 00 03 00 01 00 EC 00 00 00 22 00 02 00 53 03 04 00 66 00 00 00 11 F0 00 00 00 00';
+        $this->appendRecord('MsoDrawing', array($drawing));
+
+        $this->appendRecord('ObjComment', array($objId, $guid));
+        $this->appendRecord('MsoDrawing', array('00 00 0D F0 00 00 00 00'));
+        $this->appendRecord('Txo', array($note));
+        $this->appendRecord('Note', array($row, $col, $objId));
     }
 
     /**
@@ -1681,7 +1675,7 @@ class Worksheet extends BIFFwriter
             throw new \Exception('Invalid merge range');
         }
 
-        $maxRecordRanges = floor(($this->biff->getLimit() - 6) / 8);
+        $maxRecordRanges = floor((Biff8::LIMIT - 6) / 8);
         if ($this->mergedCellsCounter >= $maxRecordRanges) {
             $this->mergedCellsRecord++;
             $this->mergedCellsCounter = 0;
@@ -1863,8 +1857,9 @@ class Worksheet extends BIFFwriter
         $y2 = $height / $this->sizeRow($rowEnd) * 256; // Distance to bottom of object
 
         $this->appendRecord(
-            'Obj',
+            'ObjPicture',
             array(
+                $this->getNewObjectId(),
                 $colStart,
                 $x1,
                 $rowStart,
@@ -2102,5 +2097,23 @@ class Worksheet extends BIFFwriter
     public function getIndex()
     {
         return $this->index;
+    }
+
+    /**
+     * @return integer
+     */
+    protected function getNewObjectId()
+    {
+        $this->lastObjectId++;
+
+        return $this->lastObjectId;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDrawings()
+    {
+        return $this->drawings;
     }
 }

@@ -25,4 +25,12 @@ class Utils
 
         return $result;
     }
+
+    /**
+     * @return string
+     */
+    public static function generateGuid()
+    {
+        return strtoupper(md5(uniqid(rand(), true)));
+    }
 }

@@ -136,6 +136,16 @@ class StringUtils
     }
 
     /**
+     * @param $value
+     *
+     * @return string
+     */
+    public static function toBiff8UnicodeLongWoLenInfo($value)
+    {
+        return substr(self::toBiff8UnicodeLong($value), 2);
+    }
+
+    /**
      * Convert string from one encoding to another. First try mbstring, then iconv, finally strlen
      *
      * @param string $value

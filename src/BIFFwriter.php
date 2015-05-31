@@ -67,17 +67,10 @@ class BIFFwriter
     protected $datasize = 0;
 
     /**
-     * @var Biff8
-     */
-    protected $biff;
-
-    /**
      * @throws \Exception
      */
     public function __construct()
     {
-        $this->biff = new Biff8;
-
         $this->setByteOrder();
     }
 
@@ -104,7 +97,7 @@ class BIFFwriter
      */
     protected function addContinueIfNeeded($data)
     {
-        if (strlen($data) > $this->biff->getLimit()) {
+        if (strlen($data) > Biff8::LIMIT) {
             $data = $this->addContinue($data);
         }
 
@@ -136,8 +129,6 @@ class BIFFwriter
     /**
      * @param string $type
      * @param array $params
-     *
-     * @return mixed
      */
     protected function appendRecord($type, array $params = array())
     {
@@ -153,7 +144,7 @@ class BIFFwriter
      */
     protected function addContinue($data)
     {
-        return $this->getRecord('ContinueRecord', array($data, $this->biff->getLimit()));
+        return $this->getRecord('ContinueRecord', array($data));
     }
 
     /**

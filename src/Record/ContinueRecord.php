@@ -2,27 +2,29 @@
 
 namespace Xls\Record;
 
+use Xls\Biff8;
+
 class ContinueRecord extends AbstractRecord
 {
     const NAME = 'CONTINUE';
     const ID = 0x003C;
 
     /**
-     * Excel limits the size of BIFF records. In Excel 5 the limit is 2084 bytes. In
-     * Excel 97 the limit is 8228 bytes. Records that are longer than these limits
+     * Excel limits the size of BIFF records. In Excel 97 the limit is 8228 bytes.
+     * Records that are longer than these limits
      * must be split up into CONTINUE blocks.
      *
      * This function takes a long BIFF record and inserts CONTINUE records as
      * necessary.
      *
      * @param string $data The original binary data to be written
-     * @param int $limit BIFF format-specific limit
+     *
      * @return string Сonvenient string of continue blocks
      */
-    public function getData($data, $limit)
+    public function getData($data)
     {
         //reserve 4 bytes for header
-        $limit = $limit - 4;
+        $limit = Biff8::LIMIT - 4;
 
         // The first bytes below limit remain intact. However, we have to change
         // the length field of the record.
@@ -31,19 +33,33 @@ class ContinueRecord extends AbstractRecord
         $recordData = substr($data, 4, $newRecordSize);
         $result = $recordId . pack("v", $newRecordSize) . $recordData;
 
-        $header = $this->getHeader($limit);
+        $data = substr($data, $newRecordSize + 4);
+        $result .= $this->getDataRaw($data);
 
-        // Retrieve chunks of 2080/8224 bytes +4 for the header
+        return $result;
+    }
+
+    public function getDataRaw($data)
+    {
+        //reserve 4 bytes for header
+        $limit = Biff8::LIMIT - 4;
+
         $dataLength = strlen($data);
-        for ($i = $limit; $i < $dataLength - $limit; $i += $limit) {
-            $result .= $header;
-            $result .= substr($data, $i, $limit);
+
+        $result = '';
+
+        // Retrieve chunks of 8224 bytes +4 for the header
+        for ($i = 0; $i < $dataLength - $limit; $i += $limit) {
+            $chunk = substr($data, $i, $limit);
+            $result .= $this->getHeader(strlen($chunk)) . $chunk;
         }
 
         // Retrieve the last chunk of data
-        $header = $this->getHeader($dataLength - $i);
-        $result .= $header;
-        $result .= substr($data, $i, $dataLength - $i);
+        $lastChunkLength = $dataLength - $i;
+        if ($lastChunkLength > 0) {
+            $lastChunk = substr($data, $i, $lastChunkLength);
+            $result .= $this->getHeader(strlen($lastChunk)) . $lastChunk;
+        }
 
         return $result;
     }

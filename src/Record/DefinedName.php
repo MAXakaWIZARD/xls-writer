@@ -24,7 +24,7 @@ class DefinedName extends AbstractRecord
 
         $name = pack("C", $type);
         $nameLen = StringUtils::CountCharacters($name);
-        $name = substr(StringUtils::toBiff8UnicodeLong($name), 2);
+        $name = StringUtils::toBiff8UnicodeLongWoLenInfo($name);
 
         $formulaLen = strlen($formulaData);
 

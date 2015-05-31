@@ -160,7 +160,7 @@ class Workbook extends BIFFwriter
         }
 
         $this->appendRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
-        $this->appendRecord('Codepage', array($this->biff->getCodepage()));
+        $this->appendRecord('Codepage', array(Biff8::CODEPAGE));
         $this->storeWindow1();
         $this->storeDatemode();
 
@@ -176,6 +176,7 @@ class Workbook extends BIFFwriter
         $this->storeSupbookInternal();
         $this->storeExternsheet();
         $this->storeDefinedNames();
+        $this->storeDrawings();
         $this->storeSharedStringsTable();
         $this->appendRecord('Eof');
         $this->endBufferedWrite();
@@ -187,6 +188,23 @@ class Workbook extends BIFFwriter
         $this->saveOleFile($filePath);
 
         $this->saved = true;
+    }
+
+    protected function storeDrawings()
+    {
+        $totalDrawings = 0;
+        foreach ($this->getWorksheets() as $sheet) {
+            $totalDrawings += count($sheet->getDrawings());
+        }
+
+        if ($totalDrawings == 0) {
+            return;
+        }
+
+        $data = '0F 00 00 F0 52 00 00 00 00 00 06 F0 18 00 00 00';
+        $data .= '01 08';
+        $data .= '00 00 02 00 00 00 03 00 00 00 01 00 00 00 01 00 00 00 03 00 00 00 33 00 0B F0 12 00 00 00 BF 00 08 00 08 00 81 01 41 00 00 08 C0 01 40 00 00 08 40 00 1E F1 10 00 00 00 0D 00 00 08 0C 00 00 08 17 00 00 08 F7 00 00 10';
+        $this->appendRecord('MsoDrawingGroup', array($data));
     }
 
     /**
@@ -322,7 +340,7 @@ class Workbook extends BIFFwriter
      */
     protected function checkSheetName($name)
     {
-        $maxLen = $this->biff->getMaxSheetNameLength();
+        $maxLen = Biff8::MAX_SHEET_NAME_LENGTH;
         if (strlen($name) > $maxLen) {
             throw new \Exception(
                 "Sheet name must be shorter than $maxLen chars"
@@ -453,7 +471,7 @@ class Workbook extends BIFFwriter
      */
     protected function saveOleFile($filePath)
     {
-        $ole = new PpsFile($this->biff->getWorkbookName());
+        $ole = new PpsFile(Biff8::WORKBOOK_NAME);
         $ole->append($this->data);
 
         foreach ($this->worksheets as $sheet) {

@@ -23,57 +23,18 @@ class Biff8
 
     const LIMIT = 8228;
 
+    /*
+       8228 : Maximum Excel97 block size
+         -4 : Length of block header
+         -8 : Length of additional SST header information
+         -8 : Arbitrary number to keep within addContinue() limit = 8208
+    */
+    const CONTINUE_LIMIT = 8208;
+
     const WORKBOOK_NAME = 'Workbook';
 
     /**
      * The codepage indicates the text encoding used for strings
      */
     const CODEPAGE = 0x04B0;
-
-    /**
-     * @inheritdoc
-     */
-    public function getLimit()
-    {
-        return static::LIMIT;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getCodepage()
-    {
-        return static::CODEPAGE;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMaxSheetNameLength()
-    {
-        return static::MAX_SHEET_NAME_LENGTH;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getWorkbookName()
-    {
-        return static::WORKBOOK_NAME;
-    }
-
-    /**
-     * @return int
-     */
-    public static function getContinueLimit()
-    {
-        /* Iterate through the strings to calculate the CONTINUE block sizes.
-           For simplicity we use the same size for the SST and CONTINUE records:
-           8228 : Maximum Excel97 block size
-             -4 : Length of block header
-             -8 : Length of additional SST header information
-             -8 : Arbitrary number to keep within addContinue() limit = 8208
-        */
-        return static::LIMIT - 4 - 8 - 8;
-    }
 }
