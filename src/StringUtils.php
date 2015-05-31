@@ -82,29 +82,14 @@ class StringUtils
      * see OpenOffice.org's Documentation of the Microsoft Excel File Format, sect. 2.5.3
      *
      * @param string  $value    UTF-8 encoded string
-     * @param mixed[] $arrcRuns Details of rich text runs in $value
      * @return string
      */
-    public static function toBiff8UnicodeShort($value, $arrcRuns = array())
+    public static function toBiff8UnicodeShort($value)
     {
-        // character count
         $ln = self::CountCharacters($value, 'UTF-8');
-        // option flags
-        if (empty($arrcRuns)) {
-            $opt = (self::isMbstringOrIconvEnabled()) ? 0x01 : 0x00;
-            $data = pack('CC', $ln, $opt);
-            // characters
-            $data .= self::ConvertEncoding($value, 'UTF-16LE', 'UTF-8');
-        } else {
-            $data = pack('vC', $ln, 0x09);
-            $data .= pack('v', count($arrcRuns));
-            // characters
-            $data .= self::ConvertEncoding($value, 'UTF-16LE', 'UTF-8');
-            foreach ($arrcRuns as $cRun) {
-                $data .= pack('v', $cRun['strlen']);
-                $data .= pack('v', $cRun['fontidx']);
-            }
-        }
+        $opt = (self::isMbstringOrIconvEnabled()) ? 0x01 : 0x00;
+        $data = pack('CC', $ln, $opt);
+        $data .= self::ConvertEncoding($value, 'UTF-16LE', 'UTF-8');
 
         return $data;
     }
