@@ -98,4 +98,12 @@ class UtilsTest extends TestAbstract
             array('01 00 00 00', pack('V', 1)),
         );
     }
+
+    public function testGuids()
+    {
+        $guid = Utils::generateGuid();
+        $this->assertEquals(32, strlen($guid), 'GUID mus be 32 chars long');
+
+        $this->assertNotSame($guid, Utils::generateGuid(), 'Every new GUID must be unique');
+    }
 }
