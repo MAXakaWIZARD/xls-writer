@@ -161,13 +161,7 @@ class PpsRoot extends PPS
             if ($size >= OLE::DATA_SIZE_SMALL
                 || ($item->isRoot() && $item->hasData())
             ) {
-                // Write Data
-                $filePointer = $item->getFilePointer();
-                if (is_resource($filePointer)) {
-                    $this->copyFromItemStream($filePointer);
-                } else {
-                    $this->write($item->getData());
-                }
+                $this->write($item->getData());
 
                 if ($size % $this->bigBlockSize) {
                     $loopEnd = ($this->bigBlockSize - ($size % $this->bigBlockSize));
@@ -180,17 +174,6 @@ class PpsRoot extends PPS
                 $item->setStartBlock($iStBlk);
                 $iStBlk += $this->getBlocksCount($size, $this->bigBlockSize);
             }
-        }
-    }
-
-    /**
-     * @param resource $sourceStream
-     */
-    protected function copyFromItemStream($sourceStream)
-    {
-        fseek($sourceStream, 0);
-        while ($buffer = fread($sourceStream, 4096)) {
-            $this->write($buffer);
         }
     }
 
@@ -221,13 +204,7 @@ class PpsRoot extends PPS
             }
             $this->writeUlong(-2);
 
-            // Add to Data String(this will be written for RootEntry)
-            $filePointer = $item->getFilePointer();
-            if (is_resource($filePointer)) {
-                $result .= $this->getStreamContent($filePointer);
-            } else {
-                $result .= $item->getData();
-            }
+            $result .= $item->getData();
 
             $exp = $size % $this->smallBlockSize;
             if ($exp) {

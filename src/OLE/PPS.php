@@ -72,22 +72,6 @@ class PPS
     protected $children = array();
 
     /**
-     * The temporary dir for storing the OLE file
-     * @var string
-     */
-    protected $tmpDir;
-
-    /**
-     * @var string
-     */
-    protected $tmpFilename;
-
-    /**
-     * @var resource
-     */
-    protected $filePointer;
-
-    /**
      * The constructor
      *
      * @param integer $index The PPS index
@@ -124,16 +108,6 @@ class PPS
         $this->children = $children;
 
         $this->data = $data;
-
-        $this->tmpDir = sys_get_temp_dir();
-    }
-
-    /**
-     *
-     */
-    public function __destruct()
-    {
-        $this->removeTmpFile();
     }
 
     /**
@@ -159,13 +133,6 @@ class PPS
      */
     protected function getSize()
     {
-        if (is_resource($this->filePointer)) {
-            fseek($this->filePointer, 0);
-            $stats = fstat($this->filePointer);
-
-            return $stats[7];
-        }
-
         return strlen($this->data);
     }
 
@@ -250,26 +217,6 @@ class PPS
     }
 
     /**
-     *
-     */
-    public function removeTmpFile()
-    {
-        if (is_resource($this->filePointer)) {
-            fclose($this->filePointer);
-            $this->filePointer = null;
-        }
-        @unlink($this->tmpFilename);
-    }
-
-    /**
-     * @return resource
-     */
-    public function getFilePointer()
-    {
-        return $this->filePointer;
-    }
-
-    /**
      * @return bool
      */
     public function isFile()
@@ -350,18 +297,12 @@ class PPS
     }
 
     /**
-     * @param resource $stream
+     * Append data to PPS
      *
-     * @return string
+     * @param string $data The data to append
      */
-    protected function getStreamContent($stream)
+    public function append($data)
     {
-        $content = '';
-        fseek($stream, 0);
-        while ($buffer = fread($stream, 4096)) {
-            $content .= $buffer;
-        }
-
-        return $content;
+        $this->data .= $data;
     }
 }
