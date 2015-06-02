@@ -20,16 +20,16 @@ class WsBool extends AbstractRecord
 
         // Set the option flags
         $grbit |= 0x0001; // Auto page breaks visible
-        if ($sheet->outlineStyle) {
+        if ($sheet->getOutlineStyle()) {
             $grbit |= 0x0020; // Auto outline styles
         }
-        if ($sheet->outlineBelow) {
+        if ($sheet->getOutlineBelow()) {
             $grbit |= 0x0040; // Outline summary below
         }
-        if ($sheet->outlineRight) {
+        if ($sheet->getOutlineRight()) {
             $grbit |= 0x0080; // Outline summary right
         }
-        if ($sheet->fitPage) {
+        if ($sheet->isFitPage()) {
             $grbit |= 0x0100; // Page setup fit to page
         }
         if ($sheet->isOutlineOn()) {

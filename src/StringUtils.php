@@ -86,12 +86,7 @@ class StringUtils
      */
     public static function toBiff8UnicodeShort($value)
     {
-        $ln = self::CountCharacters($value, 'UTF-8');
-        $opt = (self::isMbstringOrIconvEnabled()) ? 0x01 : 0x00;
-        $data = pack('CC', $ln, $opt);
-        $data .= self::ConvertEncoding($value, 'UTF-16LE', 'UTF-8');
-
-        return $data;
+        return self::toBiff8Unicode($value, 8);
     }
 
     /**
@@ -106,16 +101,25 @@ class StringUtils
      */
     public static function toBiff8UnicodeLong($value)
     {
-        // character count
-        $ln = self::CountCharacters($value, 'UTF-8');
+        return self::toBiff8Unicode($value, 16);
+    }
 
-        // option flags
+    /**
+     * @param string $value
+     * @param int $lengthSize 8 or 16
+     *
+     * @return string
+     */
+    public static function toBiff8Unicode($value, $lengthSize)
+    {
+        $ln = self::CountCharacters($value);
+        $lengthFormat = ($lengthSize == 8) ? 'C' : 'v';
+        $data = pack($lengthFormat, $ln);
+
         $opt = (self::isMbstringOrIconvEnabled()) ? 0x01 : 0x00;
+        $data .= pack('C', $opt);
 
-        // characters
-        $chars = self::toUtf16Le($value);
-
-        $data = pack('vC', $ln, $opt) . $chars;
+        $data .= self::toUtf16Le($value);
 
         return $data;
     }
@@ -134,18 +138,18 @@ class StringUtils
      * Convert string from one encoding to another. First try mbstring, then iconv, finally strlen
      *
      * @param string $value
-     * @param string $to Encoding to convert to, e.g. 'UTF-8'
      * @param string $from Encoding to convert from, e.g. 'UTF-16LE'
+     * @param string $to Encoding to convert to, e.g. 'UTF-8'
      * @return string
      */
-    public static function convertEncoding($value, $to, $from)
+    public static function convertEncoding($value, $from, $to)
     {
-        if (self::isIconvEnabled()) {
-            return iconv($from, $to, $value);
-        }
-
         if (self::isMbstringEnabled()) {
             return mb_convert_encoding($value, $to, $from);
+        }
+
+        if (self::isIconvEnabled()) {
+            return iconv($from, $to, $value);
         }
 
         return $value;
@@ -202,18 +206,23 @@ class StringUtils
      */
     public static function toUtf16Le($value)
     {
-        if (!self::isIconvEnabled() || !self::isMbstringEnabled()) {
+        if (!self::isMbstringEnabled()) {
             return $value;
         }
 
         $encoding = mb_detect_encoding($value, 'auto');
         if ($encoding !== 'UTF-16LE') {
-            $value = self::convertEncoding($value, 'UTF-16LE', $encoding);
+            $value = self::convertEncoding($value, $encoding, 'UTF-16LE');
         }
 
         return $value;
     }
 
+    /**
+     * @param $str
+     *
+     * @return string
+     */
     public static function toNullTerminatedWchar($str)
     {
         $str = join("\0", preg_split("''", $str, -1, PREG_SPLIT_NO_EMPTY));

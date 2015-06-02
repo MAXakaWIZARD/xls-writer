@@ -93,16 +93,6 @@ class Bitmap
     /**
      * @return mixed
      */
-    public function getSize()
-    {
-        $result = unpack("Vsize", substr($this->header, 2, 4));
-
-        return $result['size'];
-    }
-
-    /**
-     * @return mixed
-     */
     public function getWidth()
     {
         $result = unpack("Vwidth", substr($this->header, 18, 4));

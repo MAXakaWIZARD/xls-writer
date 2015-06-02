@@ -31,13 +31,13 @@ class Worksheet extends BIFFwriter
      * Index for the Worksheet
      * @var integer
      */
-    public $index;
+    protected $index;
 
     /**
      * Reference to the (default) Format object for URLs
      * @var Format
      */
-    public $urlFormat;
+    protected $urlFormat;
 
     /**
      * Reference to the parser used for parsing formulas
@@ -49,67 +49,67 @@ class Worksheet extends BIFFwriter
      * Maximum number of rows for an Excel spreadsheet
      * @var integer
      */
-    public $xlsRowmax = Biff8::MAX_ROWS;
+    protected $xlsRowmax = Biff8::MAX_ROWS;
 
     /**
      * Maximum number of columns for an Excel spreadsheet
      * @var integer
      */
-    public $xlsColmax = Biff8::MAX_COLS;
+    protected $xlsColmax = Biff8::MAX_COLS;
 
     /**
      * First row for the DIMENSIONS record
      * @var integer
      */
-    public $dimRowmin;
+    protected $dimRowmin;
 
     /**
      * Last row for the DIMENSIONS record
      * @var integer
      */
-    public $dimRowmax = 0;
+    protected $dimRowmax = 0;
 
     /**
      * First column for the DIMENSIONS record
      * @var integer
      */
-    public $dimColmin;
+    protected $dimColmin;
 
     /**
      * Last column for the DIMENSIONS record
      * @var integer
      */
-    public $dimColmax = 0;
+    protected $dimColmax = 0;
 
     /**
      * Array containing format information for columns
      * @var array
      */
-    public $colInfo = array();
+    protected $colInfo = array();
 
     /**
      * Array containing the selected area for the worksheet
      * @var array
      */
-    public $selection = array(0, 0, 0, 0);
+    protected $selection = array(0, 0, 0, 0);
 
     /**
      * Array containing the panes for the worksheet
      * @var array
      */
-    public $panes = array();
+    protected $panes = array();
 
     /**
      * The active pane for the worksheet
      * @var integer
      */
-    public $activePane = 3;
+    protected $activePane = 3;
 
     /**
      * Bit specifying if panes are frozen
      * @var integer
      */
-    public $frozen = 0;
+    protected $frozen = 0;
 
     /**
      * Bit specifying if the worksheet is selected
@@ -121,175 +121,175 @@ class Worksheet extends BIFFwriter
      * The paper size (for printing) (DOCUMENT!!!)
      * @var integer
      */
-    public $paperSize = self::PAPER_CUSTOM;
+    protected $paperSize = self::PAPER_CUSTOM;
 
     /**
      * Bit specifying paper orientation (for printing). 0 => landscape, 1 => portrait
      * @var integer
      */
-    public $orientation = self::ORIENTATION_PORTRAIT;
+    protected $orientation = self::ORIENTATION_PORTRAIT;
 
     /**
      * The page header caption
      * @var string
      */
-    public $header = '';
+    protected $header = '';
 
     /**
      * The page footer caption
      * @var string
      */
-    public $footer = '';
+    protected $footer = '';
 
     /**
      * The horizontal centering value for the page
      * @var integer
      */
-    public $hcenter = 0;
+    protected $hcenter = 0;
 
     /**
      * The vertical centering value for the page
      * @var integer
      */
-    public $vcenter = 0;
+    protected $vcenter = 0;
 
     /**
      * The margin for the header
      * @var float
      */
-    public $marginHead = 0.50;
+    protected $marginHead = 0.50;
 
     /**
      * The margin for the footer
      * @var float
      */
-    public $marginFoot = 0.50;
+    protected $marginFoot = 0.50;
 
     /**
      * The left margin for the worksheet in inches
      * @var float
      */
-    public $marginLeft = 0.75;
+    protected $marginLeft = 0.75;
 
     /**
      * The right margin for the worksheet in inches
      * @var float
      */
-    public $marginRight = 0.75;
+    protected $marginRight = 0.75;
 
     /**
      * The top margin for the worksheet in inches
      * @var float
      */
-    public $marginTop = 1.00;
+    protected $marginTop = 1.00;
 
     /**
      * The bottom margin for the worksheet in inches
      * @var float
      */
-    public $marginBottom = 1.00;
+    protected $marginBottom = 1.00;
 
     /**
      * First row to reapeat on each printed page
      * @var integer
      */
-    public $titleRowMin = null;
+    protected $titleRowMin = null;
 
     /**
      * Last row to reapeat on each printed page
      * @var integer
      */
-    public $titleRowMax = null;
+    protected $titleRowMax = null;
 
     /**
      * First column to reapeat on each printed page
      * @var integer
      */
-    public $titleColMin = null;
+    protected $titleColMin = null;
 
     /**
      * Last column to reapeat on each printed page
      * @var integer
      */
-    public $titleColMax = null;
+    protected $titleColMax = null;
 
     /**
      * First row of the area to print
      * @var integer
      */
-    public $printRowMin = null;
+    protected $printRowMin = null;
 
     /**
      * Last row to of the area to print
      * @var integer
      */
-    public $printRowMax = null;
+    protected $printRowMax = null;
 
     /**
      * First column of the area to print
      * @var integer
      */
-    public $printColMin = null;
+    protected $printColMin = null;
 
     /**
      * Last column of the area to print
      * @var integer
      */
-    public $printColMax = null;
+    protected $printColMax = null;
 
     /**
      * Whether to display RightToLeft.
      * @var integer
      */
-    public $arabic = 0;
+    protected $rtl = 0;
 
     /**
      * Whether to use outline.
      * @var integer
      */
-    public $outlineOn = 1;
+    protected $outlineOn = 1;
 
     /**
      * Auto outline styles.
      * @var bool
      */
-    public $outlineStyle = 0;
+    protected $outlineStyle = 0;
 
     /**
      * Whether to have outline summary below.
      * @var bool
      */
-    public $outlineBelow = 1;
+    protected $outlineBelow = 1;
 
     /**
      * Whether to have outline summary at the right.
      * @var bool
      */
-    public $outlineRight = 1;
+    protected $outlineRight = 1;
 
     /**
      * Outline row level.
      * @var integer
      */
-    public $outlineRowLevel = 0;
+    protected $outlineRowLevel = 0;
 
     /**
      * Whether to fit to page when printing or not.
      * @var bool
      */
-    public $fitPage = 0;
+    protected $fitPage = 0;
 
     /**
      * Number of pages to fit wide
      * @var integer
      */
-    public $fitWidth = 0;
+    protected $fitWidth = 0;
 
     /**
      * Number of pages to fit high
      * @var integer
      */
-    public $fitHeight = 0;
+    protected $fitHeight = 0;
 
     /**
      * @var SharedStringsTable
@@ -306,20 +306,20 @@ class Worksheet extends BIFFwriter
      *
      * @var int $mergedCellsCounter
      */
-    public $mergedCellsCounter = 0;
+    protected $mergedCellsCounter = 0;
 
     /**
      * Number of actual mergedcells record
      *
      * @var int $mergedCellsRecord
      */
-    public $mergedCellsRecord = 0;
+    protected $mergedCellsRecord = 0;
 
     /**
      * Merged cell ranges
      * @var array
      */
-    public $mergedRanges = array();
+    protected $mergedRanges = array();
 
     protected $printGridLines = 1;
     protected $screenGridLines = 1;
@@ -984,23 +984,24 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Map to the appropriate write method acording to the token recieved.
+     * Write value to cell
+     *
      * @param integer $row    The row of the cell we are writing to
      * @param integer $col    The column of the cell we are writing to
-     * @param mixed $token  What we are writing
+     * @param mixed $value What we are writing
      * @param mixed $format The optional format to apply to the cell
-     * @return mixed
+     *
      */
-    public function write($row, $col, $token, $format = null)
+    public function write($row, $col, $value, $format = null)
     {
-        if ($this->looksLikeNumber($token)) {
-            $this->writeNumber($row, $col, $token, $format);
-        } elseif ($this->looksLikeUrl($token)) {
-            $this->writeUrl($row, $col, $token, '', $format);
-        } elseif ($this->looksLikeFormula($token)) {
-            $this->writeFormula($row, $col, $token, $format);
+        if ($this->looksLikeNumber($value)) {
+            $this->writeNumber($row, $col, $value, $format);
+        } elseif ($this->looksLikeUrl($value)) {
+            $this->writeUrl($row, $col, $value, '', $format);
+        } elseif ($this->looksLikeFormula($value)) {
+            $this->writeFormula($row, $col, $value, $format);
         } else {
-            $this->writeString($row, $col, $token, $format);
+            $this->writeString($row, $col, $value, $format);
         }
     }
 
@@ -1108,7 +1109,7 @@ class Worksheet extends BIFFwriter
      */
     public function setRTL($rtl = true)
     {
-        $this->arabic = ($rtl ? 1 : 0);
+        $this->rtl = ($rtl ? 1 : 0);
     }
 
     /**
@@ -1595,6 +1596,7 @@ class Worksheet extends BIFFwriter
         $width = $bmp->getWidth();
         $height = $bmp->getHeight();
 
+        // BITMAPCOREINFO
         $data = $this->getRecord('BitmapCoreHeader', array($width, $height));
         $data .= $bmp->getDataWithoutHeader();
 
@@ -1828,9 +1830,9 @@ class Worksheet extends BIFFwriter
     /**
      * @return bool
      */
-    public function isArabic()
+    public function isRtl()
     {
-        return (bool)$this->arabic;
+        return (bool)$this->rtl;
     }
 
     /**
@@ -1937,5 +1939,109 @@ class Worksheet extends BIFFwriter
     public function getDrawings()
     {
         return $this->drawings;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isFitPage()
+    {
+        return $this->fitPage;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPrintRowMin()
+    {
+        return $this->printRowMin;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPrintRowMax()
+    {
+        return $this->printRowMax;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPrintColMin()
+    {
+        return $this->printColMin;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPrintColMax()
+    {
+        return $this->printColMax;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTitleRowMin()
+    {
+        return $this->titleRowMin;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTitleRowMax()
+    {
+        return $this->titleRowMax;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTitleColMin()
+    {
+        return $this->titleColMin;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTitleColMax()
+    {
+        return $this->titleColMax;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getOutlineStyle()
+    {
+        return $this->outlineStyle;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getOutlineBelow()
+    {
+        return $this->outlineBelow;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getOutlineRight()
+    {
+        return $this->outlineRight;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOutlineRowLevel()
+    {
+        return $this->outlineRowLevel;
     }
 }

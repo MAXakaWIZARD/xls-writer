@@ -36,7 +36,10 @@ class GeneralTest extends TestAbstract
         $this->workbook->addWorksheet('Sheet2')->write(0, 0, 'Test2');
 
         $sheet->writeUrl(0, 0, 'mailto:jsmith@server.com', 'Contact John Smith');
-        $sheet->writeUrl(1, 0, 'http://google.com');
+
+        //should be written as url
+        $sheet->write(1, 0, 'http://google.com');
+
         $sheet->writeUrl(2, 0, 'internal:Sheet2!A1');
         $sheet->writeUrl(3, 0, '#Sheet2!A2');
         $sheet->writeUrl(4, 0, 'external:general.xls');

@@ -41,7 +41,7 @@ class Window2 extends AbstractRecord
         $fFrozen = intval($worksheet->isFrozen()); // 3
         $fDspZeros = 1; // 4
         $fDefaultHdr = 1; // 5
-        $fArabic = intval($worksheet->isArabic()); // 6
+        $fArabic = intval($worksheet->isRtl()); // 6
         $fDspGuts = intval($worksheet->isOutlineOn()); // 7
         $fFrozenNoSplit = 0; // 0 - bit
         $fSelected = intval($worksheet->isSelected()); // 1

@@ -610,10 +610,10 @@ class Workbook extends BIFFwriter
                     'Cvvvvv',
                     0x3B,
                     $sheet->getIndex(),
-                    $sheet->printRowMin,
-                    $sheet->printRowMax,
-                    $sheet->printColMin,
-                    $sheet->printColMax
+                    $sheet->getPrintRowMin(),
+                    $sheet->getPrintRowMax(),
+                    $sheet->getPrintColMin(),
+                    $sheet->getPrintColMax()
                 );
                 $this->appendRecord('DefinedName', array(
                     Record\DefinedName::BUILTIN_PRINT_AREA,
@@ -639,10 +639,10 @@ class Workbook extends BIFFwriter
      */
     protected function storePrintTitleName(Worksheet $sheet)
     {
-        $rowmin = $sheet->titleRowMin;
-        $rowmax = $sheet->titleRowMax;
-        $colmin = $sheet->titleColMin;
-        $colmax = $sheet->titleColMax;
+        $rowmin = $sheet->getTitleRowMin();
+        $rowmax = $sheet->getTitleRowMax();
+        $colmin = $sheet->getTitleColMin();
+        $colmax = $sheet->getTitleColMax();
 
         if (!isset($rowmin) && !isset($colmin)) {
             return;
