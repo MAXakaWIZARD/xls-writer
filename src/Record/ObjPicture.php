@@ -4,8 +4,6 @@ namespace Xls\Record;
 
 class ObjPicture extends Obj
 {
-    const LENGTH = 0x3c;
-
     const TYPE = 0x08;
 
     /**
@@ -82,6 +80,6 @@ class ObjPicture extends Obj
 
         $data .= $this->getFtEndSubrecord();
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

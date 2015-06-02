@@ -5,7 +5,6 @@ class Formula extends AbstractRecord
 {
     const NAME = 'FORMULA';
     const ID = 0x0006;
-    const LENGTH = 0x16;
 
     /**
      * @param $row
@@ -22,7 +21,6 @@ class Formula extends AbstractRecord
         // Clearly we are not in a position to calculate this a priori. Instead
         // we set $num to zero and set the option flags in $grbit to ensure
         // automatic calculation of the formula when the file is opened.
-        $xf = $this->xf($format); // The cell format
         $num = 0x00; // Current value of formula
         $grbit = 0x03; // Option flags
         $unknown = 0x0000; // Must be zero
@@ -33,13 +31,14 @@ class Formula extends AbstractRecord
             "vvvdvVv",
             $row,
             $col,
-            $xf,
+            $this->xf($format),
             $num,
             $grbit,
             $unknown,
             $formlen
         );
+        $data .= $formula;
 
-        return $this->getHeader($formlen) . $data . $formula;
+        return $this->getFullRecord($data);
     }
 }

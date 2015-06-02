@@ -6,7 +6,6 @@ class Colinfo extends AbstractRecord
 {
     const NAME = 'COLINFO';
     const ID = 0x7D;
-    const LENGTH = 0x0B;
 
     /**
      * Generate the COLINFO biff record to define column widths
@@ -25,13 +24,8 @@ class Colinfo extends AbstractRecord
      */
     public function getData($colArray)
     {
-        if (isset($colArray[0])) {
-            $colFirst = $colArray[0];
-        }
-
-        if (isset($colArray[1])) {
-            $colLast = $colArray[1];
-        }
+        $colFirst = (isset($colArray[0])) ? $colArray[0] : 0;
+        $colLast = (isset($colArray[1])) ? $colArray[1] : 0;
 
         if (isset($colArray[2])) {
             $coldx = $colArray[2];
@@ -60,7 +54,6 @@ class Colinfo extends AbstractRecord
         $coldx += 0.72; // Fudge. Excel subtracts 0.72 !?
         $coldx *= 256; // Convert to units of 1/256 of a char
 
-        $ixfe = $this->xf($format);
         $reserved = 0x00; // Reserved
 
         $level = max(0, min($level, 7));
@@ -71,11 +64,11 @@ class Colinfo extends AbstractRecord
             $colFirst,
             $colLast,
             $coldx,
-            $ixfe,
+            $this->xf($format),
             $grbit,
             $reserved
         );
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

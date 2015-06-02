@@ -24,6 +24,6 @@ class Note extends AbstractRecord
         $author = 'xls-writer';
         $data .= StringUtils::toBiff8UnicodeLong($author);
 
-        return $this->getHeader(strlen($data)) . $data;
+        return $this->getFullRecord($data);
     }
 }

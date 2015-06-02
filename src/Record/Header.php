@@ -16,10 +16,10 @@ class Header extends AbstractRecord
     public function getData($text)
     {
         $cch = strlen($text);
-        $length = 3 + $cch;
         $encoding = 0x0;
         $data = pack("vC", $cch, $encoding);
+        $data .= $text;
 
-        return $this->getHeader($length) . $data . $text;
+        return $this->getFullRecord($data);
     }
 }

@@ -1582,15 +1582,21 @@ class Worksheet extends BIFFwriter
      *
      * @param integer $row     The row we are going to insert the bitmap into
      * @param integer $col     The column we are going to insert the bitmap into
-     * @param string $bitmap  The bitmap filename
+     * @param string $path  The bitmap filename
      * @param integer $x       The horizontal position (offset) of the image inside the cell.
      * @param integer $y       The vertical position (offset) of the image inside the cell.
      * @param integer $scaleX The horizontal scale
      * @param integer $scaleY The vertical scale
      */
-    public function insertBitmap($row, $col, $bitmap, $x = 0, $y = 0, $scaleX = 1, $scaleY = 1)
+    public function insertBitmap($row, $col, $path, $x = 0, $y = 0, $scaleX = 1, $scaleY = 1)
     {
-        list($width, $height, $size, $data) = $this->processBitmap($bitmap);
+        $bmp = new Bitmap($path);
+
+        $width = $bmp->getWidth();
+        $height = $bmp->getHeight();
+
+        $data = $this->getRecord('BitmapCoreHeader', array($width, $height));
+        $data .= $bmp->getDataWithoutHeader();
 
         // Scale the frame of the image.
         $width *= $scaleX;
@@ -1598,7 +1604,7 @@ class Worksheet extends BIFFwriter
 
         $this->positionImage($col, $row, $x, $y, $width, $height);
 
-        $this->appendRecord('Imdata', array($size, $data));
+        $this->appendRecord('Imdata', array($data));
     }
 
     /**
@@ -1759,32 +1765,6 @@ class Worksheet extends BIFFwriter
         }
 
         return 17;
-    }
-
-    /**
-     * Convert a 24 bit bitmap into the modified internal format used by Windows.
-     * This is described in BITMAPCOREHEADER and BITMAPCOREINFO structures in the
-     * MSDN library.
-     *
-     * @param string $filePath The bitmap to process
-     *
-     * @throws \Exception
-     * @return array Array with data and properties of the bitmap
-     */
-    protected function processBitmap($filePath)
-    {
-        $bmp = new Bitmap($filePath);
-
-        $size = $bmp->getSize();
-        $size -= Bitmap::HEADER_SIZE; // Subtract size of bitmap header.
-        $size += Record\BitmapCoreHeader::LENGTH; // Add size of BIFF header.
-
-        $width = $bmp->getWidth();
-        $height = $bmp->getHeight();
-
-        $data = $this->getRecord('BitmapCoreHeader', array($width, $height, $bmp->getDataWithoutHeader()));
-
-        return array($width, $height, $size, $data);
     }
 
     /**

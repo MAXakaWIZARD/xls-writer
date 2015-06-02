@@ -6,7 +6,6 @@ class Palette extends AbstractRecord
 {
     const NAME = 'PALETTE';
     const ID = 0x0092;
-    const LENGTH = 0x02;
 
     /**
      * Write the PALETTE biff record
@@ -17,9 +16,8 @@ class Palette extends AbstractRecord
     public function getData($palette)
     {
         $ccv = count($palette); // Number of RGB values to follow
-        $extraLength = 4 * $ccv; // Number of bytes to follow
+        $data = pack("v", $ccv); // The RGB data
 
-        $data = ''; // The RGB data
         // Pack the RGB data
         foreach ($palette as $color) {
             foreach ($color as $byte) {
@@ -27,6 +25,6 @@ class Palette extends AbstractRecord
             }
         }
 
-        return $this->getHeader($extraLength, $ccv) . $data;
+        return $this->getFullRecord($data);
     }
 }

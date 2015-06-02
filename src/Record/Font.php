@@ -42,11 +42,11 @@ class Font extends AbstractRecord
             $cch
         );
 
-        $length = 0x10 + $cch;
         $encoding = 0;
         $data .= pack("C", $encoding);
+        $data .= $format->fontName;
 
-        return $this->getHeader($length) . $data . $format->fontName;
+        return $this->getFullRecord($data);
     }
 
     /**

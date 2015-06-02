@@ -6,7 +6,6 @@ class DataValidations extends AbstractRecord
 {
     const NAME = 'DATAVALIDATIONS';
     const ID = 0x01B2;
-    const LENGTH = 0x12;
 
     /**
      * Generate the DVAL biff record
@@ -30,6 +29,6 @@ class DataValidations extends AbstractRecord
             count($dv)
         );
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

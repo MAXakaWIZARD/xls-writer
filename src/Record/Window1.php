@@ -6,7 +6,6 @@ class Window1 extends AbstractRecord
 {
     const NAME = 'WINDOW1';
     const ID = 0x003D;
-    const LENGTH = 0x12;
 
     /**
      * @param $selectedSheetsCount Number of workbook tabs selected
@@ -38,6 +37,6 @@ class Window1 extends AbstractRecord
             $wTabRatio
         );
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

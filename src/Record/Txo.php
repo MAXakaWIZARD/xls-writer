@@ -7,7 +7,6 @@ class Txo extends AbstractRecord
 {
     const NAME = 'TXO';
     const ID = 0x01B6;
-    const LENGTH = 0x12;
 
     /**
      * @param $text
@@ -27,7 +26,7 @@ class Txo extends AbstractRecord
         $data .= pack('vv', $charCount, $txoRunsLength);
         $data .= pack('V', 0); //reserved
 
-        $result = $this->getHeader() . $data;
+        $result = $this->getFullRecord($data);
 
         $continue = new ContinueRecord();
         $result .= $continue->getDataRaw($text);

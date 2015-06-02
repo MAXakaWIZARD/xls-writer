@@ -7,7 +7,6 @@ class WsBool extends AbstractRecord
 {
     const NAME = 'WSBOOL';
     const ID = 0x0081;
-    const LENGTH = 0x02;
 
     /**
      * Generate the WSBOOL biff record
@@ -39,6 +38,6 @@ class WsBool extends AbstractRecord
 
         $data = pack("v", $grbit);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

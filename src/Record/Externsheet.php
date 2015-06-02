@@ -6,7 +6,6 @@ class Externsheet extends AbstractRecord
 {
     const NAME = 'EXTERNSHEET';
     const ID = 0x0017;
-    const LENGTH = 0x02;
 
     /**
      * Writes the Excel BIFF EXTERNSHEET record. These references are used by
@@ -22,8 +21,9 @@ class Externsheet extends AbstractRecord
         $rgch = 0x03; // Filename encoding
 
         $data = pack("CC", $cch, $rgch);
+        $data .= $sheetName;
 
-        return $this->getHeader($cch) . $data . $sheetName;
+        return $this->getFullRecord($data);
     }
 
     /**
@@ -38,13 +38,12 @@ class Externsheet extends AbstractRecord
             return $this->getData($sheetName);
         }
 
-        $sheetName = '';
         $cch = 1; // The following byte
         $rgch = 0x02; // Self reference
 
         $data = pack("CC", $cch, $rgch);
 
-        return $this->getHeader() . $data . $sheetName;
+        return $this->getFullRecord($data);
     }
 
     /**
@@ -55,13 +54,12 @@ class Externsheet extends AbstractRecord
     public function getDataForReferences($refs)
     {
         $refCount = count($refs);
-        $extraLength = 6 * $refCount;
-
         $data = pack('v', $refCount);
+
         foreach ($refs as $ref) {
             $data .= $ref;
         }
 
-        return $this->getHeader($extraLength) . $data;
+        return $this->getFullRecord($data);
     }
 }

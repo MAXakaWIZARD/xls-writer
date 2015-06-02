@@ -716,17 +716,9 @@ class Workbook extends BIFFwriter
      */
     protected function storeSharedStringsTable()
     {
-        $this->appendRecord(
-            'SharedStringsTable',
-            array(
-                $this->sst->getBlocksSizes(),
-                $this->sst->getTotalCount(),
-                $this->sst->getUniqueCount()
-            )
-        );
+        $this->appendRecord('SharedStringsTable', array($this->sst));
 
-        $data = $this->sst->getDataForWrite();
-        foreach ($data as $item) {
+        foreach ($this->sst->getDataForWrite() as $item) {
             $this->append($item);
         }
     }

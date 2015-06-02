@@ -5,7 +5,6 @@ class PrintGridLines extends AbstractRecord
 {
     const NAME = 'PRINTGRIDLINES';
     const ID = 0x2B;
-    const LENGTH = 0x02;
 
     /**
      * @param $printGridLines
@@ -16,6 +15,6 @@ class PrintGridLines extends AbstractRecord
     {
         $data = pack("v", intval($printGridLines));
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

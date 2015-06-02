@@ -9,7 +9,6 @@ class PageSetup extends AbstractRecord
 {
     const NAME = 'PAGESETUP';
     const ID = 0xA1;
-    const LENGTH = 0x22;
 
     /**
      * @param Worksheet $sheet
@@ -35,7 +34,7 @@ class PageSetup extends AbstractRecord
             $numFtr = strrev($numFtr);
         }
 
-        $data1 = pack(
+        $data = pack(
             "vvvvvvvv",
             $iPaperSize,
             $iScale,
@@ -46,12 +45,12 @@ class PageSetup extends AbstractRecord
             $iRes,
             $iVRes
         );
-        $data2 = $numHdr . $numFtr;
+        $data .= $numHdr . $numFtr;
 
         $iCopies = 0x01; // Number of copies
-        $data3 = pack("v", $iCopies);
+        $data .= pack("v", $iCopies);
 
-        return $this->getHeader() . $data1 . $data2 . $data3;
+        return $this->getFullRecord($data);
     }
 
     /**

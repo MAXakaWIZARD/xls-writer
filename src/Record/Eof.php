@@ -12,6 +12,6 @@ class Eof extends AbstractRecord
      */
     public function getData()
     {
-        return $this->getHeader();
+        return $this->getFullRecord();
     }
 }

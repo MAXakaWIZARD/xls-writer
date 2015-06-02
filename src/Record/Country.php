@@ -6,7 +6,6 @@ class Country extends AbstractRecord
 {
     const NAME = 'COUNTRY';
     const ID = 0x008C;
-    const LENGTH = 0x04;
 
     /**
      * Generate the COUNTRY record for localization
@@ -18,6 +17,6 @@ class Country extends AbstractRecord
     {
         $data = pack('vv', $countryCode, $countryCode);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

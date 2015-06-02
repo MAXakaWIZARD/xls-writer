@@ -34,6 +34,6 @@ class DefinedName extends AbstractRecord
         $data .= pack("CCCC", 0, 0, 0, 0);
         $data .= $name . $formulaData;
 
-        return $this->getHeader(strlen($data)) . $data;
+        return $this->getFullRecord($data);
     }
 }

@@ -8,19 +8,19 @@ class Imdata extends AbstractRecord
 
     /**
      * Generate IMDATA record
-     * @param $size
-     * @param $data
+     * @param $imgData
      *
      * @return string
      */
-    public function getData($size, $data)
+    public function getData($imgData)
     {
-        $length = 8 + $size;
         $cf = 0x09;
         $env = 0x01;
 
-        $header = pack("vvvvV", static::ID, $length, $cf, $env, $size);
+        $size = strlen($imgData);
+        $data = pack("vvV", $cf, $env, $size);
+        $data .= $imgData;
 
-        return $header . $data;
+        return $this->getFullRecord($data);
     }
 }

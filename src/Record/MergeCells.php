@@ -6,7 +6,6 @@ class MergeCells extends AbstractRecord
 {
     const NAME = 'MERGECELLS';
     const ID = 0x00E5;
-    const LENGTH = 0x02;
 
     /**
      * Generate the MERGECELLS biff record
@@ -24,8 +23,6 @@ class MergeCells extends AbstractRecord
             $data .= pack('vvvv', $range[0], $range[2], $range[1], $range[3]);
         }
 
-        $extraLength = $rangesCount * 8;
-
-        return $this->getHeader($extraLength) . $data;
+        return $this->getFullRecord($data);
     }
 }

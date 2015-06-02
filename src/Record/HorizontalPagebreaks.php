@@ -25,8 +25,6 @@ class HorizontalPagebreaks extends AbstractRecord
         }
 
         $cbrk = count($breaks);
-        $length = 2 + 6 * $cbrk;
-
         $data = pack("v", $cbrk);
 
         // Append each page break
@@ -34,6 +32,6 @@ class HorizontalPagebreaks extends AbstractRecord
             $data .= pack("vvv", $break, 0x00, 0xff);
         }
 
-        return $this->getHeader($length) . $data;
+        return $this->getFullRecord($data);
     }
 }

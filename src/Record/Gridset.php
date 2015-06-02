@@ -5,7 +5,6 @@ class Gridset extends AbstractRecord
 {
     const NAME = 'GRIDSET';
     const ID = 0x82;
-    const LENGTH = 0x02;
 
     /**
      * @param $gridsetVisible
@@ -16,6 +15,6 @@ class Gridset extends AbstractRecord
     {
         $data = pack("v", intval($gridsetVisible));
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

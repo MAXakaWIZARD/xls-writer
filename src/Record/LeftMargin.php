@@ -8,7 +8,6 @@ class LeftMargin extends AbstractRecord
 {
     const NAME = 'LEFTMARGIN';
     const ID = 0x26;
-    const LENGTH = 0x08;
 
     /**
      * @param $margin
@@ -22,6 +21,6 @@ class LeftMargin extends AbstractRecord
             $data = strrev($data);
         }
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

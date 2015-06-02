@@ -2,19 +2,11 @@
 namespace Xls\Record;
 
 use Xls\BIFFwriter;
-use Xls\Biff8;
 use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
 {
     const ID = 0x00;
-    const LENGTH = 0x00;
-    const HEADER_SIZE = 4;
-
-    /**
-     * @var int
-     */
-    protected $version = Biff8::VERSION;
 
     /**
      * @var int
@@ -34,21 +26,12 @@ abstract class AbstractRecord
 
     /**
      * Returns record header data ready for writing
-     * @param int $extraLength
-     * @param int $extraParam
+     * @param int $length
      * @return string
      */
-    public static function getHeader($extraLength = 0, $extraParam = null)
+    public static function getHeader($length = 0)
     {
-        $length = static::LENGTH + $extraLength;
-
-        $header = pack("vv", static::ID, $length);
-
-        if (!is_null($extraParam)) {
-            $header .= pack("v", $extraParam);
-        }
-
-        return $header;
+        return pack("vv", static::ID, $length);
     }
 
     /**
@@ -67,7 +50,7 @@ abstract class AbstractRecord
      *
      * @return string
      */
-    protected function getFullRecord($data)
+    protected function getFullRecord($data = '')
     {
         return $this->getHeader(strlen($data)) . $data;
     }

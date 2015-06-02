@@ -5,7 +5,6 @@ class Row extends AbstractRecord
 {
     const NAME = 'ROW';
     const ID = 0x0208;
-    const LENGTH = 0x0010;
 
     /**
      * @param      $row
@@ -43,7 +42,7 @@ class Row extends AbstractRecord
             $this->xf($format)
         );
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 
     /**

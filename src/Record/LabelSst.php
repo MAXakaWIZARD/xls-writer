@@ -5,7 +5,6 @@ class LabelSst extends AbstractRecord
 {
     const NAME = 'LABELSST';
     const ID = 0x00FD;
-    const LENGTH = 0x0A;
 
     /**
      * @param integer $row
@@ -21,6 +20,6 @@ class LabelSst extends AbstractRecord
 
         $data = pack('vvvV', $row, $col, $xf, $strIdx);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

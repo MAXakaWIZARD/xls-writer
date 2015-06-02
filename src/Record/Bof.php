@@ -1,6 +1,8 @@
 <?php
 namespace Xls\Record;
 
+use Xls\Biff8;
+
 class Bof extends AbstractRecord
 {
     const NAME = 'BOF';
@@ -15,13 +17,13 @@ class Bof extends AbstractRecord
      */
     public function getData($type)
     {
-        $length = 0x10;
-        $unknown = pack("VV", 0x000100D1, 0x00000406);
         $build = 0x0DBB;
         $year = 0x07CC;
 
-        $data = pack("vvvv", $this->version, $type, $build, $year);
+        $data = pack("vvvv", Biff8::VERSION, $type, $build, $year);
+        $unknown = pack("VV", 0x000100D1, 0x00000406);
+        $data .= $unknown;
 
-        return $this->getHeader($length) . $data . $unknown;
+        return $this->getFullRecord($data);
     }
 }

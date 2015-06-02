@@ -29,14 +29,12 @@ class Xf extends AbstractRecord
         $icv = $format->fgColor; // fg and bg pattern colors
         $icv |= $format->bgColor << 7;
 
-        $length = 0x0014;
-
         $options = 0x00;
         $data = pack("vvvC", $format->fontIndex, $format->getNumFormatIndex(), $style, $this->getAlignment($format));
         $data .= pack("CCC", $format->rotation, $options, $this->getUsedAttr($format));
         $data .= pack("VVv", $border1, $border2, $icv);
 
-        return $this->getHeader($length) . $data;
+        return $this->getFullRecord($data);
     }
 
     /**

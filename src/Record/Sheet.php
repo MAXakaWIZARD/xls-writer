@@ -24,8 +24,6 @@ class Sheet extends AbstractRecord
         $data = pack("VCC", $offset, $sheetState, $sheetType);
         $data .= StringUtils::toBiff8UnicodeShort($sheetName);
 
-        $length = strlen($data);
-
-        return $this->getHeader($length) . $data;
+        return $this->getFullRecord($data);
     }
 }

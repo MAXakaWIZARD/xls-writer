@@ -6,7 +6,6 @@ class Style extends AbstractRecord
 {
     const NAME = 'STYLE';
     const ID = 0x0293;
-    const LENGTH = 0x04;
 
     /**
      * Generate the TYLE records
@@ -20,6 +19,6 @@ class Style extends AbstractRecord
 
         $data = pack("vCC", $ixfe, $builtIn, $iLevel);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

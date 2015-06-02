@@ -6,7 +6,6 @@ class Guts extends AbstractRecord
 {
     const NAME = 'GUTS';
     const ID = 0x0080;
-    const LENGTH = 0x08;
 
     /**
      * Generate the GUTS BIFF record. This is used to configure the gutter margins
@@ -48,6 +47,6 @@ class Guts extends AbstractRecord
 
         $data = pack("vvvv", $dxRwGut, $dxColGut, $rowLevel, $colLevel);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

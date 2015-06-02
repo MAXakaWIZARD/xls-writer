@@ -15,8 +15,6 @@ class DataValidation extends AbstractRecord
      */
     public function getData($dv)
     {
-        $extraLength = strlen($dv);
-
-        return $this->getHeader($extraLength) . $dv;
+        return $this->getFullRecord($dv);
     }
 }

@@ -6,7 +6,6 @@ class Password extends AbstractRecord
 {
     const NAME = 'PASSWORD';
     const ID = 0x0013;
-    const LENGTH = 0x02;
 
     /**
      * Generate the PASSWORD biff record
@@ -19,7 +18,7 @@ class Password extends AbstractRecord
     {
         $data = pack("v", $this->encode($plaintextPassword));
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 
     /**

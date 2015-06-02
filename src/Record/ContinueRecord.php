@@ -51,14 +51,14 @@ class ContinueRecord extends AbstractRecord
         // Retrieve chunks of 8224 bytes +4 for the header
         for ($i = 0; $i < $dataLength - $limit; $i += $limit) {
             $chunk = substr($data, $i, $limit);
-            $result .= $this->getHeader(strlen($chunk)) . $chunk;
+            $result .= $this->getFullRecord($chunk);
         }
 
         // Retrieve the last chunk of data
         $lastChunkLength = $dataLength - $i;
         if ($lastChunkLength > 0) {
             $lastChunk = substr($data, $i, $lastChunkLength);
-            $result .= $this->getHeader(strlen($lastChunk)) . $lastChunk;
+            $result .= $this->getFullRecord($lastChunk);
         }
 
         return $result;

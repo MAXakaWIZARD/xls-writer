@@ -11,6 +11,6 @@ class MsoDrawingGroup extends AbstractRecord
     {
         $data = pack('H*', str_replace(' ', '', $hexStrData));
 
-        return $this->getHeader(strlen($data)) . $data;
+        return $this->getFullRecord($data);
     }
 }

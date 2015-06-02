@@ -25,8 +25,7 @@ class Dimensions extends AbstractRecord
             $colMax,
             $reserved
         );
-        $length = strlen($data);
 
-        return $this->getHeader($length) . $data;
+        return $this->getFullRecord($data);
     }
 }

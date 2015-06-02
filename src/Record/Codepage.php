@@ -5,7 +5,6 @@ class Codepage extends AbstractRecord
 {
     const NAME = 'CODEPAGE';
     const ID = 0x0042;
-    const LENGTH = 0x02;
 
     /**
      * Generate the CODEPAGE biff record
@@ -17,6 +16,6 @@ class Codepage extends AbstractRecord
     {
         $data = pack('v', $codepage);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

@@ -5,7 +5,6 @@ class Pane extends AbstractRecord
 {
     const NAME = 'PANE';
     const ID = 0x0041;
-    const LENGTH = 0x0A;
 
     /**
      * @param $x
@@ -20,6 +19,6 @@ class Pane extends AbstractRecord
     {
         $data = pack("vvvvv", $x, $y, $rowTop, $colLeft, $activePane);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

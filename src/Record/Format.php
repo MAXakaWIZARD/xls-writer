@@ -20,6 +20,6 @@ class Format extends AbstractRecord
         $data = pack("v", $formatIndex);
         $data .= StringUtils::toBiff8UnicodeLong($format);
 
-        return $this->getHeader(strlen($data)) . $data;
+        return $this->getFullRecord($data);
     }
 }

@@ -6,7 +6,6 @@ class Zoom extends AbstractRecord
 {
     const NAME = 'ZOOM';
     const ID = 0x00A0;
-    const LENGTH = 0x04;
 
     /**
      * Store the window zoom factor. This should be a reduced fraction but for
@@ -19,6 +18,6 @@ class Zoom extends AbstractRecord
     {
         $data = pack("vv", $zoom, 100);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

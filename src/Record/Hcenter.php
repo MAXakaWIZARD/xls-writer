@@ -6,7 +6,6 @@ class Hcenter extends AbstractRecord
 {
     const NAME = 'HCENTER';
     const ID = 0x0083;
-    const LENGTH = 0x02;
 
     /**
      * @param $centering
@@ -17,6 +16,6 @@ class Hcenter extends AbstractRecord
     {
         $data = pack('v', $centering);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

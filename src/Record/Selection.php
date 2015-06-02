@@ -6,7 +6,6 @@ class Selection extends AbstractRecord
 {
     const NAME = 'SELECTION';
     const ID = 0x001D;
-    const LENGTH = 0x0F;
 
     /**
      * Generate the SELECTION record
@@ -37,6 +36,6 @@ class Selection extends AbstractRecord
             $colLast
         );
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

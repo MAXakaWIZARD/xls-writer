@@ -6,7 +6,6 @@ class Datemode extends AbstractRecord
 {
     const NAME = 'DATEMODE';
     const ID = 0x0022;
-    const LENGTH = 0x02;
 
     /**
      * Generate DATEMODE record to indicate the date system in use (1904 or 1900).
@@ -18,6 +17,6 @@ class Datemode extends AbstractRecord
     {
         $data = pack("v", $f1904);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

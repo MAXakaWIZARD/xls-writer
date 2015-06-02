@@ -6,7 +6,6 @@ class Protect extends AbstractRecord
 {
     const NAME = 'PROTECT';
     const ID = 0x0012;
-    const LENGTH = 0x02;
 
     /**
      * Generate the PROTECT biff record
@@ -19,6 +18,6 @@ class Protect extends AbstractRecord
     {
         $data = pack("v", $lock);
 
-        return $this->getHeader() . $data;
+        return $this->getFullRecord($data);
     }
 }

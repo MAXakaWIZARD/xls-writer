@@ -18,6 +18,6 @@ class ObjComment extends Obj
         $data .= $this->getFtNtsSubrecord($guid);
         $data .= $this->getFtEndSubrecord();
 
-        return $this->getHeader(strlen($data)) . $data;
+        return $this->getFullRecord($data);
     }
 }
