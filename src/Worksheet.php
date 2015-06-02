@@ -1369,8 +1369,6 @@ class Worksheet extends BIFFwriter
      */
     protected function writeUrlWeb($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
-        $record = 0x01B8; // Record identifier
-
         if (!$format) {
             $format = $this->urlFormat;
         }
@@ -1386,33 +1384,7 @@ class Worksheet extends BIFFwriter
             $this->writeString($row1, $col1, $str, $format);
         }
 
-        // Pack the undocumented parts of the hyperlink stream
-        $unknown1 = pack("H*", "D0C9EA79F9BACE118C8200AA004BA90B02000000");
-        $unknown2 = pack("H*", "E0C9EA79F9BACE118C8200AA004BA90B");
-
-        // Pack the option flags
-        $options = pack("V", 0x03);
-
-        // Convert URL to a null terminated wchar string
-        $url = join("\0", preg_split("''", $url, -1, PREG_SPLIT_NO_EMPTY));
-        $url = $url . "\0\0\0";
-
-        // Pack the length of the URL
-        $urlLen = pack("V", strlen($url));
-
-        // Calculate the data length
-        $length = 0x34 + strlen($url);
-
-        // Pack the header data
-        $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $row1, $row2, $col1, $col2);
-
-        // Write the packed data
-        $this->append(
-            $header . $data .
-            $unknown1 . $options .
-            $unknown2 . $urlLen . $url
-        );
+        $this->appendRecord('Hyperlink', array($row1, $row2, $col1, $col2, $url));
     }
 
     /**
@@ -1428,8 +1400,6 @@ class Worksheet extends BIFFwriter
      */
     protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
-        $record = 0x01B8; // Record identifier
-
         if (!$format) {
             $format = $this->urlFormat;
         }
@@ -1447,6 +1417,8 @@ class Worksheet extends BIFFwriter
         } else {
             $this->writeString($row1, $col1, $str, $format);
         }
+
+        $record = 0x01B8; // Record identifier
 
         // Pack the undocumented parts of the hyperlink stream
         $unknown1 = pack("H*", "D0C9EA79F9BACE118C8200AA004BA90B02000000");
@@ -1499,8 +1471,6 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $record = 0x01B8; // Record identifier
-
         if (!$format) {
             $format = $this->urlFormat;
         }
@@ -1519,6 +1489,8 @@ class Worksheet extends BIFFwriter
         } else {
             $this->writeString($row1, $col1, $str, $format);
         }
+
+        $record = 0x01B8; // Record identifier
 
         // Determine if the link is relative or absolute:
         //   relative if link contains no dir separator, "somefile.xls"
