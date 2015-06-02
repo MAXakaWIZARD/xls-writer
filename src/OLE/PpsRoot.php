@@ -37,7 +37,7 @@ class PpsRoot extends PPS
         parent::__construct(
             null,
             OLE::asc2Ucs('Root Entry'),
-            OLE::PPS_TYPE_ROOT,
+            self::PPS_TYPE_ROOT,
             null,
             null,
             null,
@@ -127,7 +127,7 @@ class PpsRoot extends PPS
             }
 
             $size = $item->getSize();
-            if ($size < OLE::DATA_SIZE_SMALL) {
+            if ($size < self::DATA_SIZE_SMALL) {
                 $iSBcnt += $this->getBlocksCount($size, $this->smallBlockSize);
             } else {
                 $iBBcnt += $this->getBlocksCount($size, $this->bigBlockSize);
@@ -138,7 +138,7 @@ class PpsRoot extends PPS
         $iSlCnt = $this->getPointersPerBlock($this->bigBlockSize);
         $iSBDcnt = $this->getBlocksCount($iSBcnt, $iSlCnt);
         $iBBcnt += $this->getBlocksCount($iSmallLen, $this->bigBlockSize);
-        $iBdCnt = $this->getPointersPerBlock($this->bigBlockSize, OLE::PPS_SIZE);
+        $iBdCnt = $this->getPointersPerBlock($this->bigBlockSize, self::PPS_SIZE);
         $iPPScnt = $this->getBlocksCount(count($list), $iBdCnt);
 
         return array($iSBDcnt, $iBBcnt, $iPPScnt);
@@ -153,21 +153,15 @@ class PpsRoot extends PPS
     public function saveBigData($iStBlk, &$list)
     {
         foreach ($list as $item) {
-            if ($item->isDir()) {
-                continue;
-            }
-
             $size = $item->getSize();
-            if ($size >= OLE::DATA_SIZE_SMALL
+            if ($size >= self::DATA_SIZE_SMALL
                 || ($item->isRoot() && $item->hasData())
             ) {
                 $this->write($item->getData());
 
                 if ($size % $this->bigBlockSize) {
-                    $loopEnd = ($this->bigBlockSize - ($size % $this->bigBlockSize));
-                    for ($j = 0; $j < $loopEnd; $j++) {
-                        $this->write("\x00");
-                    }
+                    $zeroByteCount = ($this->bigBlockSize - ($size % $this->bigBlockSize));
+                    $this->write(str_repeat("\x00", $zeroByteCount));
                 }
 
                 // Set For PPS
@@ -193,13 +187,13 @@ class PpsRoot extends PPS
             }
 
             $size = $item->getSize();
-            if ($size <= 0 || $size >= OLE::DATA_SIZE_SMALL) {
+            if ($size <= 0 || $size >= self::DATA_SIZE_SMALL) {
                 continue;
             }
 
             $sbCount = $this->getBlocksCount($size, $this->smallBlockSize);
             // Add to SBD
-            for ($j = 0; $j < ($sbCount - 1); $j++) {
+            for ($j = 0; $j < $sbCount - 1; $j++) {
                 $this->writeUlong($j + $iSmBlk + 1);
             }
             $this->writeUlong(-2);
@@ -208,9 +202,8 @@ class PpsRoot extends PPS
 
             $exp = $size % $this->smallBlockSize;
             if ($exp) {
-                for ($j = 0; $j < ($this->smallBlockSize - $exp); $j++) {
-                    $result .= "\x00";
-                }
+                $zeroByteCount = $this->smallBlockSize - $exp;
+                $result .= str_repeat("\x00", $zeroByteCount);
             }
 
             $item->setStartBlock($iSmBlk);
@@ -219,9 +212,8 @@ class PpsRoot extends PPS
 
         $sbCount = $this->getPointersPerBlock($this->bigBlockSize);
         if ($iSmBlk % $sbCount) {
-            for ($i = 0; $i < ($sbCount - ($iSmBlk % $sbCount)); $i++) {
-                $this->writeUlong(-1);
-            }
+            $repeatCount = $sbCount - ($iSmBlk % $sbCount);
+            $this->writeUlong(-1, $repeatCount);
         }
 
         $this->data = $result;
@@ -242,20 +234,21 @@ class PpsRoot extends PPS
 
         // Adjust for Block
         $iCnt = count($list);
-        $iBCnt = $this->getPointersPerBlock($this->bigBlockSize, OLE::PPS_SIZE);
+        $iBCnt = $this->getPointersPerBlock($this->bigBlockSize, self::PPS_SIZE);
         if ($iCnt % $iBCnt) {
-            for ($i = 0; $i < (($iBCnt - ($iCnt % $iBCnt)) * OLE::PPS_SIZE); $i++) {
-                $this->write("\x00");
-            }
+            $zeroByteCount = ($iBCnt - ($iCnt % $iBCnt)) * self::PPS_SIZE;
+            $this->write(str_repeat("\x00", $zeroByteCount));
         }
     }
 
     /**
-     * @param $value
+     * @param     $value
+     * @param int $count
      */
-    protected function writeUlong($value)
+    protected function writeUlong($value, $count = 1)
     {
-        $this->write(pack("V", $value));
+        $packed = pack("V", $value);
+        $this->write(str_repeat($packed, $count));
     }
 
     /**
@@ -276,77 +269,71 @@ class PpsRoot extends PPS
     protected function saveBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
         $info = $this->calcBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
-        $headerEntriesCount = $info["header_blockchain_list_entries"];
-        $entriesCount = $info["blockchain_list_entries"];
+        $headerEntriesCount = $info["header_list_entries"];
+        $entriesCount = $info["list_entries"];
         $entriesPerBlock = $info["entries_per_block"];
 
-        $data = "";
-
         if ($numSbBlocks > 0) {
-            for ($i = 0; $i < ($numSbBlocks - 1); $i++) {
-                $data .= pack("V", $i + 1);
+            for ($i = 0; $i < $numSbBlocks - 1; $i++) {
+                $this->writeUlong($i + 1);
             }
-            $data .= pack("V", -2);
+            $this->writeUlong(-2);
         }
 
-        for ($i = 0; $i < ($numBbBlocks - 1); $i++) {
-            $data .= pack("V", $i + $numSbBlocks + 1);
+        for ($i = 0; $i < $numBbBlocks - 1; $i++) {
+            $this->writeUlong($i + $numSbBlocks + 1);
         }
-        $data .= pack("V", -2);
+        $this->writeUlong(-2);
 
-        for ($i = 0; $i < ($numPpsBlocks - 1); $i++) {
-            $data .= pack("V", $i + $numSbBlocks + $numBbBlocks + 1);
+        for ($i = 0; $i < $numPpsBlocks - 1; $i++) {
+            $this->writeUlong($i + $numSbBlocks + $numBbBlocks + 1);
         }
-        $data .= pack("V", -2);
+        $this->writeUlong(-2);
 
-        for ($i = 0; $i < $info["FD_blockchain_entries"]; $i++) {
-            $data .= pack("V", 0xFFFFFFFD);
-        }
-
-        for ($i = 0; $i < $info["FC_blockchain_entries"]; $i++) {
-            $data .= pack("V", 0xFFFFFFFC);
-        }
+        $this->writeUlong(0xFFFFFFFD, $info["FD_entries"]);
+        $this->writeUlong(0xFFFFFFFC, $info["FC_entries"]);
 
         // Adjust for Block
-        $allEntries = $numSbBlocks + $numBbBlocks + $numPpsBlocks + $info["FD_blockchain_entries"]
-            + $info["FC_blockchain_entries"];
+        $allEntries = $numSbBlocks
+            + $numBbBlocks
+            + $numPpsBlocks
+            + $info["FD_entries"]
+            + $info["FC_entries"];
         if ($allEntries % $entriesPerBlock) {
             $rest = $entriesPerBlock - ($allEntries % $entriesPerBlock);
-            for ($i = 0; $i < $rest; $i++) {
-                $data .= pack("V", -1);
-            }
+            $this->writeUlong(-1, $rest);
         }
 
         // Extra BDList
         if ($entriesCount > $headerEntriesCount) {
             $iN = 0;
             $iNb = 0;
+            $lastEntryIdx = $entriesPerBlock - 1;
+
             for ($i = $headerEntriesCount; $i < $entriesCount; $i++, $iN++) {
-                if ($iN >= ($entriesPerBlock - 1)) {
+                if ($iN >= $lastEntryIdx) {
                     $iN = 0;
                     $iNb++;
-                    $data .= pack(
-                        "V",
-                        $numSbBlocks + $numBbBlocks + $numPpsBlocks + $info["FD_blockchain_entries"]
-                        + $iNb
-                    );
+
+                    $val = $numSbBlocks
+                        + $numBbBlocks
+                        + $numPpsBlocks
+                        + $info["FD_entries"]
+                        + $iNb;
+                    $this->writeUlong($val);
                 }
 
-                $data .= pack("V", $numBbBlocks + $numSbBlocks + $numPpsBlocks + $i);
+                $this->writeUlong($numBbBlocks + $numSbBlocks + $numPpsBlocks + $i);
             }
 
             $allEntries = $entriesCount - $headerEntriesCount;
-            if (($allEntries % ($entriesPerBlock - 1))) {
-                $rest = ($entriesPerBlock - 1) - ($allEntries % ($entriesPerBlock - 1));
-                for ($i = 0; $i < $rest; $i++) {
-                    $data .= pack("V", -1);
-                }
+            if ($allEntries % $lastEntryIdx) {
+                $rest = $lastEntryIdx - ($allEntries % $lastEntryIdx);
+                $this->writeUlong(-1, $rest);
             }
 
-            $data .= pack("V", -2);
+            $this->writeUlong(-2);
         }
-
-        $this->write($data);
     }
 
     /**
@@ -359,27 +346,17 @@ class PpsRoot extends PPS
     public function saveHeader($numSbBlocks, $numBbBlocks, $numPpsBlocks)
     {
         $info = $this->calcBigBlockChain($numSbBlocks, $numBbBlocks, $numPpsBlocks);
-        $headerEntriesCount = $info["header_blockchain_list_entries"];
-        $entriesCount = $info["blockchain_list_entries"];
+        $headerEntriesCount = $info["header_list_entries"];
+        $entriesCount = $info["list_entries"];
 
         $this->write(
             "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
-            . pack("v", 0x3b)
-            . pack("v", 0x03)
-            . pack("v", -2)
-            . pack("v", 9)
-            . pack("v", 6)
-            . pack("v", 0)
-            . "\x00\x00\x00\x00"
-            . "\x00\x00\x00\x00"
+            . pack("V4", 0, 0, 0, 0)
+            . pack("v6", 0x3b, 0x03, -2, 9, 6, 0)
+            . pack("V2", 0, 0)
             . pack("V", $entriesCount)
             . pack("V", $numSbBlocks + $numBbBlocks) //ROOT START
-            . pack("V", 0)
-            . pack("V", 0x1000)
+            . pack("V2", 0, 0x1000)
         );
 
         //Small Block Depot
@@ -392,8 +369,8 @@ class PpsRoot extends PPS
             $this->writeUlong(-2); // Extra BDList Start
             $this->writeUlong(0); // Extra BDList Count
         } else {
-            $this->writeUlong($numSbBlocks + $numBbBlocks + $numPpsBlocks + $info["FD_blockchain_entries"]);
-            $this->writeUlong($info["FC_blockchain_entries"]);
+            $this->writeUlong($numSbBlocks + $numBbBlocks + $numPpsBlocks + $info["FD_entries"]);
+            $this->writeUlong($info["FC_entries"]);
         }
 
         // BDList
@@ -402,9 +379,8 @@ class PpsRoot extends PPS
         }
 
         if ($i < $headerEntriesCount) {
-            for ($j = 0; $j < ($headerEntriesCount - $i); $j++) {
-                $this->writeUlong(-1);
-            }
+            $repeatCount = $headerEntriesCount - $i;
+            $this->writeUlong(-1, $repeatCount);
         }
     }
 
@@ -421,40 +397,40 @@ class PpsRoot extends PPS
         $totalBlocks = $numSb + $numBb + $numPps;
         $info = array(
             "entries_per_block" => $this->getPointersPerBlock($this->bigBlockSize),
-            "header_blockchain_list_entries" => $this->getPointersPerBlock($this->bigBlockSize - 0x4C),
-            "blockchain_entries" => $totalBlocks,
-            "ext_blockchain_list_entries" => 0,
-            "FC_blockchain_entries" => 0
+            "header_list_entries" => $this->getPointersPerBlock($this->bigBlockSize - 0x4C),
+            "entries" => $totalBlocks,
+            "ext_list_entries" => 0,
+            "FC_entries" => 0,
+            "FD_entries" => $this->getNumberOfPointerBlocks($totalBlocks)
         );
 
-        $info["FD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-            $info["blockchain_entries"]
-        );
-        $info["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
-            $info["blockchain_entries"] + $info["FD_blockchain_entries"]
+        $info["list_entries"] = $this->getNumberOfPointerBlocks(
+            $totalBlocks + $info["FD_entries"]
         );
 
         // do some magic
-        if ($info["blockchain_list_entries"] <= $info["header_blockchain_list_entries"]) {
+        if ($info["list_entries"] <= $info["header_list_entries"]) {
             return $info;
         }
 
-        do {
-            $info["blockchain_list_entries"] = $this->getNumberOfPointerBlocks(
-                $info["blockchain_entries"] + $info["FD_blockchain_entries"]
-                + $info["FC_blockchain_entries"]
+        while (true) {
+            $pointerBlocksCount = $this->getNumberOfPointerBlocks(
+                $totalBlocks + $info["FD_entries"] + $info["FC_entries"]
             );
-            $info["ext_blockchain_list_entries"]
-                = $info["blockchain_list_entries"] - $info["header_blockchain_list_entries"];
-            $info["FC_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-                $info["ext_blockchain_list_entries"]
+
+            if ($info["list_entries"] >= $pointerBlocksCount) {
+                break;
+            }
+
+            $info["list_entries"] = $pointerBlocksCount;
+            $info["ext_list_entries"] = $info["list_entries"] - $info["header_list_entries"];
+            $info["FC_entries"] = $this->getNumberOfPointerBlocks(
+                $info["ext_list_entries"]
             );
-            $info["FD_blockchain_entries"] = $this->getNumberOfPointerBlocks(
-                $totalBlocks + $info["FD_blockchain_entries"] + $info["FC_blockchain_entries"]
+            $info["FD_entries"] = $this->getNumberOfPointerBlocks(
+                $totalBlocks + $info["FD_entries"] + $info["FC_entries"]
             );
-        } while ($info["blockchain_list_entries"] < $this->getNumberOfPointerBlocks(
-            $info["blockchain_entries"] + $info["FD_blockchain_entries"] + $info["FC_blockchain_entries"]
-        ));
+        }
 
         return $info;
     }
@@ -477,7 +453,7 @@ class PpsRoot extends PPS
      *
      * @return int
      */
-    protected function getPointersPerBlock($blockSize, $pointerSize = OLE::LONG_INT_SIZE)
+    protected function getPointersPerBlock($blockSize, $pointerSize = self::LONG_INT_SIZE)
     {
         return intval(floor($blockSize / $pointerSize));
     }

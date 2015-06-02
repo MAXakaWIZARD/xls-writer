@@ -21,7 +21,7 @@ class PpsFile extends PPS
         parent::__construct(
             null,
             OLE::asc2Ucs($name),
-            OLE::PPS_TYPE_FILE
+            self::PPS_TYPE_FILE
         );
     }
 }

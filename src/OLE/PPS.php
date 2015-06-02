@@ -11,6 +11,12 @@ namespace Xls\OLE;
  */
 class PPS
 {
+    const PPS_TYPE_ROOT = 5;
+    const PPS_TYPE_FILE = 2;
+    const PPS_SIZE = 0x80;
+    const DATA_SIZE_SMALL = 0x1000;
+    const LONG_INT_SIZE = 4;
+
     /**
      * The PPS index
      * @var integer
@@ -221,15 +227,7 @@ class PPS
      */
     public function isFile()
     {
-        return $this->type == OLE::PPS_TYPE_FILE;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isDir()
-    {
-        return $this->type == OLE::PPS_TYPE_DIR;
+        return $this->type == self::PPS_TYPE_FILE;
     }
 
     /**
@@ -237,7 +235,7 @@ class PPS
      */
     public function isRoot()
     {
-        return $this->type == OLE::PPS_TYPE_ROOT;
+        return $this->type == self::PPS_TYPE_ROOT;
     }
 
     /**

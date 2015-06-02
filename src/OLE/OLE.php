@@ -12,13 +12,6 @@ namespace Xls\OLE;
  */
 class OLE
 {
-    const PPS_TYPE_ROOT = 5;
-    const PPS_TYPE_DIR = 1;
-    const PPS_TYPE_FILE = 2;
-    const PPS_SIZE = 0x80;
-    const DATA_SIZE_SMALL = 0x1000;
-    const LONG_INT_SIZE = 4;
-
     /**
      * Utility function to transform ASCII text to Unicode
      *
