@@ -213,4 +213,12 @@ class StringUtils
 
         return $value;
     }
+
+    public static function toNullTerminatedWchar($str)
+    {
+        $str = join("\0", preg_split("''", $str, -1, PREG_SPLIT_NO_EMPTY));
+        $str = $str . "\0\0\0";
+
+        return $str;
+    }
 }

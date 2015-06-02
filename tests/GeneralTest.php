@@ -13,23 +13,39 @@ class GeneralTest extends TestAbstract
     {
         $this->workbook->setCountry(Workbook::COUNTRY_USA);
 
-        $sheet = $this->workbook->addWorksheet('My first worksheet');
+        $sheet = $this->workbook->addWorksheet('Sheet1');
         $sheet->writeRow(
             0,
             0,
             array(
                 array('Name', 'John Smith', 'Johann Schmidt', 'Иван Иванов'),
-                array('Age', 30, 31, 32),
-                array('URL', 'mailto:jsmith@server.com', 'http://google.com', '')
+                array('Age', 30, 31, 32)
             )
         );
 
         $this->workbook->save($this->testFilePath);
-
         $this->assertTestFileEqualsTo('general');
 
         $this->setExpectedException('\Exception', 'Workbook was already saved!');
         $this->workbook->save($this->testFilePath);
+    }
+
+    public function testLinks()
+    {
+        $sheet = $this->workbook->addWorksheet('Sheet1');
+        $this->workbook->addWorksheet('Sheet2')->write(0, 0, 'Test2');
+
+        $sheet->writeUrl(0, 0, 'mailto:jsmith@server.com', 'Contact John Smith');
+        $sheet->writeUrl(1, 0, 'http://google.com');
+        $sheet->writeUrl(2, 0, 'internal:Sheet2!A1');
+        $sheet->writeUrl(3, 0, '#Sheet2!A2');
+        $sheet->writeUrl(4, 0, 'external:general.xls');
+        $sheet->writeUrl(5, 0, 'external:../data/general.xls');
+        $sheet->writeUrl(6, 0, 'external:../data/general.xls#Sheet1!A1');
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('links');
     }
 
     public function testNotes()

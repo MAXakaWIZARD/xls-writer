@@ -1315,50 +1315,30 @@ class Worksheet extends BIFFwriter
      * @param integer $row    Row
      * @param integer $col    Column
      * @param string $url    URL string
-     * @param string $string Alternative label
+     * @param string $label Alternative label
      * @param mixed $format The cell format
      */
-    public function writeUrl($row, $col, $url, $string = '', $format = null)
+    public function writeUrl($row, $col, $url, $label = '', $format = null)
     {
-        // Add start row and col to arg list
-        $this->writeUrlRange($row, $col, $row, $col, $url, $string, $format);
-    }
+        $this->checkRowCol($row, $col);
 
-    /**
-     * This is the more general form of writeUrl(). It allows a hyperlink to be
-     * written to a range of cells. This function also decides the type of hyperlink
-     * to be written. These are either, Web (http, ftp, mailto), Internal
-     * (Sheet1!A1) or external ('c:\temp\foo.xls#Sheet1!A1').
-     * @see writeUrl()
-     * @param integer $row1   Start row
-     * @param integer $col1   Start column
-     * @param integer $row2   End row
-     * @param integer $col2   End column
-     * @param string $url    URL string
-     * @param string $string Alternative label
-     * @param mixed $format The cell format
-     */
-    protected function writeUrlRange($row1, $col1, $row2, $col2, $url, $string = '', $format = null)
-    {
-        // Check for internal/external sheet links or default to web link
-        if (preg_match('[^internal:]', $url)) {
-            $this->writeUrlInternal($row1, $col1, $row2, $col2, $url, $string, $format);
+        if (preg_match('[^internal:]', $url)
+            || strpos($url, '#') === 0
+        ) {
+            $this->writeUrlInternal($row, $col, $row, $col, $url, $label, $format);
             return;
         }
 
         if (preg_match('[^external:]', $url)) {
-            $this->writeUrlExternal($row1, $col1, $row2, $col2, $url, $string, $format);
+            $this->writeUrlExternal($row, $col, $row, $col, $url, $label, $format);
             return;
         }
 
-        $this->writeUrlWeb($row1, $col1, $row2, $col2, $url, $string, $format);
+        $this->writeUrlWeb($row, $col, $row, $col, $url, $label, $format);
     }
 
     /**
      * Used to write http, ftp and mailto hyperlinks.
-     * The link type ($options) is 0x03 is the same as absolute dir ref without
-     * sheet. However it is differentiated by the $unknown2 data stream.
-     * @see writeUrl()
      * @param integer $row1   Start row
      * @param integer $col1   Start column
      * @param integer $row2   End row
@@ -1369,184 +1349,74 @@ class Worksheet extends BIFFwriter
      */
     protected function writeUrlWeb($row1, $col1, $row2, $col2, $url, $str, $format = null)
     {
-        if (!$format) {
-            $format = $this->urlFormat;
-        }
-
-        // Write the visible label using the writeString() method.
-        if ($str == '') {
-            $str = $url;
-        }
-
-        if (is_numeric($str)) {
-            $this->writeNumber($row1, $col1, $str, $format);
-        } else {
-            $this->writeString($row1, $col1, $str, $format);
-        }
-
+        $this->writeUrlLabel($row1, $col1, $url, $str, $format);
         $this->appendRecord('Hyperlink', array($row1, $row2, $col1, $col2, $url));
     }
 
     /**
      * Used to write internal reference hyperlinks such as "Sheet1!A1".
-     * @see writeUrl()
+     *
      * @param integer $row1   Start row
      * @param integer $col1   Start column
      * @param integer $row2   End row
      * @param integer $col2   End column
      * @param string $url    URL string
-     * @param string $str    Alternative label
+     * @param string $label    Alternative label
      * @param mixed $format The cell format
      */
-    protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
+    protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $label, $format = null)
     {
-        if (!$format) {
-            $format = $this->urlFormat;
-        }
-
         // Strip URL type
         $url = preg_replace('/^internal:/', '', $url);
 
-        // Write the visible label
-        if ($str == '') {
-            $str = $url;
+        if (strpos($url, '#') === 0) {
+            $url = substr($url, 1);
         }
 
-        if (is_numeric($str)) {
-            $this->writeNumber($row1, $col1, $str, $format);
-        } else {
-            $this->writeString($row1, $col1, $str, $format);
-        }
-
-        $record = 0x01B8; // Record identifier
-
-        // Pack the undocumented parts of the hyperlink stream
-        $unknown1 = pack("H*", "D0C9EA79F9BACE118C8200AA004BA90B02000000");
-
-        // Pack the option flags
-        $options = pack("V", 0x08);
-
-        // Convert the URL type and to a null terminated wchar string
-        $url = join("\0", preg_split("''", $url, -1, PREG_SPLIT_NO_EMPTY));
-        $url = $url . "\0\0\0";
-
-        // Pack the length of the URL as chars (not wchars)
-        $urlLen = pack("V", floor(strlen($url) / 2));
-
-        // Calculate the data length
-        $length = 0x24 + strlen($url);
-
-        // Pack the header data
-        $header = pack("vv", $record, $length);
-        $data = pack("vvvv", $row1, $row2, $col1, $col2);
-
-        // Write the packed data
-        $this->append(
-            $header . $data .
-            $unknown1 . $options .
-            $urlLen . $url
-        );
+        $this->writeUrlLabel($row1, $col1, $url, $label, $format);
+        $this->appendRecord('HyperlinkInternal', array($row1, $row2, $col1, $col2, $url));
     }
 
     /**
      * Write links to external directory names such as 'c:\foo.xls',
      * c:\foo.xls#Sheet1!A1', '../../foo.xls'. and '../../foo.xls#Sheet1!A1'.
      *
-     * Note: Excel writes some relative links with the $dir_long string. We ignore
-     * these cases for the sake of simpler code.
-     * @see writeUrl()
      * @param integer $row1   Start row
      * @param integer $col1   Start column
      * @param integer $row2   End row
      * @param integer $col2   End column
      * @param string $url    URL string
-     * @param string $str    Alternative label
+     * @param string $label    Alternative label
      * @param mixed $format The cell format
      */
-    protected function writeUrlExternal($row1, $col1, $row2, $col2, $url, $str, $format = null)
+    protected function writeUrlExternal($row1, $col1, $row2, $col2, $url, $label, $format = null)
     {
-        // Network drives are different. We will handle them separately
-        // MS/Novell network drives and shares start with \\
-        if (preg_match('[^external:\\\\]', $url)) {
-            return;
-        }
-
-        if (!$format) {
-            $format = $this->urlFormat;
-        }
-
         // Strip URL type and change Unix dir separator to Dos style (if needed)
         $url = preg_replace('/^external:/', '', $url);
         $url = preg_replace('/\//', "\\", $url);
 
-        // Write the visible label
+        $this->writeUrlLabel($row1, $col1, $url, $label, $format);
+        $this->appendRecord('HyperlinkExternal', array($row1, $row2, $col1, $col2, $url));
+    }
+
+    /**
+     * @param      $row1
+     * @param      $col1
+     * @param      $url
+     * @param      $str
+     * @param null $format
+     */
+    protected function writeUrlLabel($row1, $col1, $url, $str, $format = null)
+    {
+        if (!$format) {
+            $format = $this->urlFormat;
+        }
+
         if ($str == '') {
-            $str = preg_replace('/\#/', ' - ', $url);
+            $str = $url;
         }
 
-        if (is_numeric($str)) {
-            $this->writeNumber($row1, $col1, $str, $format);
-        } else {
-            $this->writeString($row1, $col1, $str, $format);
-        }
-
-        $record = 0x01B8; // Record identifier
-
-        // Determine if the link is relative or absolute:
-        //   relative if link contains no dir separator, "somefile.xls"
-        //   relative if link starts with up-dir, "..\..\somefile.xls"
-        //   otherwise, absolute
-
-        $absolute = 0x02; // Bit mask
-        if (!preg_match("/\\\/", $url)) {
-            $absolute = 0x00;
-        }
-        if (preg_match("/^\.\.\\\/", $url)) {
-            $absolute = 0x00;
-        }
-        $linkType = 0x01 | $absolute;
-
-        $dirLong = $url;
-        if (preg_match("/\#/", $url)) {
-            $linkType |= 0x08;
-        }
-
-        // Pack the link type
-        $linkType = pack("V", $linkType);
-
-        // Calculate the up-level dir count e.g.. (..\..\..\ == 3)
-        $upCount = preg_match_all("/\.\.\\\/", $dirLong, $useless);
-        $upCount = pack("v", $upCount);
-
-        // Store the short dos dir name (null terminated)
-        $dirShort = preg_replace("/\.\.\\\/", '', $dirLong) . "\0";
-
-        // Pack the lengths of the dir strings
-        $dirShortLen = pack("V", strlen($dirShort));
-        $streamLen = pack("V", 0);
-
-        // Pack the undocumented parts of the hyperlink stream
-        $unknown1 = pack("H*", 'D0C9EA79F9BACE118C8200AA004BA90B02000000');
-        $unknown2 = pack("H*", '0303000000000000C000000000000046');
-        $unknown3 = pack("H*", 'FFFFADDE000000000000000000000000000000000000000');
-
-        // Pack the main data stream
-        $data = pack("vvvv", $row1, $row2, $col1, $col2) .
-            $unknown1 .
-            $linkType .
-            $unknown2 .
-            $upCount .
-            $dirShortLen .
-            $dirShort .
-            $unknown3 .
-            $streamLen;
-
-        // Pack the header data
-        $length = strlen($data);
-        $header = pack("vv", $record, $length);
-
-        // Write the packed data
-        $this->append($header . $data);
+        $this->writeString($row1, $col1, $str, $format);
     }
 
     /**

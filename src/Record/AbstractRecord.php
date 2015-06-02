@@ -60,4 +60,15 @@ abstract class AbstractRecord
     {
         return (is_object($format)) ? $format->getXfIndex(): 0x0F;
     }
+
+    /**
+     * returns full record data: header + data
+     * @param $data
+     *
+     * @return string
+     */
+    protected function getFullRecord($data)
+    {
+        return $this->getHeader(strlen($data)) . $data;
+    }
 }
