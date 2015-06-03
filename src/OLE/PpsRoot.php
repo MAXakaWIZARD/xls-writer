@@ -67,9 +67,7 @@ class PpsRoot extends PPS
         list($iSBDcnt, $iBBcnt, $iPPScnt) = $this->calcSize($list);
 
         $this->saveHeader($iSBDcnt, $iBBcnt, $iPPScnt);
-
         $this->saveSmallData($list);
-
         $this->saveBigData($iSBDcnt, $list);
         $this->savePps($list);
         $this->saveBigBlockChain($iSBDcnt, $iBBcnt, $iPPScnt);
@@ -408,14 +406,23 @@ class PpsRoot extends PPS
             $totalBlocks + $info["FD_entries"]
         );
 
-        // do some magic
         if ($info["list_entries"] <= $info["header_list_entries"]) {
             return $info;
         }
 
+        return $this->calcBigBlockChainExtra($info);
+    }
+
+    /**
+     * @param array $info
+     *
+     * @return array
+     */
+    protected function calcBigBlockChainExtra($info)
+    {
         while (true) {
             $pointerBlocksCount = $this->getNumberOfPointerBlocks(
-                $totalBlocks + $info["FD_entries"] + $info["FC_entries"]
+                $info["entries"] + $info["FD_entries"] + $info["FC_entries"]
             );
 
             if ($info["list_entries"] >= $pointerBlocksCount) {
@@ -428,7 +435,7 @@ class PpsRoot extends PPS
                 $info["ext_list_entries"]
             );
             $info["FD_entries"] = $this->getNumberOfPointerBlocks(
-                $totalBlocks + $info["FD_entries"] + $info["FC_entries"]
+                $info["entries"] + $info["FD_entries"] + $info["FC_entries"]
             );
         }
 
