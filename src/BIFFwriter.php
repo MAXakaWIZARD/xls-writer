@@ -26,14 +26,6 @@ class BIFFwriter
     const BYTE_ORDER_LE = 0;
     const BYTE_ORDER_BE = 1;
 
-    const BOF_TYPE_WORKBOOK = 0x0005;
-    const BOF_TYPE_WORKSHEET = 0x0010;
-
-    /**
-     * @var integer
-     */
-    protected $version = Biff8::VERSION;
-
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer

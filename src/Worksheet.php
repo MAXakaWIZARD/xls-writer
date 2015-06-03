@@ -4,6 +4,8 @@ namespace Xls;
 
 class Worksheet extends BIFFwriter
 {
+    const BOF_TYPE = 0x0010;
+
     const ORIENTATION_PORTRAIT = 1;
     const ORIENTATION_LANDSCAPE = 0;
 
@@ -351,7 +353,7 @@ class Worksheet extends BIFFwriter
         //save previously written data
         $data = $this->getDataAndFlush();
 
-        $this->appendRecord('Bof', array(self::BOF_TYPE_WORKSHEET));
+        $this->appendRecord('Bof', array(static::BOF_TYPE));
 
         $this->storeColinfo();
         $this->storePrintHeaders();
@@ -425,7 +427,7 @@ class Worksheet extends BIFFwriter
      */
     public function activate()
     {
-        $this->workbook->setActiveSheet($this->index);
+        $this->workbook->setActiveSheetIndex($this->index);
     }
 
     /**
@@ -436,7 +438,7 @@ class Worksheet extends BIFFwriter
      */
     public function setFirstSheet()
     {
-        $this->workbook->setFirstSheet($this->index);
+        $this->workbook->setFirstSheetIndex($this->index);
     }
 
     /**

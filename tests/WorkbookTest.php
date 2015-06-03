@@ -46,24 +46,24 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     public function testActiveAndFirstSheet()
     {
         $firstSheet = $this->workbook->addWorksheet('Sheet1');
-        $this->assertSame(0, $this->workbook->getActiveSheet());
-        $this->assertSame(0, $this->workbook->getFirstSheet());
+        $this->assertSame(0, $this->workbook->getActiveSheetIndex());
+        $this->assertSame(0, $this->workbook->getFirstSheetIndex());
         $this->assertTrue($firstSheet->isSelected());
 
         $secondSheet = $this->workbook->addWorksheet('Sheet2');
         $secondSheet->activate();
-        $this->assertSame(1, $this->workbook->getActiveSheet());
+        $this->assertSame(1, $this->workbook->getActiveSheetIndex());
         $this->assertTrue($secondSheet->isSelected());
         $this->assertFalse($firstSheet->isSelected());
         $secondSheet->setFirstSheet();
-        $this->assertSame(1, $this->workbook->getFirstSheet());
+        $this->assertSame(1, $this->workbook->getFirstSheetIndex());
 
         $firstSheet->activate();
-        $this->assertSame(0, $this->workbook->getActiveSheet());
+        $this->assertSame(0, $this->workbook->getActiveSheetIndex());
         $this->assertTrue($firstSheet->isSelected());
         $this->assertFalse($secondSheet->isSelected());
         $firstSheet->setFirstSheet();
-        $this->assertSame(0, $this->workbook->getFirstSheet());
+        $this->assertSame(0, $this->workbook->getFirstSheetIndex());
     }
 
     /**

@@ -13,6 +13,8 @@ class Workbook extends BIFFwriter
     const COUNTRY_NONE = -1;
     const COUNTRY_USA = 1;
 
+    const BOF_TYPE = 0x0005;
+
     /**
      * Formula parser
      * @var FormulaParser
@@ -20,22 +22,16 @@ class Workbook extends BIFFwriter
     protected $formulaParser;
 
     /**
-     * Flag for 1904 date system (0 => base date is 1900, 1 => base date is 1904)
-     * @var integer
-     */
-    protected $f1904 = 0;
-
-    /**
      * The active worksheet of the workbook (0 indexed)
      * @var integer
      */
-    protected $activeSheet = 0;
+    protected $activeSheetIndex = 0;
 
     /**
      * 1st displayed worksheet in the workbook (0 indexed)
      * @var integer
      */
-    protected $firstSheet = 0;
+    protected $firstSheetIndex = 0;
 
     /**
      * Index for creating adding new formats to the workbook
@@ -124,14 +120,6 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * @return int
-     */
-    public function getCreationTimestamp()
-    {
-        return $this->creationTimestamp;
-    }
-
-    /**
      * @param int $creationTime
      */
     public function setCreationTimestamp($creationTime)
@@ -159,7 +147,7 @@ class Workbook extends BIFFwriter
             throw new \Exception('Cannot save workbook with no sheets');
         }
 
-        $this->appendRecord('Bof', array(self::BOF_TYPE_WORKBOOK));
+        $this->appendRecord('Bof', array(static::BOF_TYPE));
         $this->appendRecord('Codepage', array(Biff8::CODEPAGE));
         $this->storeWindow1();
         $this->storeDatemode();
@@ -322,7 +310,7 @@ class Workbook extends BIFFwriter
         $this->sheetNames[$index] = $name;
 
         if (count($this->worksheets) == 1) {
-            $this->setActiveSheet(0);
+            $this->setActiveSheetIndex(0);
         }
 
         // Register worksheet name with parser
@@ -351,9 +339,9 @@ class Workbook extends BIFFwriter
     /**
      * @param int $sheetIndex
      */
-    public function setActiveSheet($sheetIndex)
+    public function setActiveSheetIndex($sheetIndex)
     {
-        $this->activeSheet = $sheetIndex;
+        $this->activeSheetIndex = $sheetIndex;
         foreach ($this->worksheets as $idx => $sheet) {
             if ($idx == $sheetIndex) {
                 $sheet->select();
@@ -364,27 +352,27 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * @param int $sheetIndex
+     * @return int
      */
-    public function setFirstSheet($sheetIndex)
+    public function getActiveSheetIndex()
     {
-        $this->firstSheet = $sheetIndex;
+        return $this->activeSheetIndex;
     }
 
     /**
      * @return int
      */
-    public function getActiveSheet()
+    public function getFirstSheetIndex()
     {
-        return $this->activeSheet;
+        return $this->firstSheetIndex;
     }
 
     /**
-     * @return int
+     * @param int $firstSheetIndex
      */
-    public function getFirstSheet()
+    public function setFirstSheetIndex($firstSheetIndex)
     {
-        return $this->firstSheet;
+        $this->firstSheetIndex = $firstSheetIndex;
     }
 
     /**
@@ -450,22 +438,6 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * @return int
-     */
-    protected function getSelectedSheetsCount()
-    {
-        $selected = 0;
-
-        foreach ($this->worksheets as $sheet) {
-            if ($sheet->isSelected()) {
-                $selected++;
-            }
-        }
-
-        return $selected;
-    }
-
-    /**
      * Store the workbook in an OLE container
      * @param $filePath
      */
@@ -479,7 +451,7 @@ class Workbook extends BIFFwriter
         }
 
         $root = new PpsRoot(
-            $this->getCreationTimestamp(),
+            $this->creationTimestamp,
             array($ole)
         );
 
@@ -689,12 +661,13 @@ class Workbook extends BIFFwriter
      */
     protected function storeWindow1()
     {
+        $selectedSheetsCount = 1;
         $this->appendRecord(
             'Window1',
             array(
-                $this->getSelectedSheetsCount(),
-                $this->firstSheet,
-                $this->activeSheet
+                $selectedSheetsCount,
+                $this->firstSheetIndex,
+                $this->activeSheetIndex
             )
         );
     }
@@ -711,11 +684,12 @@ class Workbook extends BIFFwriter
     }
 
     /**
-     * Write DATEMODE record to indicate the date system in use (1904 or 1900).
+     * Write DATEMODE record to indicate the date system in use (1904 or 1900)
+     * Flag for 1904 date system (0 => base date is 1900, 1 => base date is 1904)
      */
     protected function storeDatemode()
     {
-        $this->appendRecord('Datemode', array($this->f1904));
+        $this->appendRecord('Datemode', array(0));
     }
 
     /**
