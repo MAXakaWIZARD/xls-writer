@@ -2,6 +2,7 @@
 namespace Xls\Record;
 
 use Xls\StringUtils;
+use Xls\Range;
 
 class Hyperlink extends AbstractRecord
 {
@@ -11,20 +12,17 @@ class Hyperlink extends AbstractRecord
     const MONIKER_GUID = "E0C9EA79F9BACE118C8200AA004BA90B";
 
     /**
-     * @param $row1
-     * @param $row2
-     * @param $col1
-     * @param $col2
+     * @param Range $range
      * @param $url
      *
      * @return string
      */
-    public function getData($row1, $row2, $col1, $col2, $url)
+    public function getData(Range $range, $url)
     {
         $url = StringUtils::toNullTerminatedWchar($url);
 
         $options = $this->getOptions($url);
-        $data = $this->getCommonData($row1, $row2, $col1, $col2, $options);
+        $data = $this->getCommonData($range, $options);
         $data .= pack("H*", static::MONIKER_GUID);
         $data .= pack("V", strlen($url));
         $data .= $url;
@@ -41,9 +39,15 @@ class Hyperlink extends AbstractRecord
         return $options;
     }
 
-    protected function getCommonData($row1, $row2, $col1, $col2, $options)
+    protected function getCommonData(Range $range, $options)
     {
-        $data = pack("vvvv", $row1, $row2, $col1, $col2);
+        $data = pack(
+            "vvvv",
+            $range->getRowFrom(),
+            $range->getRowTo(),
+            $range->getColFrom(),
+            $range->getColTo()
+        );
         $data .= pack("H*", static::STDLINK_GUID);
         $data .= pack("H*", "02000000");
         $data .= pack("V", $options);

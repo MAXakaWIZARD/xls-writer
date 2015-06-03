@@ -2,21 +2,19 @@
 namespace Xls\Record;
 
 use Xls\StringUtils;
+use Xls\Range;
 
 class HyperlinkExternal extends Hyperlink
 {
     const MONIKER_GUID = "0303000000000000C000000000000046";
 
     /**
-     * @param $row1
-     * @param $row2
-     * @param $col1
-     * @param $col2
+     * @param Range $range
      * @param $url
      *
      * @return string
      */
-    public function getData($row1, $row2, $col1, $col2, $url)
+    public function getData(Range $range, $url)
     {
         $cellRef = null;
         if (preg_match("/\#/", $url)) {
@@ -37,7 +35,7 @@ class HyperlinkExternal extends Hyperlink
         $streamLen = pack("V", 0);
 
         $options = $this->getOptions($url);
-        $data = $this->getCommonData($row1, $row2, $col1, $col2, $options);
+        $data = $this->getCommonData($range, $options);
         $data .= pack("H*", static::MONIKER_GUID) .
             pack("v", $upCount) .
             pack("V", strlen($urlWithoutDots)) .

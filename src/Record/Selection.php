@@ -2,6 +2,8 @@
 
 namespace Xls\Record;
 
+use Xls\Range;
+
 class Selection extends AbstractRecord
 {
     const NAME = 'SELECTION';
@@ -10,16 +12,14 @@ class Selection extends AbstractRecord
     /**
      * Generate the SELECTION record
      *
-     * @param array $selection array containing ($rwFirst,$colFirst,$rwLast,$colLast)
+     * @param Range $selection
      * @param integer $activePane pane position
      * @return string
      */
     public function getData($selection, $activePane)
     {
-        list($rwFirst, $colFirst, $rwLast, $colLast) = $selection;
-
-        $rwAct = $rwFirst; // Active row
-        $colAct = $colFirst; // Active column
+        $rwAct = $selection->getRowFrom(); // Active row
+        $colAct = $selection->getColFrom(); // Active column
         $irefAct = 0; // Active cell ref
         $cref = 1; // Number of refs
 
@@ -30,10 +30,10 @@ class Selection extends AbstractRecord
             $colAct,
             $irefAct,
             $cref,
-            $rwFirst,
-            $rwLast,
-            $colFirst,
-            $colLast
+            $selection->getRowFrom(),
+            $selection->getRowTo(),
+            $selection->getColFrom(),
+            $selection->getColTo()
         );
 
         return $this->getFullRecord($data);

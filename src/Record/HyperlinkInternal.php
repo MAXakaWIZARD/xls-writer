@@ -2,24 +2,22 @@
 namespace Xls\Record;
 
 use Xls\StringUtils;
+use Xls\Range;
 
 class HyperlinkInternal extends Hyperlink
 {
     /**
-     * @param $row1
-     * @param $row2
-     * @param $col1
-     * @param $col2
+     * @param Range $range
      * @param $url
      *
      * @return string
      */
-    public function getData($row1, $row2, $col1, $col2, $url)
+    public function getData(Range $range, $url)
     {
         $url = StringUtils::toNullTerminatedWchar($url);
 
         $options = $this->getOptions($url);
-        $data = $this->getCommonData($row1, $row2, $col1, $col2, $options);
+        $data = $this->getCommonData($range, $options);
         $data .= $this->getTextMarkData($url);
 
         return $this->getFullRecord($data);

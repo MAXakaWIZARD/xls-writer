@@ -2,6 +2,8 @@
 
 namespace Xls\Record;
 
+use Xls\Range;
+
 class MergeCells extends AbstractRecord
 {
     const NAME = 'MERGECELLS';
@@ -10,7 +12,7 @@ class MergeCells extends AbstractRecord
     /**
      * Generate the MERGECELLS biff record
      *
-     * @param array $ranges
+     * @param Range[] $ranges
      *
      * @return string
      */
@@ -20,7 +22,13 @@ class MergeCells extends AbstractRecord
 
         $data = pack('v', $rangesCount);
         foreach ($ranges as $range) {
-            $data .= pack('vvvv', $range[0], $range[2], $range[1], $range[3]);
+            $data .= pack(
+                'vvvv',
+                $range->getRowFrom(),
+                $range->getRowTo(),
+                $range->getColFrom(),
+                $range->getColTo()
+            );
         }
 
         return $this->getFullRecord($data);

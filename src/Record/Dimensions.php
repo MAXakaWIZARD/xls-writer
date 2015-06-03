@@ -1,28 +1,27 @@
 <?php
 namespace Xls\Record;
 
+use Xls\Range;
+
 class Dimensions extends AbstractRecord
 {
     const NAME = 'DIMENSIONS';
     const ID = 0x0200;
 
     /**
-     * @param $rowMin
-     * @param $rowMax
-     * @param $colMin
-     * @param $colMax
+     * @param Range $range
      *
      * @return string
      */
-    public function getData($rowMin, $rowMax, $colMin, $colMax)
+    public function getData(Range $range)
     {
         $reserved = 0x00;
 
-        $data = pack("VV", $rowMin, $rowMax);
+        $data = pack("VV", $range->getRowFrom(), $range->getRowTo() + 1);
         $data .= pack(
             "vvv",
-            $colMin,
-            $colMax,
+            $range->getColFrom(),
+            $range->getColTo() + 1,
             $reserved
         );
 

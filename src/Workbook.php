@@ -606,15 +606,17 @@ class Workbook extends BIFFwriter
     {
         foreach ($this->worksheets as $sheet) {
             if ($sheet->isPrintAreaSet()) {
-                $data = pack(
-                    'Cvvvvv',
-                    0x3B,
-                    $sheet->getIndex(),
-                    $sheet->getPrintRowMin(),
-                    $sheet->getPrintRowMax(),
-                    $sheet->getPrintColMin(),
-                    $sheet->getPrintColMax()
+                $area = $sheet->getPrintArea();
+
+                $data = $this->getRangeCommonHeader($sheet);
+                $data .= pack(
+                    'vvvv',
+                    $area->getRowFrom(),
+                    $area->getRowTo(),
+                    $area->getColFrom(),
+                    $area->getColTo()
                 );
+
                 $this->appendRecord('DefinedName', array(
                     Record\DefinedName::BUILTIN_PRINT_AREA,
                     $sheet->getIndex() + 1,
@@ -622,6 +624,11 @@ class Workbook extends BIFFwriter
                 ));
             }
         }
+    }
+
+    protected function getRangeCommonHeader(Worksheet $sheet)
+    {
+        return pack('Cv', 0x3B, $sheet->getIndex());
     }
 
     /**
@@ -648,10 +655,14 @@ class Workbook extends BIFFwriter
             return;
         }
 
+        $rangeHeader = $this->getRangeCommonHeader($sheet);
+
         if (isset($rowmin) && isset($colmin)) {
             $data = pack('Cv', 0x29, 0x17); // tMemFunc
-            $data .= pack('Cvvvvv', 0x3B, $sheet->getIndex(), 0, 65535, $colmin, $colmax); // tArea3d
-            $data .= pack('Cvvvvv', 0x3B, $sheet->getIndex(), $rowmin, $rowmax, 0, Biff8::MAX_COLS - 1); // tArea3d
+            $data .= $rangeHeader;
+            $data .= pack('vvvv', 0, 65535, $colmin, $colmax); // tArea3d
+            $data .= $rangeHeader;
+            $data .= pack('vvvv', $rowmin, $rowmax, 0, Biff8::MAX_COLS - 1); // tArea3d
             $data .= pack('C', 0x10); // tList
         } else {
             if (isset($colmin)) {
@@ -662,7 +673,8 @@ class Workbook extends BIFFwriter
                 $colmax = Biff8::MAX_COLS - 1;
             }
 
-            $data = pack('Cvvvvv', 0x3B, $sheet->getIndex(), $rowmin, $rowmax, $colmin, $colmax);
+            $data = $rangeHeader;
+            $data .= pack('vvvv', $rowmin, $rowmax, $colmin, $colmax);
         }
 
         $this->appendRecord('DefinedName', array(

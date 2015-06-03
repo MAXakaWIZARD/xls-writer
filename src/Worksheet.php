@@ -46,40 +46,9 @@ class Worksheet extends BIFFwriter
     protected $formulaParser;
 
     /**
-     * Maximum number of rows for an Excel spreadsheet
-     * @var integer
+     * @var Range
      */
-    protected $xlsRowmax = Biff8::MAX_ROWS;
-
-    /**
-     * Maximum number of columns for an Excel spreadsheet
-     * @var integer
-     */
-    protected $xlsColmax = Biff8::MAX_COLS;
-
-    /**
-     * First row for the DIMENSIONS record
-     * @var integer
-     */
-    protected $dimRowmin;
-
-    /**
-     * Last row for the DIMENSIONS record
-     * @var integer
-     */
-    protected $dimRowmax = 0;
-
-    /**
-     * First column for the DIMENSIONS record
-     * @var integer
-     */
-    protected $dimColmin;
-
-    /**
-     * Last column for the DIMENSIONS record
-     * @var integer
-     */
-    protected $dimColmax = 0;
+    protected $dimensions;
 
     /**
      * Array containing format information for columns
@@ -88,10 +57,10 @@ class Worksheet extends BIFFwriter
     protected $colInfo = array();
 
     /**
-     * Array containing the selected area for the worksheet
-     * @var array
+     * Range containing the selected area for the worksheet
+     * @var Range
      */
-    protected $selection = array(0, 0, 0, 0);
+    protected $selection = null;
 
     /**
      * Array containing the panes for the worksheet
@@ -214,28 +183,9 @@ class Worksheet extends BIFFwriter
     protected $titleColMax = null;
 
     /**
-     * First row of the area to print
-     * @var integer
+     * @var null|Range
      */
-    protected $printRowMin = null;
-
-    /**
-     * Last row to of the area to print
-     * @var integer
-     */
-    protected $printRowMax = null;
-
-    /**
-     * First column of the area to print
-     * @var integer
-     */
-    protected $printColMin = null;
-
-    /**
-     * Last column of the area to print
-     * @var integer
-     */
-    protected $printColMax = null;
+    protected $printArea = null;
 
     /**
      * Whether to display RightToLeft.
@@ -378,8 +328,15 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->dimRowmin = Biff8::MAX_ROWS + 1;
-        $this->dimColmin = Biff8::MAX_COLS + 1;
+        $this->dimensions = new Range(
+            Biff8::MAX_ROWS + 1,
+            Biff8::MAX_COLS + 1,
+            0,
+            0,
+            false
+        );
+
+        $this->selection = new Range();
     }
 
     /**
@@ -564,24 +521,7 @@ class Worksheet extends BIFFwriter
      */
     public function setSelection($firstRow, $firstColumn, $lastRow = null, $lastColumn = null)
     {
-        if (!isset($lastRow)) {
-            $lastRow = $firstRow; // Last row in reference
-        }
-
-        if (!isset($lastColumn)) {
-            $lastColumn = $firstColumn; // Last col in reference
-        }
-
-        // Swap last row/col for first row/col as necessary
-        if ($firstRow > $lastRow) {
-            list($firstRow, $lastRow) = array($lastRow, $firstRow);
-        }
-
-        if ($firstColumn > $lastColumn) {
-            list($firstColumn, $lastColumn) = array($lastColumn, $firstColumn);
-        }
-
-        $this->selection = array($firstRow, $firstColumn, $lastRow, $lastColumn);
+        $this->selection = new Range($firstRow, $firstColumn, $lastRow, $lastColumn);
     }
 
     /**
@@ -878,10 +818,7 @@ class Worksheet extends BIFFwriter
      */
     public function setPrintArea($firstRow, $firstCol, $lastRow, $lastCol)
     {
-        $this->printRowMin = $firstRow;
-        $this->printColMin = $firstCol;
-        $this->printRowMax = $lastRow;
-        $this->printColMax = $lastCol;
+        $this->printArea = new Range($firstRow, $firstCol, $lastRow, $lastCol);
     }
 
 
@@ -1179,7 +1116,7 @@ class Worksheet extends BIFFwriter
      */
     protected function validateRowIndex($row)
     {
-        if ($row >= $this->xlsRowmax) {
+        if ($row >= Biff8::MAX_ROWS) {
             throw new \Exception('Row index is beyond max row number');
         }
     }
@@ -1191,7 +1128,7 @@ class Worksheet extends BIFFwriter
      */
     protected function validateColIndex($col)
     {
-        if ($col >= $this->xlsColmax) {
+        if ($col >= Biff8::MAX_COLS) {
             throw new \Exception('Col index is beyond max col number');
         }
     }
@@ -1209,21 +1146,7 @@ class Worksheet extends BIFFwriter
         $this->validateRowIndex($row);
         $this->validateColIndex($col);
 
-        if ($row < $this->dimRowmin) {
-            $this->dimRowmin = $row;
-        }
-
-        if ($row > $this->dimRowmax) {
-            $this->dimRowmax = $row;
-        }
-
-        if ($col < $this->dimColmin) {
-            $this->dimColmin = $col;
-        }
-
-        if ($col > $this->dimColmax) {
-            $this->dimColmax = $col;
-        }
+        $this->dimensions->expand($row, $col);
     }
 
     /**
@@ -1323,49 +1246,45 @@ class Worksheet extends BIFFwriter
     {
         $this->checkRowCol($row, $col);
 
+        $range = new Range($row, $col);
+
         if (preg_match('[^internal:]', $url)
             || strpos($url, '#') === 0
         ) {
-            $this->writeUrlInternal($row, $col, $row, $col, $url, $label, $format);
+            $this->writeUrlInternal($range, $url, $label, $format);
             return;
         }
 
         if (preg_match('[^external:]', $url)) {
-            $this->writeUrlExternal($row, $col, $row, $col, $url, $label, $format);
+            $this->writeUrlExternal($range, $url, $label, $format);
             return;
         }
 
-        $this->writeUrlWeb($row, $col, $row, $col, $url, $label, $format);
+        $this->writeUrlWeb($range, $url, $label, $format);
     }
 
     /**
      * Used to write http, ftp and mailto hyperlinks.
-     * @param integer $row1   Start row
-     * @param integer $col1   Start column
-     * @param integer $row2   End row
-     * @param integer $col2   End column
+     * @param Range $range   Cell range
      * @param string $url    URL string
      * @param string $str    Alternative label
      * @param mixed $format The cell format
      */
-    protected function writeUrlWeb($row1, $col1, $row2, $col2, $url, $str, $format = null)
+    protected function writeUrlWeb(Range $range, $url, $str, $format = null)
     {
-        $this->writeUrlLabel($row1, $col1, $url, $str, $format);
-        $this->appendRecord('Hyperlink', array($row1, $row2, $col1, $col2, $url));
+        $this->writeUrlLabel($range, $url, $str, $format);
+        $this->appendRecord('Hyperlink', array($range, $url));
     }
 
     /**
      * Used to write internal reference hyperlinks such as "Sheet1!A1".
      *
-     * @param integer $row1   Start row
-     * @param integer $col1   Start column
-     * @param integer $row2   End row
-     * @param integer $col2   End column
+     * @param Range $range Cell range
      * @param string $url    URL string
      * @param string $label    Alternative label
      * @param mixed $format The cell format
      */
-    protected function writeUrlInternal($row1, $col1, $row2, $col2, $url, $label, $format = null)
+    protected function writeUrlInternal(Range $range, $url, $label, $format = null)
     {
         // Strip URL type
         $url = preg_replace('/^internal:/', '', $url);
@@ -1374,40 +1293,36 @@ class Worksheet extends BIFFwriter
             $url = substr($url, 1);
         }
 
-        $this->writeUrlLabel($row1, $col1, $url, $label, $format);
-        $this->appendRecord('HyperlinkInternal', array($row1, $row2, $col1, $col2, $url));
+        $this->writeUrlLabel($range, $url, $label, $format);
+        $this->appendRecord('HyperlinkInternal', array($range, $url));
     }
 
     /**
      * Write links to external directory names such as 'c:\foo.xls',
      * c:\foo.xls#Sheet1!A1', '../../foo.xls'. and '../../foo.xls#Sheet1!A1'.
      *
-     * @param integer $row1   Start row
-     * @param integer $col1   Start column
-     * @param integer $row2   End row
-     * @param integer $col2   End column
+     * @param Range $range Cell range
      * @param string $url    URL string
      * @param string $label    Alternative label
      * @param mixed $format The cell format
      */
-    protected function writeUrlExternal($row1, $col1, $row2, $col2, $url, $label, $format = null)
+    protected function writeUrlExternal(Range $range, $url, $label, $format = null)
     {
         // Strip URL type and change Unix dir separator to Dos style (if needed)
         $url = preg_replace('/^external:/', '', $url);
         $url = preg_replace('/\//', "\\", $url);
 
-        $this->writeUrlLabel($row1, $col1, $url, $label, $format);
-        $this->appendRecord('HyperlinkExternal', array($row1, $row2, $col1, $col2, $url));
+        $this->writeUrlLabel($range, $url, $label, $format);
+        $this->appendRecord('HyperlinkExternal', array($range, $url));
     }
 
     /**
-     * @param      $row1
-     * @param      $col1
-     * @param      $url
-     * @param      $str
+     * @param Range $range Cell range
+     * @param string $url
+     * @param string $str
      * @param null $format
      */
-    protected function writeUrlLabel($row1, $col1, $url, $str, $format = null)
+    protected function writeUrlLabel(Range $range, $url, $str, $format = null)
     {
         if (!$format) {
             $format = $this->urlFormat;
@@ -1417,7 +1332,7 @@ class Worksheet extends BIFFwriter
             $str = $url;
         }
 
-        $this->writeString($row1, $col1, $str, $format);
+        $this->writeString($range->getRowFrom(), $range->getColFrom(), $str, $format);
     }
 
     /**
@@ -1445,15 +1360,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDimensions()
     {
-        $this->appendRecord(
-            'Dimensions',
-            array(
-                $this->dimRowmin,
-                $this->dimRowmax + 1,
-                $this->dimColmin,
-                $this->dimColmax + 1
-            )
-        );
+        $this->appendRecord('Dimensions', array($this->dimensions));
     }
 
     /**
@@ -1526,7 +1433,7 @@ class Worksheet extends BIFFwriter
 
         // don't check rowmin, rowmax, etc... because we don't know when this
         // is going to be called
-        $this->mergedRanges[$this->mergedCellsRecord][] = array($firstRow, $firstCol, $lastRow, $lastCol);
+        $this->mergedRanges[$this->mergedCellsRecord][] = new Range($firstRow, $firstCol, $lastRow, $lastCol);
         $this->mergedCellsCounter++;
     }
 
@@ -1912,7 +1819,7 @@ class Worksheet extends BIFFwriter
      */
     public function isPrintAreaSet()
     {
-        return !is_null($this->printRowMin);
+        return !is_null($this->printArea);
     }
 
     /**
@@ -1947,38 +1854,6 @@ class Worksheet extends BIFFwriter
     public function isFitPage()
     {
         return $this->fitPage;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPrintRowMin()
-    {
-        return $this->printRowMin;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPrintRowMax()
-    {
-        return $this->printRowMax;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPrintColMin()
-    {
-        return $this->printColMin;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPrintColMax()
-    {
-        return $this->printColMax;
     }
 
     /**
@@ -2043,5 +1918,13 @@ class Worksheet extends BIFFwriter
     public function getOutlineRowLevel()
     {
         return $this->outlineRowLevel;
+    }
+
+    /**
+     * @return null|Range
+     */
+    public function getPrintArea()
+    {
+        return $this->printArea;
     }
 }
