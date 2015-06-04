@@ -63,8 +63,7 @@ class RichTest extends TestAbstract
     {
         $format = $this->workbook->addFormat();
         $format->setBold();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
+        $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setColor('blue');
         $format->setAlign('center');
         $format->setPattern(Fill::PATTERN_GRAY50);
@@ -84,7 +83,7 @@ class RichTest extends TestAbstract
         $format = $this->workbook->addFormat();
         $format->setColor('red');
         $format->setScript(Format::SCRIPT_SUPER);
-        $format->setSize(14);
+        $format->setFontSize(14);
         $format->setFgColor('white');
         $format->setBgColor('black');
 
@@ -98,8 +97,7 @@ class RichTest extends TestAbstract
     {
         $format = $this->workbook->addFormat();
         $format->setNormal();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
+        $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setUnLocked();
 
         return $format;
@@ -112,8 +110,7 @@ class RichTest extends TestAbstract
     {
         $format = $this->workbook->addFormat();
         $format->setNormal();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
+        $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setUnLocked();
         $format->setNumFormat(NumberFormat::TYPE_DECIMAL_1);
 
@@ -127,9 +124,8 @@ class RichTest extends TestAbstract
     {
         $format = $this->workbook->addFormat();
         $format->setBold();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
-        $format->setSize(12);
+        $format->setBorder(Format::BORDER_THIN, 'navy');
+        $format->setFontSize(12);
         $format->setFontFamily('Tahoma');
         $format->setUnderline(Format::UNDERLINE_ONCE);
         $format->setNumFormat(NumberFormat::TYPE_CURRENCY_3);
@@ -144,9 +140,8 @@ class RichTest extends TestAbstract
     protected function getOldPriceFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
-        $format->setSize(12);
+        $format->setBorder(Format::BORDER_THIN, 'navy');
+        $format->setFontSize(12);
         $format->setStrikeOut();
         $format->setOutLine();
         $format->setItalic();
@@ -165,8 +160,7 @@ class RichTest extends TestAbstract
     protected function getPriceFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setBorder(Format::BORDER_THIN);
-        $format->setBorderColor('navy');
+        $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setNumFormat(NumberFormat::TYPE_CURRENCY_3);
 
         return $format;

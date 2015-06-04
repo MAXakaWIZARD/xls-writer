@@ -16,13 +16,13 @@ class Font extends AbstractRecord
      */
     public function getData($format)
     {
-        $dyHeight = $format->size * 20; // Height of font (1/20 of a point)
-        $icv = $format->color; // Index to color palette
+        $dyHeight = $format->fontSize * 20; // Height of font (1/20 of a point)
+        $icv = $format->fontColor; // Index to color palette
         $bls = $format->bold; // Bold style
         $sss = $format->fontScript; // Superscript/subscript
         $uls = $format->underline; // Underline
         $bFamily = $format->fontFamily; // Font family
-        $bCharSet = $format->fontCharset; // Character set
+        $bCharSet = 0x00; // Character set
 
         $cch = strlen($format->fontName); // Length of font name
 

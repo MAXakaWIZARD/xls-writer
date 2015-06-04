@@ -47,7 +47,9 @@ class Xf extends AbstractRecord
         $align = $format->textHorAlign;
         $align |= $format->textWrap << 3;
         $align |= $format->textVertAlign << 4;
-        $align |= $format->textJustlast << 7;
+
+        $textJustlast = 0x00;
+        $align |= $textJustlast << 7;
 
         return $align;
     }
@@ -78,12 +80,12 @@ class Xf extends AbstractRecord
      */
     protected function getBorder1($format)
     {
-        $border1 = $format->left; // Border line style and color
-        $border1 |= $format->right << 4;
-        $border1 |= $format->top << 8;
-        $border1 |= $format->bottom << 12;
-        $border1 |= $format->leftColor << 16;
-        $border1 |= $format->rightColor << 23;
+        $border1 = $format->getBorderStyle('left'); // Border line style and color
+        $border1 |= $format->getBorderStyle('right') << 4;
+        $border1 |= $format->getBorderStyle('top') << 8;
+        $border1 |= $format->getBorderStyle('bottom') << 12;
+        $border1 |= $format->getBorderColor('left') << 16;
+        $border1 |= $format->getBorderColor('right') << 23;
         $diagTlToRb = 0;
         $diagTrToLb = 0;
         $border1 |= $diagTlToRb << 30;
@@ -99,8 +101,8 @@ class Xf extends AbstractRecord
      */
     protected function getBorder2($format)
     {
-        $border2 = $format->topColor; // Border color
-        $border2 |= $format->bottomColor << 7;
+        $border2 = $format->getBorderColor('top'); // Border color
+        $border2 |= $format->getBorderColor('bottom') << 7;
         $border2 |= $format->diagColor << 14;
         $border2 |= $format->diag << 21;
         $border2 |= $format->pattern << 26;
@@ -133,22 +135,6 @@ class Xf extends AbstractRecord
      */
     protected function checkBorders($format)
     {
-        if ($format->bottom == 0) {
-            $format->bottomColor = 0;
-        }
-
-        if ($format->top == 0) {
-            $format->topColor = 0;
-        }
-
-        if ($format->right == 0) {
-            $format->rightColor = 0;
-        }
-
-        if ($format->left == 0) {
-            $format->leftColor = 0;
-        }
-
         if ($format->diag == 0) {
             $format->diagColor = 0;
         }
@@ -165,10 +151,10 @@ class Xf extends AbstractRecord
             'Num' => ($format->getNumFormat() != NumberFormat::TYPE_GENERAL) ? 1 : 0,
             'Fnt' => ($format->fontIndex != 0) ? 1 : 0,
             'Alc' => ($format->textWrap) ? 1 : 0,
-            'Bdr' => ($format->bottom
-                || $format->top
-                || $format->left
-                || $format->right) ? 1 : 0,
+            'Bdr' => ($format->getBorderStyle('top')
+                || $format->getBorderStyle('right')
+                || $format->getBorderStyle('bottom')
+                || $format->getBorderStyle('left')) ? 1 : 0,
             'Pat' => ($format->fgColor != 0x40
                 || $format->bgColor != 0x41
                 || $format->pattern) ? 1 : 0,

@@ -2,16 +2,9 @@
 
 namespace Xls;
 
-/**
- * Class for generating Excel XF records (formats)
- *
- * @author   Xavier Noguer <xnoguer@rezebra.com>
- * @category FileFormats
- * @package  Spreadsheet_Excel_Writer
- */
-
 class Format
 {
+    const BORDER_NONE = 0;
     const BORDER_THIN = 1;
     const BORDER_THICK = 2;
 
@@ -23,11 +16,6 @@ class Format
 
     const FONT_NORMAL = 400;
     const FONT_BOLD = 700;
-
-    /**
-     * @var integer
-     */
-    protected $version = Biff8::VERSION;
 
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
@@ -57,7 +45,7 @@ class Format
      * Height of font (1/20 of a point)
      * @var integer
      */
-    public $size = 10;
+    public $fontSize = 10;
 
     /**
      * Bold style
@@ -75,7 +63,7 @@ class Format
      * Index to the cell's color
      * @var integer
      */
-    public $color = 0x7FFF;
+    public $fontColor = 0x7FFF;
 
     /**
      * The text underline property
@@ -159,13 +147,7 @@ class Format
      * The three bits specifying the text vertical alignment.
      * @var integer
      */
-    public $textVertAlign = 2;
-
-    /**
-     * 1 bit, apparently not used.
-     * @var integer
-     */
-    public $textJustlast = 0;
+    public $textVertAlign;
 
     /**
      * The two bits specifying the text rotation.
@@ -190,54 +172,6 @@ class Format
      * @var integer
      */
     public $pattern = 0;
-
-    /**
-     * Style of the bottom border of the cell
-     * @var integer
-     */
-    public $bottom = 0;
-
-    /**
-     * Color of the bottom border of the cell.
-     * @var integer
-     */
-    public $bottomColor = 0x40;
-
-    /**
-     * Style of the top border of the cell
-     * @var integer
-     */
-    public $top = 0;
-
-    /**
-     * Color of the top border of the cell.
-     * @var integer
-     */
-    public $topColor = 0x40;
-
-    /**
-     * Style of the left border of the cell
-     * @var integer
-     */
-    public $left = 0;
-
-    /**
-     * Color of the left border of the cell.
-     * @var integer
-     */
-    public $leftColor = 0x40;
-
-    /**
-     * Style of the right border of the cell
-     * @var integer
-     */
-    public $right = 0;
-
-    /**
-     * Color of the right border of the cell.
-     * @var integer
-     */
-    public $rightColor = 0x40;
 
     public $diag = 0;
     public $diagColor = 0x40;
@@ -272,6 +206,25 @@ class Format
         -1 => 255
     );
 
+    protected $borders = array(
+        'top' => array(
+            'style' => self::BORDER_NONE,
+            'color' => 0
+        ),
+        'right' => array(
+            'style' => self::BORDER_NONE,
+            'color' => 0
+        ),
+        'bottom' => array(
+            'style' => self::BORDER_NONE,
+            'color' => 0
+        ),
+        'left' => array(
+            'style' => self::BORDER_NONE,
+            'color' => 0
+        )
+    );
+
     /**
      * @param integer $byteOrder
      * @param integer $index the XF index for the format.
@@ -282,6 +235,7 @@ class Format
         $this->xfIndex = $index;
         $this->byteOrder = $byteOrder;
 
+        $this->setVAlign('bottom');
         $this->setProperties($properties);
     }
 
@@ -331,11 +285,11 @@ class Format
      */
     public function getFontKey()
     {
-        $key = "$this->fontName$this->size";
+        $key = "$this->fontName$this->fontSize";
         $key .= "$this->fontScript$this->underline";
         $key .= "$this->fontStrikeout$this->bold$this->fontOutline";
-        $key .= "$this->fontFamily$this->fontCharset";
-        $key .= "$this->fontShadow$this->color$this->italic";
+        $key .= "$this->fontFamily";
+        $key .= "$this->fontShadow$this->fontColor$this->italic";
         $key = str_replace(' ', '_', $key);
 
         return $key;
@@ -419,112 +373,103 @@ class Format
     }
 
     /**
-     * Sets the width for the bottom border of the cell
+     * Sets the style for the bottom border of the cell
      *
      * @param integer $style style of the cell border (BORDER_THIN or BORDER_THICK).
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
+     *                     or an integer (range is [8...63]).
      */
-    public function setBottom($style)
+    public function setBorderBottom($style, $color = 0x40)
     {
-        $this->bottom = $style;
+        $this->setBorderInternal('bottom', $style, $color);
     }
 
     /**
-     * Sets the width for the top border of the cell
+     * Sets the style for the top border of the cell
      *
      * @param integer $style style of the cell top border (BORDER_THIN or BORDER_THICK).
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
+     *                     or an integer (range is [8...63]).
      */
-    public function setTop($style)
+    public function setBorderTop($style, $color = 0x40)
     {
-        $this->top = $style;
+        $this->setBorderInternal('top', $style, $color);
     }
 
     /**
-     * Sets the width for the left border of the cell
+     * Sets the style for the left border of the cell
      *
      * @param integer $style style of the cell left border (BORDER_THIN or BORDER_THICK).
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
+     *                     or an integer (range is [8...63]).
      */
-    public function setLeft($style)
+    public function setBorderLeft($style, $color = 0x40)
     {
-        $this->left = $style;
+        $this->setBorderInternal('left', $style, $color);
     }
 
     /**
-     * Sets the width for the right border of the cell
+     * Sets the style for the right border of the cell
      *
      * @param integer $style style of the cell right border (BORDER_THIN or BORDER_THICK).
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
+     *                     or an integer (range is [8...63]).
      */
-    public function setRight($style)
+    public function setBorderRight($style, $color = 0x40)
     {
-        $this->right = $style;
+        $this->setBorderInternal('right', $style, $color);
     }
 
     /**
      * Set cells borders to the same style
      *
      * @param integer $style style to apply for all cell borders (BORDER_THIN or BORDER_THICK).
-     */
-    public function setBorder($style)
-    {
-        $this->setBottom($style);
-        $this->setTop($style);
-        $this->setLeft($style);
-        $this->setRight($style);
-    }
-
-    /**
-     * Sets all the cell's borders to the same color
-     *
      * @param string|integer $color The color we are setting. Either a string (like 'blue'),
      *                     or an integer (range is [8...63]).
      */
-    public function setBorderColor($color)
+    public function setBorder($style, $color = 0x40)
     {
-        $this->setBottomColor($color);
-        $this->setTopColor($color);
-        $this->setLeftColor($color);
-        $this->setRightColor($color);
+        $this->setBorderBottom($style, $color);
+        $this->setBorderTop($style, $color);
+        $this->setBorderLeft($style, $color);
+        $this->setBorderRight($style, $color);
     }
 
     /**
-     * Sets the cell's bottom border color
-     *
-     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * Sets the style for the bottom border of the cell
+     * @param string $side
+     * @param integer $style style of the cell border (BORDER_THIN or BORDER_THICK).
+     * @param string|integer $color The color we are setting. Either a string (like 'blue'),
+     *                     or an integer (range is [8...63]).
      */
-    public function setBottomColor($color)
+    protected function setBorderInternal($side, $style, $color = 0x40)
     {
-        $this->bottomColor = $this->getColor($color);
+        $this->borders[$side]['style'] = $style;
+
+        if (!is_null($color)) {
+            $this->borders[$side]['color'] = $this->getColor($color);
+        }
     }
 
     /**
-     * Sets the cell's top border color
+     * @param $side
      *
-     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @return null
      */
-    public function setTopColor($color)
+    public function getBorderStyle($side)
     {
-        $this->topColor = $this->getColor($color);
+        return (isset($this->borders[$side])) ? $this->borders[$side]['style'] : null;
     }
 
     /**
-     * Sets the cell's left border color
+     * @param $side
      *
-     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
+     * @return null
      */
-    public function setLeftColor($color)
+    public function getBorderColor($side)
     {
-        $this->leftColor = $this->getColor($color);
+        return (isset($this->borders[$side])) ? $this->borders[$side]['color'] : null;
     }
-
-    /**
-     * Sets the cell's right border color
-     *
-     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
-     */
-    public function setRightColor($color)
-    {
-        $this->rightColor = $this->getColor($color);
-    }
-
 
     /**
      * Sets the cell's foreground color
@@ -553,13 +498,13 @@ class Format
     }
 
     /**
-     * Sets the cell's color
+     * Sets the cell's font color
      *
      * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
      */
     public function setColor($color)
     {
-        $this->color = $this->getColor($color);
+        $this->fontColor = $this->getColor($color);
     }
 
     /**
@@ -598,9 +543,9 @@ class Format
      *
      * @param integer $size The font size (in pixels I think).
      */
-    public function setSize($size)
+    public function setFontSize($size)
     {
-        $this->size = $size;
+        $this->fontSize = $size;
     }
 
     /**
