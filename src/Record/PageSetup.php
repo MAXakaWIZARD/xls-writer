@@ -17,15 +17,17 @@ class PageSetup extends AbstractRecord
      */
     public function getData($sheet)
     {
-        $iPaperSize = $sheet->getPaperSize(); // Paper size
-        $iScale = $sheet->getPrintScale(); // Print scaling factor
+        $pageSetup = $sheet->getPageSetup();
+
+        $iPaperSize = $pageSetup->getPaperSize(); // Paper size
+        $iScale = $pageSetup->getPrintScale(); // Print scaling factor
         $iPageStart = 0x01; // Starting page number
-        $iFitWidth = $sheet->getFitWidth(); // Fit to number of pages wide
-        $iFitHeight = $sheet->getFitHeight(); // Fit to number of pages high
+        $iFitWidth = $pageSetup->getFitWidth(); // Fit to number of pages wide
+        $iFitHeight = $pageSetup->getFitHeight(); // Fit to number of pages high
         $iRes = 0x0258; // Print resolution
         $iVRes = 0x0258; // Vertical print resolution
-        $numHdr = $sheet->getMarginHead(); // Header Margin
-        $numFtr = $sheet->getMarginFoot(); // Footer Margin
+        $numHdr = $pageSetup->getMarginHead(); // Header Margin
+        $numFtr = $pageSetup->getMarginFoot(); // Footer Margin
 
         $numHdr = pack("d", $numHdr);
         $numFtr = pack("d", $numFtr);
@@ -61,7 +63,7 @@ class PageSetup extends AbstractRecord
     protected function calcGrbit(Worksheet $worksheet)
     {
         $fLeftToRight = 0x0; // Print over then down
-        $fLandscape = $worksheet->getOrientation(); // Page orientation
+        $fLandscape = $worksheet->getPageSetup()->getOrientation(); // Page orientation
         $fNoPls = 0x0; // Setup not read from printer
         $fNoColor = 0x0; // Print black and white
         $fDraft = 0x0; // Print draft quality

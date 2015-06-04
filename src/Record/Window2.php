@@ -36,7 +36,7 @@ class Window2 extends AbstractRecord
     protected function calcGrbit(Worksheet $worksheet)
     {
         $fDspFmla = 0; // 0 - bit
-        $fDspGrid = intval($worksheet->areScreenGridLinesVisible()); // 1
+        $fDspGrid = intval($worksheet->getPageSetup()->areScreenGridLinesVisible()); // 1
         $fDspRwCol = 1; // 2
         $fFrozen = intval($worksheet->isFrozen()); // 3
         $fDspZeros = 1; // 4

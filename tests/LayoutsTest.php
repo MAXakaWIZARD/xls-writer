@@ -19,20 +19,22 @@ class LayoutsTest extends TestAbstract
         );
         $sheet->writeRow(0, 0, $row);
 
-        $sheet->setZoom(125);
+        $pageSetup = $sheet->getPageSetup();
 
-        $sheet->setPortrait();
-        $sheet->setMargins(1.25);
-        $sheet->setHeader('Page header');
-        $sheet->setFooter('Page footer');
-        $sheet->setPrintScale(90);
-        $sheet->setPaper($sheet::PAPER_A3);
+        $pageSetup->setZoom(125);
 
-        $sheet->setPrintArea(0, 0, 5, 5);
+        $pageSetup->setPortrait();
+        $pageSetup->setMargins(1.25);
+        $pageSetup->setHeader('Page header');
+        $pageSetup->setFooter('Page footer');
 
-        $sheet->hidePrintGridlines();
-        $sheet->setHPagebreaks(array(1));
-        $sheet->setVPagebreaks(array(5));
+        $pageSetup->setPrintScale(90);
+        $pageSetup->setPaper($pageSetup::PAPER_A3);
+        $pageSetup->setPrintArea(0, 0, 5, 5);
+
+        $pageSetup->hidePrintGridlines();
+        $pageSetup->setHPagebreaks(array(1));
+        $pageSetup->setVPagebreaks(array(5));
 
         $this->workbook->save($this->testFilePath);
 
@@ -51,8 +53,9 @@ class LayoutsTest extends TestAbstract
             $sheet->write($id, 1, 'Name' . $id);
         }
 
-        $sheet->printRepeatRows(0);
-        $sheet->printRepeatRows(0, 0);
+        $pageSetup = $sheet->getPageSetup();
+        $pageSetup->printRepeatRows(0);
+        $pageSetup->printRepeatRows(0, 0);
 
         $this->workbook->save($this->testFilePath);
 
@@ -80,8 +83,9 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->printRepeatColumns(0);
-        $sheet->printRepeatColumns(0, 0);
+        $pageSetup = $sheet->getPageSetup();
+        $pageSetup->printRepeatColumns(0);
+        $pageSetup->printRepeatColumns(0, 0);
 
         $this->workbook->save($this->testFilePath);
 
@@ -109,8 +113,9 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->printRepeatRows(0);
-        $sheet->printRepeatColumns(0);
+        $pageSetup = $sheet->getPageSetup();
+        $pageSetup->printRepeatRows(0);
+        $pageSetup->printRepeatColumns(0);
 
         $this->workbook->save($this->testFilePath);
 
@@ -138,19 +143,21 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->hideScreenGridlines();
+        $pageSetup = $sheet->getPageSetup();
 
-        $sheet->setLandscape();
+        $pageSetup->hideScreenGridlines();
+
+        $pageSetup->setLandscape();
 
         //header and footer should be cut to max length (255)
-        $sheet->setHeader('Page header ' . str_repeat('.', 255));
-        $sheet->setFooter('Page footer ' . str_repeat('.', 255));
+        $pageSetup->setHeader('Page header ' . str_repeat('.', 255));
+        $pageSetup->setFooter('Page footer ' . str_repeat('.', 255));
 
-        $sheet->centerHorizontally();
-        $sheet->centerVertically();
-        $sheet->fitToPages(999, 999);
-        $sheet->setPaper($sheet::PAPER_A4);
-        $sheet->printRowColHeaders();
+        $pageSetup->centerHorizontally();
+        $pageSetup->centerVertically();
+        $pageSetup->fitToPages(999, 999);
+        $pageSetup->setPaper($pageSetup::PAPER_A4);
+        $pageSetup->printRowColHeaders();
 
         $this->workbook->save($this->testFilePath);
 
