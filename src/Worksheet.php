@@ -1369,14 +1369,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * @return int
-     */
-    public function getOutlineRowLevel()
-    {
-        return $this->outlineRowLevel;
-    }
-
-    /**
      * @return PageSetup
      */
     public function getPageSetup()
