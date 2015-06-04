@@ -30,7 +30,13 @@ class Xf extends AbstractRecord
         $icv |= $format->bgColor << 7;
 
         $options = 0x00;
-        $data = pack("vvvC", $format->fontIndex, $format->getNumFormatIndex(), $style, $this->getAlignment($format));
+        $data = pack(
+            "vvvC",
+            $format->getFont()->getIndex(),
+            $format->getNumFormatIndex(),
+            $style,
+            $this->getAlignment($format)
+        );
         $data .= pack("CCC", $format->rotation, $options, $this->getUsedAttr($format));
         $data .= pack("VVv", $border1, $border2, $icv);
 
@@ -149,7 +155,7 @@ class Xf extends AbstractRecord
     {
         return array(
             'Num' => ($format->getNumFormat() != NumberFormat::TYPE_GENERAL) ? 1 : 0,
-            'Fnt' => ($format->fontIndex != 0) ? 1 : 0,
+            'Fnt' => ($format->getFont()->getIndex() != 0) ? 1 : 0,
             'Alc' => ($format->textWrap) ? 1 : 0,
             'Bdr' => ($format->getBorderStyle('top')
                 || $format->getBorderStyle('right')

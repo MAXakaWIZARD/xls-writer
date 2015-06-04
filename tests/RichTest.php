@@ -4,6 +4,7 @@ namespace Test;
 use Xls\Format;
 use Xls\NumberFormat;
 use Xls\Fill;
+use Xls\Font;
 
 /**
  *
@@ -44,6 +45,7 @@ class RichTest extends TestAbstract
         $sheet->write(11, 3, '=ROUND(D11-D11*0.2, 2)', $grandFormat);
 
         $sheet->write(11, 4, '20% скидка!', $this->getDiscountFormat());
+        $sheet->write(11, 5, 'subscript', $this->getSubscriptFormat());
 
         $sheet->setColumnWidth(0, 0, 20);
         $sheet->setColumnWidth(3, 3, 15);
@@ -62,9 +64,10 @@ class RichTest extends TestAbstract
     protected function getHeaderFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setBold();
+
+        $format->getFont()->setBold()->setColor('blue');
+
         $format->setBorder(Format::BORDER_THIN, 'navy');
-        $format->setColor('blue');
         $format->setAlign('center');
         $format->setPattern(Fill::PATTERN_GRAY50);
 
@@ -81,11 +84,28 @@ class RichTest extends TestAbstract
     protected function getDiscountFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setColor('red');
-        $format->setScript(Format::SCRIPT_SUPER);
-        $format->setFontSize(14);
+
+        $format->getFont()
+            ->setColor('red')
+            ->setSuperScript()
+            ->setSize(14);
+
         $format->setFgColor('white');
         $format->setBgColor('black');
+
+        return $format;
+    }
+
+    /**
+     * @return Format
+     */
+    protected function getSubscriptFormat()
+    {
+        $format = $this->workbook->addFormat();
+
+        $format->getFont()
+            ->setSubScript()
+            ->setSize(14);
 
         return $format;
     }
@@ -96,7 +116,7 @@ class RichTest extends TestAbstract
     protected function getCellFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setNormal();
+        $format->getFont()->setBold(false);
         $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setUnLocked();
 
@@ -109,7 +129,7 @@ class RichTest extends TestAbstract
     protected function getCountFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setNormal();
+        $format->getFont()->setBold(false);
         $format->setBorder(Format::BORDER_THIN, 'navy');
         $format->setUnLocked();
         $format->setNumFormat(NumberFormat::TYPE_DECIMAL_1);
@@ -123,11 +143,15 @@ class RichTest extends TestAbstract
     protected function getGrandTotalFormat()
     {
         $format = $this->workbook->addFormat();
-        $format->setBold();
+
+        $format->getFont()
+            ->setBold()
+            ->setSize(12)
+            ->setName('Tahoma')
+            ->setUnderline(Font::UNDERLINE_ONCE);
+
         $format->setBorder(Format::BORDER_THIN, 'navy');
-        $format->setFontSize(12);
-        $format->setFontFamily('Tahoma');
-        $format->setUnderline(Format::UNDERLINE_ONCE);
+
         $format->setNumFormat(NumberFormat::TYPE_CURRENCY_3);
 
         return $format;
@@ -139,17 +163,21 @@ class RichTest extends TestAbstract
      */
     protected function getOldPriceFormat()
     {
-        $format = $this->workbook->addFormat();
+        $format = $this->workbook->addFormat(array(
+            'numFormat' => '$0.00',
+            'textRotation' => 0
+        ));
+
+        $format->getFont()
+            ->setSize(12)
+            ->setStrikeOut()
+            ->setOutLine()
+            ->setItalic()
+            ->setShadow();
+
         $format->setBorder(Format::BORDER_THIN, 'navy');
-        $format->setFontSize(12);
-        $format->setStrikeOut();
-        $format->setOutLine();
-        $format->setItalic();
-        $format->setShadow();
-        $format->setNumFormat('$0.00');
         $format->setLocked();
         $format->setTextWrap();
-        $format->setTextRotation(0);
 
         return $format;
     }

@@ -8,15 +8,6 @@ class Format
     const BORDER_THIN = 1;
     const BORDER_THICK = 2;
 
-    const UNDERLINE_ONCE = 1;
-    const UNDERLINE_TWICE = 2;
-
-    const SCRIPT_SUPER = 1;
-    const SCRIPT_SUB = 2;
-
-    const FONT_NORMAL = 400;
-    const FONT_BOLD = 700;
-
     /**
      * The byte order of this architecture. 0 => little endian, 1 => big endian
      * @var integer
@@ -28,84 +19,6 @@ class Format
      * @var integer
      */
     public $xfIndex;
-
-    /**
-     * Index to the FONT record.
-     * @var integer
-     */
-    public $fontIndex = 0;
-
-    /**
-     * The font name (ASCII).
-     * @var string
-     */
-    public $fontName = 'Arial';
-
-    /**
-     * Height of font (1/20 of a point)
-     * @var integer
-     */
-    public $fontSize = 10;
-
-    /**
-     * Bold style
-     * @var integer
-     */
-    public $bold = self::FONT_NORMAL;
-
-    /**
-     * Bit specifiying if the font is italic.
-     * @var integer
-     */
-    public $italic = 0;
-
-    /**
-     * Index to the cell's color
-     * @var integer
-     */
-    public $fontColor = 0x7FFF;
-
-    /**
-     * The text underline property
-     * @var integer
-     */
-    public $underline = 0;
-
-    /**
-     * Bit specifiying if the font has strikeout.
-     * @var integer
-     */
-    public $fontStrikeout = 0;
-
-    /**
-     * Bit specifiying if the font has outline.
-     * @var integer
-     */
-    public $fontOutline = 0;
-
-    /**
-     * Bit specifiying if the font has shadow.
-     * @var integer
-     */
-    public $fontShadow = 0;
-
-    /**
-     * 2 bytes specifiying the script type for the font.
-     * @var integer
-     */
-    public $fontScript = 0;
-
-    /**
-     * Byte specifiying the font family.
-     * @var integer
-     */
-    public $fontFamily = 0;
-
-    /**
-     * Byte specifiying the font charset.
-     * @var integer
-     */
-    public $fontCharset = 0;
 
     /**
      * An index (2 bytes) to a FORMAT record (number format).
@@ -226,6 +139,11 @@ class Format
     );
 
     /**
+     * @var Font
+     */
+    protected $font;
+
+    /**
      * @param integer $byteOrder
      * @param integer $index the XF index for the format.
      * @param array $properties array with properties to be set on initialization.
@@ -234,6 +152,8 @@ class Format
     {
         $this->xfIndex = $index;
         $this->byteOrder = $byteOrder;
+
+        $this->font = new Font();
 
         $this->setVAlign('bottom');
         $this->setProperties($properties);
@@ -245,9 +165,19 @@ class Format
     protected function setProperties($properties)
     {
         foreach ($properties as $property => $value) {
+            $propertyParts = explode('.', $property);
+            if (count($propertyParts) === 2
+                && $propertyParts[0] === 'font'
+            ) {
+                $object = $this->getFont();
+                $property = $propertyParts[1];
+            } else {
+                $object = $this;
+            }
+
             $methodName = 'set' . ucwords($property);
-            if (method_exists($this, $methodName)) {
-                $this->$methodName($value);
+            if (method_exists($object, $methodName)) {
+                $object->$methodName($value);
             }
         }
     }
@@ -265,6 +195,14 @@ class Format
     }
 
     /**
+     * @return Font
+     */
+    public function getFont()
+    {
+        return $this->font;
+    }
+
+    /**
      * Generate an Excel BIFF FONT record.
      *
      * @return string The FONT record
@@ -272,27 +210,7 @@ class Format
     public function getFontRecord()
     {
         $record = new Record\Font($this->byteOrder);
-        return $record->getData($this);
-    }
-
-    /**
-     * Returns a unique hash key for a font.
-     * The elements that form the key are arranged to increase the probability of
-     * generating a unique key. Elements that hold a large range of numbers
-     * (eg. color) are placed between two binary elements such as italic
-     *
-     * @return string A key for this font
-     */
-    public function getFontKey()
-    {
-        $key = "$this->fontName$this->fontSize";
-        $key .= "$this->fontScript$this->underline";
-        $key .= "$this->fontStrikeout$this->bold$this->fontOutline";
-        $key .= "$this->fontFamily";
-        $key .= "$this->fontShadow$this->fontColor$this->italic";
-        $key = str_replace(' ', '_', $key);
-
-        return $key;
+        return $record->getData($this->getFont());
     }
 
     /**
@@ -303,20 +221,6 @@ class Format
     public function getXfIndex()
     {
         return $this->xfIndex;
-    }
-
-    /**
-     * Used to convert a color
-     * string into a number. Color range is 0..63 but we will restrict it
-     * to 8..63 to comply with Gnumeric. Colors 0..7 are repeated in 8..15.
-     *
-     * @param string|integer $name name of the color (i.e.: 'blue', 'red', etc..). Optional.
-     *
-     * @return integer The color index
-     */
-    protected function getColor($name = '')
-    {
-        return Palette::getColor($name);
     }
 
     /**
@@ -354,22 +258,6 @@ class Format
         if (isset($this->vertAlignMap[$location])) {
             $this->textVertAlign = $this->vertAlignMap[$location];
         }
-    }
-
-    /**
-     * Sets the boldness of the text.
-     */
-    public function setBold()
-    {
-        $this->bold = self::FONT_BOLD;
-    }
-
-    /**
-     *
-     */
-    public function setNormal()
-    {
-        $this->bold = self::FONT_NORMAL;
     }
 
     /**
@@ -447,14 +335,14 @@ class Format
         $this->borders[$side]['style'] = $style;
 
         if (!is_null($color)) {
-            $this->borders[$side]['color'] = $this->getColor($color);
+            $this->borders[$side]['color'] = Palette::getColor($color);
         }
     }
 
     /**
      * @param $side
      *
-     * @return null
+     * @return integer|null
      */
     public function getBorderStyle($side)
     {
@@ -464,7 +352,7 @@ class Format
     /**
      * @param $side
      *
-     * @return null
+     * @return integer|null
      */
     public function getBorderColor($side)
     {
@@ -478,7 +366,7 @@ class Format
      */
     public function setFgColor($color)
     {
-        $this->fgColor = $this->getColor($color);
+        $this->fgColor = Palette::getColor($color);
         if ($this->pattern == Fill::PATTERN_NONE) {
             $this->setPattern(Fill::PATTERN_SOLID);
         }
@@ -491,20 +379,10 @@ class Format
      */
     public function setBgColor($color)
     {
-        $this->bgColor = $this->getColor($color);
+        $this->bgColor = Palette::getColor($color);
         if ($this->pattern == Fill::PATTERN_NONE) {
             $this->setPattern(Fill::PATTERN_SOLID);
         }
-    }
-
-    /**
-     * Sets the cell's font color
-     *
-     * @param string|integer $color either a string (like 'blue'), or an integer (range is [8...63]).
-     */
-    public function setColor($color)
-    {
-        $this->fontColor = $this->getColor($color);
     }
 
     /**
@@ -516,36 +394,6 @@ class Format
     public function setPattern($pattern = Fill::PATTERN_SOLID)
     {
         $this->pattern = $pattern;
-    }
-
-    /**
-     * Sets the underline of the text
-     *
-     * @param integer $underline The value for underline. Possible values are:
-     * UNDERLINE_ONCE => underline, UNDERLINE_TWICE => double underline.
-     */
-    public function setUnderline($underline)
-    {
-        $this->underline = $underline;
-    }
-
-    /**
-     * Sets the font style as italic
-     *
-     */
-    public function setItalic()
-    {
-        $this->italic = 1;
-    }
-
-    /**
-     * Sets the font size
-     *
-     * @param integer $size The font size (in pixels I think).
-     */
-    public function setFontSize($size)
-    {
-        $this->fontSize = $size;
     }
 
     /**
@@ -578,44 +426,6 @@ class Format
     }
 
     /**
-     * Sets font as strikeout.
-     *
-     */
-    public function setStrikeOut()
-    {
-        $this->fontStrikeout = 1;
-    }
-
-    /**
-     * Sets outlining for a font.
-     *
-     */
-    public function setOutLine()
-    {
-        $this->fontOutline = 1;
-    }
-
-    /**
-     * Sets font as shadow.
-     *
-     */
-    public function setShadow()
-    {
-        $this->fontShadow = 1;
-    }
-
-    /**
-     * Sets the script type of the text
-     *
-     * @param integer $script The value for script type. Possible values are:
-     * SCRIPT_SUPER => superscript, SCRIPT_SUB => subscript.
-     */
-    public function setScript($script)
-    {
-        $this->fontScript = $script;
-    }
-
-    /**
      * Locks a cell.
      */
     public function setLocked()
@@ -629,17 +439,6 @@ class Format
     public function setUnLocked()
     {
         $this->locked = 0;
-    }
-
-    /**
-     * Sets the font family name.
-     *
-     * @param string $fontFamily The font family name. Possible values are:
-     *                           'Times New Roman', 'Arial', 'Courier'.
-     */
-    public function setFontFamily($fontFamily)
-    {
-        $this->fontName = $fontFamily;
     }
 
     /**

@@ -110,13 +110,27 @@ class Workbook extends BIFFwriter
 
         $this->palette = Palette::getXl97Palette();
 
-        $this->tmpFormat = new Format($this->byteOrder);
-        // Add the default format for hyperlinks
-        $this->urlFormat = $this->addFormat(array('color' => 'blue', 'underline' => 1));
+        $this->addDefaultFormats();
 
         $this->sst = new SharedStringsTable();
 
         $this->setCreationTimestamp(time());
+    }
+
+    /**
+     *
+     */
+    protected function addDefaultFormats()
+    {
+        $this->tmpFormat = new Format($this->byteOrder);
+
+        // Add the default format for hyperlinks
+        $this->urlFormat = $this->addFormat(
+            array(
+                'font.color' => 'blue',
+                'font.underline' => Font::UNDERLINE_ONCE
+            )
+        );
     }
 
     /**
@@ -476,18 +490,19 @@ class Workbook extends BIFFwriter
         // same as the default FONT and if it hasn't already been used.
         $fonts = array();
         $index = 6; // The first user defined FONT
-        $key = $this->tmpFormat->getFontKey(); // The default font from _tmp_format
+        $key = $this->tmpFormat->getFont()->getKey(); // The default font from _tmp_format
         $fonts[$key] = 0; // Index of the default font
 
         foreach ($this->formats as $format) {
-            $key = $format->getFontKey();
+            $font = $format->getFont();
+            $key = $font->getKey();
             if (isset($fonts[$key])) {
                 // FONT has already been used
-                $format->fontIndex = $fonts[$key];
+                $font->setIndex($fonts[$key]);
             } else {
                 // Add a new FONT record
                 $fonts[$key] = $index;
-                $format->fontIndex = $index;
+                $font->setIndex($index);
                 $index++;
                 $this->append($format->getFontRecord());
             }

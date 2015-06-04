@@ -260,7 +260,7 @@ class GeneralTest extends TestAbstract
         $sheet = $this->workbook->addWorksheet();
 
         $format = $this->workbook->addFormat();
-        $format->setColor('red');
+        $format->getFont()->setColor('red');
         $format->setAlign('center');
 
         //intentionally blank string and number bigger than 63
