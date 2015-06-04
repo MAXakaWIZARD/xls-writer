@@ -104,9 +104,7 @@ class Workbook extends BIFFwriter
      */
     public function __construct()
     {
-        parent::__construct();
-
-        $this->formulaParser = new FormulaParser($this->byteOrder);
+        $this->formulaParser = new FormulaParser();
 
         $this->palette = Palette::getXl97Palette();
 
@@ -122,7 +120,7 @@ class Workbook extends BIFFwriter
      */
     protected function addDefaultFormats()
     {
-        $this->tmpFormat = new Format($this->byteOrder);
+        $this->tmpFormat = new Format();
 
         // Add the default format for hyperlinks
         $this->urlFormat = $this->addFormat(
@@ -408,7 +406,7 @@ class Workbook extends BIFFwriter
      */
     public function addFormat($properties = array())
     {
-        $format = new Format($this->byteOrder, $this->xfIndex, $properties);
+        $format = new Format($this->xfIndex, $properties);
         $this->xfIndex++;
         $this->formats[] = $format;
 

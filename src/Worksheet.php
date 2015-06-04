@@ -183,8 +183,6 @@ class Worksheet extends BIFFwriter
         $urlFormat,
         $formulaParser
     ) {
-        parent::__construct();
-
         $this->name = $name;
         $this->index = $index;
         $this->workbook = $workbook;

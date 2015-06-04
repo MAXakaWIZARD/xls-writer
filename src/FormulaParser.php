@@ -40,12 +40,6 @@ class FormulaParser
     protected $parseTree = array();
 
     /**
-     * The byte order. 1 => big endian, 0 => little endian.
-     * @var integer
-     */
-    protected $byteOrder;
-
-    /**
      * Array of external sheets
      * @var array
      */
@@ -56,17 +50,6 @@ class FormulaParser
      * @var array
      */
     protected $references = array();
-
-    /**
-     * The class constructor
-     *
-     * @param integer $byteOrder The byte order (Little endian or Big endian) of the architecture
-     * (optional). 1 => big endian, 0 (default) little endian.
-     */
-    public function __construct($byteOrder)
-    {
-        $this->byteOrder = $byteOrder;
-    }
 
     /**
      * Convert a token to the proper ptg value.
@@ -113,10 +96,6 @@ class FormulaParser
             return pack("Cv", Ptg::get('ptgInt'), $num);
         } else {
             // A float
-            if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-                $num = strrev($num);
-            }
-
             return pack("Cd", Ptg::get('ptgNum'), $num);
         }
     }

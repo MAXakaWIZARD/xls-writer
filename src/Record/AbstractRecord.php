@@ -9,22 +9,6 @@ abstract class AbstractRecord
     const ID = 0x00;
 
     /**
-     * @var int
-     */
-    protected $byteOrder;
-
-    /**
-     * AbstractRecord constructor.
-     *
-     * @param int $byteOrder
-     */
-    public function __construct(
-        $byteOrder = BIFFwriter::BYTE_ORDER_LE
-    ) {
-        $this->byteOrder = $byteOrder;
-    }
-
-    /**
      * Returns record header data ready for writing
      * @param int $length
      * @return string

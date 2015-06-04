@@ -23,15 +23,6 @@ use Xls\Record\AbstractRecord;
 
 class BIFFwriter
 {
-    const BYTE_ORDER_LE = 0;
-    const BYTE_ORDER_BE = 1;
-
-    /**
-     * The byte order of this architecture. 0 => little endian, 1 => big endian
-     * @var integer
-     */
-    protected $byteOrder;
-
     /**
      * This flag indicates write to temporary buffer mode
      * instead of $data
@@ -57,30 +48,6 @@ class BIFFwriter
      * @var integer
      */
     protected $datasize = 0;
-
-    /**
-     * @throws \Exception
-     */
-    public function __construct()
-    {
-        $this->setByteOrder();
-    }
-
-    /**
-     * Determine the byte order and store it
-     *
-     */
-    protected function setByteOrder()
-    {
-        // Check if "pack" gives the required IEEE 64bit float
-        $teststr = pack("d", 1.2345);
-        $number = pack("C8", 0x8D, 0x97, 0x6E, 0x12, 0x83, 0xC0, 0xF3, 0x3F);
-        if ($number == $teststr) {
-            $this->byteOrder = self::BYTE_ORDER_LE;
-        } else {
-            $this->byteOrder = self::BYTE_ORDER_BE;
-        }
-    }
 
     /**
      * @param $data
@@ -168,7 +135,7 @@ class BIFFwriter
     protected function createRecord($type)
     {
         $className = "\\Xls\\Record\\$type";
-        return new $className($this->byteOrder);
+        return new $className();
     }
 
     protected function isBufferedWriteOn()

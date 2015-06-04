@@ -17,9 +17,6 @@ class LeftMargin extends AbstractRecord
     public function getData($margin)
     {
         $data = pack("d", $margin);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $data = strrev($data);
-        }
 
         return $this->getFullRecord($data);
     }

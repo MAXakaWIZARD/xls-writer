@@ -21,7 +21,7 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->parser = new FormulaParser(BIFFwriter::BYTE_ORDER_LE);
+        $this->parser = new FormulaParser();
     }
 
     /**

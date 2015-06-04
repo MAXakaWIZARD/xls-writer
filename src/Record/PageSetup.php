@@ -31,10 +31,6 @@ class PageSetup extends AbstractRecord
 
         $numHdr = pack("d", $numHdr);
         $numFtr = pack("d", $numFtr);
-        if ($this->byteOrder === BIFFwriter::BYTE_ORDER_BE) {
-            $numHdr = strrev($numHdr);
-            $numFtr = strrev($numFtr);
-        }
 
         $data = pack(
             "vvvvvvvv",
