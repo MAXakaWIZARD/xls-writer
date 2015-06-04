@@ -179,6 +179,34 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @dataProvider providerTokenIsExternalRange
+     * @param string $expected
+     * @param string $value
+     *
+     * @throws \Exception
+     */
+    public function testTokenIsExternalRange($expected, $value)
+    {
+        $str = ($expected) ? 'valid' : 'not valid';
+        $this->assertEquals($expected, Token::isExternalRange($value), "$value is $str external range");
+    }
+
+    /**
+     * @return array
+     */
+    public function providerTokenIsExternalRange()
+    {
+        return array(
+            array(true, 'Sheet1!A1:A2'),
+            array(true, 'Sheet1:Sheet2!A1:B2'),
+            array(true, "'Sheet1'!A1:B2"),
+            array(true, "'Sheet1:Sheet2'!A1:B2"),
+            array(false, "Sheet1!A1"),
+            array(false, "A1"),
+        );
+    }
+
+    /**
      * @dataProvider providerTokenGetPtg
      * @param string $expected
      * @param string $value

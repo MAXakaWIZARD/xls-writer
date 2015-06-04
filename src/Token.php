@@ -56,6 +56,15 @@ class Token
         self::TOKEN_LT => array('=', '>'),
     );
 
+    protected static $comparisonTokens = array(
+        self::TOKEN_LT,
+        self::TOKEN_GT,
+        self::TOKEN_LE,
+        self::TOKEN_GE,
+        self::TOKEN_EQ,
+        self::TOKEN_NE
+    );
+
     /**
      * Reference A1 or $A$1
      * @param $token
@@ -133,21 +142,27 @@ class Token
     }
 
     /**
-     * External range Sheet1!A1 or Sheet1:Sheet2!A1:B2 or 'Sheet1'!A1 or 'Sheet1:Sheet2'!A1:B2
+     * External range:
+     * Sheet1!A1:B2 or Sheet1:Sheet2!A1:B2
+     * 'Sheet1'!A1:B2 or 'Sheet1:Sheet2'!A1:B2
+     *
      * @param $token
      *
      * @return boolean
      */
     public static function isExternalRange($token)
     {
-        return preg_match(
-            "/^\w+(\:\w+)?\!([A-Ia-i]?[A-Za-z])?[0-9]+:([A-Ia-i]?[A-Za-z])?[0-9]+$/u",
-            $token
-        ) === 1
-        || preg_match(
-            "/^'[\w -]+(\:[\w -]+)?'\!([A-Ia-i]?[A-Za-z])?[0-9]+:([A-Ia-i]?[A-Za-z])?[0-9]+$/u",
-            $token
-        ) === 1;
+        // A1:B2
+        $cellsPattern = '([A-Ia-i]?[A-Za-z])?[0-9]+:([A-Ia-i]?[A-Za-z])?[0-9]+';
+
+        // Sheet1!A1:B2 or Sheet1:Sheet2!A1:B2
+        $unquotedSheetsPattern = "/^\w+(\:\w+)?\!{$cellsPattern}$/u";
+
+        // 'Sheet1'!A1:B2 or 'Sheet1:Sheet2'!A1:B2
+        $quotedSheetsPattern = "/^'[\w -]+(\:[\w -]+)?'\!{$cellsPattern}$/u";
+
+        return preg_match($unquotedSheetsPattern, $token) === 1
+            || preg_match($quotedSheetsPattern, $token) === 1;
     }
 
     /**
@@ -212,12 +227,7 @@ class Token
      */
     public static function isComparison($token)
     {
-        return $token == self::TOKEN_LT
-            || $token == self::TOKEN_GT
-            || $token == self::TOKEN_LE
-            || $token == self::TOKEN_GE
-            || $token == self::TOKEN_EQ
-            || $token == self::TOKEN_NE;
+        return in_array($token, self::$comparisonTokens);
     }
 
     /**
