@@ -41,13 +41,7 @@ class Hyperlink extends AbstractRecord
 
     protected function getCommonData(Range $range, $options)
     {
-        $data = pack(
-            "vvvv",
-            $range->getRowFrom(),
-            $range->getRowTo(),
-            $range->getColFrom(),
-            $range->getColTo()
-        );
+        $data = $this->getSubRecord('Range', array(array($range), false));
         $data .= pack("H*", static::STDLINK_GUID);
         $data .= pack("H*", "02000000");
         $data .= pack("V", $options);

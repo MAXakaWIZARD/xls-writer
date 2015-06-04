@@ -1063,7 +1063,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeNumber($row, $col, $num, $format = null)
     {
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         $this->appendRecord('Number', array($row, $col, $num, $format));
     }
@@ -1084,7 +1084,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         $this->writeStringSST($row, $col, $str, $format);
     }
@@ -1112,43 +1112,19 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * @param $row
-     *
-     * @throws \Exception
-     */
-    protected function validateRowIndex($row)
-    {
-        if ($row >= Biff8::MAX_ROWS) {
-            throw new \Exception('Row index is beyond max row number');
-        }
-    }
-
-    /**
-     * @param $col
-     *
-     * @throws \Exception
-     */
-    protected function validateColIndex($col)
-    {
-        if ($col >= Biff8::MAX_COLS) {
-            throw new \Exception('Col index is beyond max col number');
-        }
-    }
-
-    /**
      * Check row and col before writing to a cell, and update the sheet's
      * dimensions accordingly
      * @param integer $row    Zero indexed row
      * @param integer $col    Zero indexed column
-     * @return boolean true for success, false if row and/or col are grester
-     *                 then maximums allowed.
+     * @return Cell
      */
-    protected function checkRowCol($row, $col)
+    protected function addCell($row, $col)
     {
-        $this->validateRowIndex($row);
-        $this->validateColIndex($col);
+        $cell = new Cell($row, $col);
 
-        $this->dimensions->expand($row, $col);
+        $this->dimensions->expand($cell);
+
+        return $cell;
     }
 
     /**
@@ -1161,7 +1137,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeNote($row, $col, $note, $guid = null)
     {
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         $objId = $this->getNewObjectId();
         $this->drawings[] = $objId;
@@ -1195,7 +1171,7 @@ class Worksheet extends BIFFwriter
             return;
         }
 
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         $this->appendRecord('Blank', array($row, $col, $format));
     }
@@ -1213,7 +1189,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeFormula($row, $col, $formula, $format = null)
     {
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         // Strip the '=' or '@' sign at the beginning of the formula string
         if (in_array($formula[0], array('=', '@'), true)) {
@@ -1246,7 +1222,7 @@ class Worksheet extends BIFFwriter
      */
     public function writeUrl($row, $col, $url, $label = '', $format = null)
     {
-        $this->checkRowCol($row, $col);
+        $this->addCell($row, $col);
 
         $range = new Range($row, $col);
 
@@ -1274,7 +1250,7 @@ class Worksheet extends BIFFwriter
      */
     protected function writeUrlWeb(Range $range, $url, $str, $format = null)
     {
-        $this->writeUrlLabel($range, $url, $str, $format);
+        $this->writeUrlLabel($range->startCell(), $url, $str, $format);
         $this->appendRecord('Hyperlink', array($range, $url));
     }
 
@@ -1295,7 +1271,7 @@ class Worksheet extends BIFFwriter
             $url = substr($url, 1);
         }
 
-        $this->writeUrlLabel($range, $url, $label, $format);
+        $this->writeUrlLabel($range->startCell(), $url, $label, $format);
         $this->appendRecord('HyperlinkInternal', array($range, $url));
     }
 
@@ -1314,17 +1290,17 @@ class Worksheet extends BIFFwriter
         $url = preg_replace('/^external:/', '', $url);
         $url = preg_replace('/\//', "\\", $url);
 
-        $this->writeUrlLabel($range, $url, $label, $format);
+        $this->writeUrlLabel($range->startCell(), $url, $label, $format);
         $this->appendRecord('HyperlinkExternal', array($range, $url));
     }
 
     /**
-     * @param Range $range Cell range
+     * @param Cell $cell
      * @param string $url
      * @param string $str
      * @param null $format
      */
-    protected function writeUrlLabel(Range $range, $url, $str, $format = null)
+    protected function writeUrlLabel(Cell $cell, $url, $str, $format = null)
     {
         if (!$format) {
             $format = $this->urlFormat;
@@ -1334,7 +1310,7 @@ class Worksheet extends BIFFwriter
             $str = $url;
         }
 
-        $this->writeString($range->getRowFrom(), $range->getColFrom(), $str, $format);
+        $this->writeString($cell->getRow(), $cell->getCol(), $str, $format);
     }
 
     /**
@@ -1423,10 +1399,6 @@ class Worksheet extends BIFFwriter
      */
     public function mergeCells($firstRow, $firstCol, $lastRow, $lastCol)
     {
-        if ($lastRow < $firstRow || $lastCol < $firstCol) {
-            throw new \Exception('Invalid merge range');
-        }
-
         $maxRecordRanges = floor((Biff8::LIMIT - 6) / 8);
         if ($this->mergedCellsCounter >= $maxRecordRanges) {
             $this->mergedCellsRecord++;
@@ -1435,7 +1407,8 @@ class Worksheet extends BIFFwriter
 
         // don't check rowmin, rowmax, etc... because we don't know when this
         // is going to be called
-        $this->mergedRanges[$this->mergedCellsRecord][] = new Range($firstRow, $firstCol, $lastRow, $lastCol);
+        $range = new Range($firstRow, $firstCol, $lastRow, $lastCol);
+        $this->mergedRanges[$this->mergedCellsRecord][] = $range;
         $this->mergedCellsCounter++;
     }
 
@@ -1578,11 +1551,13 @@ class Worksheet extends BIFFwriter
         $rowEnd = $rowStart; // Row containing bottom right corner of object
 
         // Zero the specified offset if greater than the cell dimensions
-        if ($x1 >= $this->sizeCol($colStart)) {
+        $colStartSize = $this->sizeCol($colStart);
+        if ($x1 >= $colStartSize) {
             $x1 = 0;
         }
 
-        if ($y1 >= $this->sizeRow($rowStart)) {
+        $rowStartSize = $this->sizeRow($rowStart);
+        if ($y1 >= $rowStartSize) {
             $y1 = 0;
         }
 
@@ -1601,31 +1576,32 @@ class Worksheet extends BIFFwriter
             $rowEnd++;
         }
 
-        if ($this->sizeCol($colStart) == 0
-            || $this->sizeCol($colEnd) == 0
-            || $this->sizeRow($rowStart) == 0
-            || $this->sizeRow($rowEnd) == 0
+        $colEndSize = $this->sizeCol($colEnd);
+        $rowEndSize = $this->sizeRow($rowEnd);
+
+        if ($colStartSize == 0
+            || $colEndSize == 0
+            || $rowStartSize == 0
+            || $rowEndSize == 0
         ) {
             throw new \Exception('Bitmap isn\'t allowed to start or finish in a hidden cell');
         }
 
         // Convert the pixel values to the percentage value expected by Excel
-        $x1 = $x1 / $this->sizeCol($colStart) * 1024;
-        $y1 = $y1 / $this->sizeRow($rowStart) * 256;
-        $x2 = $width / $this->sizeCol($colEnd) * 1024; // Distance to right side of object
-        $y2 = $height / $this->sizeRow($rowEnd) * 256; // Distance to bottom of object
+        $x1 = $x1 / $colStartSize * 1024;
+        $y1 = $y1 / $rowStartSize * 256;
+        $x2 = $width / $colEndSize * 1024; // Distance to right side of object
+        $y2 = $height / $rowEndSize * 256; // Distance to bottom of object
 
+        $area = new Range($rowStart, $colStart, $rowEnd, $colEnd, false);
         $this->appendRecord(
             'ObjPicture',
             array(
                 $this->getNewObjectId(),
-                $colStart,
+                $area,
                 $x1,
-                $rowStart,
                 $y1,
-                $colEnd,
                 $x2,
-                $rowEnd,
                 $y2
             )
         );
@@ -1701,7 +1677,8 @@ class Worksheet extends BIFFwriter
      */
     public function setValidation($row1, $col1, $row2, $col2, $validator)
     {
-        $this->dv[] = $validator->getData($row1, $col1, $row2, $col2);
+        $range = new Range($row1, $col1, $row2, $col2);
+        $this->dv[] = $validator->getData($range);
     }
 
     /**

@@ -187,14 +187,11 @@ class Validator
     }
 
     /**
-     * @param $row1
-     * @param $col1
-     * @param $row2
-     * @param $col2
+     * @param Range $range
      *
      * @return string
      */
-    public function getData($row1, $col1, $row2, $col2)
+    public function getData(Range $range)
     {
         $data = pack("V", $this->getOptions());
 
@@ -203,21 +200,24 @@ class Validator
         $data .= pack("vC", strlen($this->descrPrompt), 0x00) . $this->descrPrompt;
         $data .= pack("vC", strlen($this->descrError), 0x00) . $this->descrError;
 
-        $formula1 = $this->formula1;
-        if ($this->dataType === self::TYPE_USER_LIST) {
-            $formula1 = str_replace(',', chr(0), $formula1);
-        }
-        $formula1 = $this->formulaParser->getReversePolish($formula1);
-        $data .= pack("vv", strlen($formula1), 0x00) . $formula1;
+        $data .= $this->packFormula($this->formula1);
+        $data .= $this->packFormula($this->formula2);
 
-        $formula2 = $this->formula2;
-        if ($formula2 != '') {
-            $formula2 = $this->formulaParser->getReversePolish($this->formula2);
-        }
-        $data .= pack("vv", strlen($formula2), 0x00) . $formula2;
-
-        $data .= pack("vvvvv", 1, $row1, $row2, $col1, $col2);
+        $data .= \Xls\Subrecord\Range::getData(array($range));
 
         return $data;
+    }
+
+    protected function packFormula($formula)
+    {
+        if ($this->dataType === self::TYPE_USER_LIST) {
+            $formula = str_replace(',', chr(0), $formula);
+        }
+
+        if ($formula != '') {
+            $formula = $this->formulaParser->getReversePolish($formula);
+        }
+
+        return pack("vv", strlen($formula), 0x00) . $formula;
     }
 }

@@ -92,26 +92,33 @@ class Range
     }
 
     /**
-     * Include specified row and col
-     * @param integer $row
-     * @param integer $col
+     * Include specified cell
+     * @param Cell $cell
      */
-    public function expand($row, $col)
+    public function expand(Cell $cell)
     {
-        if ($row < $this->rowFrom) {
-            $this->rowFrom = $row;
+        if ($cell->getRow() < $this->rowFrom) {
+            $this->rowFrom = $cell->getRow();
         }
 
-        if ($row > $this->rowTo) {
-            $this->rowTo = $row;
+        if ($cell->getRow() > $this->rowTo) {
+            $this->rowTo = $cell->getRow();
         }
 
-        if ($col < $this->colFrom) {
-            $this->colFrom = $col;
+        if ($cell->getCol() < $this->colFrom) {
+            $this->colFrom = $cell->getCol();
         }
 
-        if ($col > $this->colTo) {
-            $this->colTo = $col;
+        if ($cell->getCol() > $this->colTo) {
+            $this->colTo = $cell->getCol();
         }
+    }
+
+    /**
+     * @return Cell
+     */
+    public function startCell()
+    {
+        return new Cell($this->rowFrom, $this->colFrom);
     }
 }

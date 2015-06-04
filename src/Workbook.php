@@ -581,13 +581,7 @@ class Workbook extends BIFFwriter
                 $area = $sheet->getPrintArea();
 
                 $data = $this->getRangeCommonHeader($sheet);
-                $data .= pack(
-                    'vvvv',
-                    $area->getRowFrom(),
-                    $area->getRowTo(),
-                    $area->getColFrom(),
-                    $area->getColTo()
-                );
+                $data .= \Xls\Subrecord\Range::getData(array($area), false);
 
                 $this->appendRecord('DefinedName', array(
                     Record\DefinedName::BUILTIN_PRINT_AREA,

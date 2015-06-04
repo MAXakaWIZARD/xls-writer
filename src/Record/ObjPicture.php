@@ -2,6 +2,8 @@
 
 namespace Xls\Record;
 
+use Xls\Range;
+
 class ObjPicture extends Obj
 {
     const TYPE = 0x08;
@@ -11,17 +13,14 @@ class ObjPicture extends Obj
      * to support other Excel objects.
      *
      * @param integer $objectId
-     * @param integer $colL Column containing upper left corner of object
+     * @param Range $area Picture position area
      * @param integer $dxL  Distance from left side of cell
-     * @param integer $rwT  Row containing top left corner of object
      * @param integer $dyT  Distance from top of cell
-     * @param integer $colR Column containing lower right corner of object
      * @param integer $dxR  Distance from right of cell
-     * @param integer $rwB  Row containing bottom right corner of object
      * @param integer $dyB  Distance from bottom of cell
      * @return string
      */
-    public function getData($objectId, $colL, $dxL, $rwT, $dyT, $colR, $dxR, $rwB, $dyB)
+    public function getData($objectId, $area, $dxL, $dyT, $dxR, $dyB)
     {
         $type = static::TYPE;
         $cObj = 0x0001; // Count of objects in file (set to 1)
@@ -52,13 +51,13 @@ class ObjPicture extends Obj
         $data .= pack("v", $id);
         $data .= pack("v", $grbit);
 
-        $data .= pack("v", $colL);
+        $data .= pack("v", $area->getColFrom());
         $data .= pack("v", $dxL);
-        $data .= pack("v", $rwT);
+        $data .= pack("v", $area->getRowFrom());
         $data .= pack("v", $dyT);
-        $data .= pack("v", $colR);
+        $data .= pack("v", $area->getColTo());
         $data .= pack("v", $dxR);
-        $data .= pack("v", $rwB);
+        $data .= pack("v", $area->getRowTo());
         $data .= pack("v", $dyB);
         $data .= pack("v", $cbMacro);
         $data .= pack("V", $Reserved1);

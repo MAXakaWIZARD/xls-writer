@@ -18,18 +18,7 @@ class MergeCells extends AbstractRecord
      */
     public function getData($ranges)
     {
-        $rangesCount = count($ranges);
-
-        $data = pack('v', $rangesCount);
-        foreach ($ranges as $range) {
-            $data .= pack(
-                'vvvv',
-                $range->getRowFrom(),
-                $range->getRowTo(),
-                $range->getColFrom(),
-                $range->getColTo()
-            );
-        }
+        $data = $this->getSubRecord('Range', array($ranges));
 
         return $this->getFullRecord($data);
     }

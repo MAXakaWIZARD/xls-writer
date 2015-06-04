@@ -54,4 +54,17 @@ abstract class AbstractRecord
     {
         return $this->getHeader(strlen($data)) . $data;
     }
+
+    /**
+     * @param string $type
+     * @param array $params
+     *
+     * @return mixed
+     */
+    protected function getSubRecord($type, array $params = array())
+    {
+        $callable = array("\\Xls\\Subrecord\\$type", 'getData');
+
+        return call_user_func_array($callable, $params);
+    }
 }

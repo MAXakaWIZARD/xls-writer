@@ -206,17 +206,6 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     /**
      *
      */
-    public function testWrongMergeRange()
-    {
-        $sheet = $this->workbook->addWorksheet();
-
-        $this->setExpectedException('\Exception', "Invalid merge range");
-        $sheet->mergeCells(5, 5, 0, 0);
-    }
-
-    /**
-     *
-     */
     public function testBitmapInHiddenCell()
     {
         $sheet = $this->workbook->addWorksheet();

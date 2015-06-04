@@ -4,6 +4,34 @@ namespace Xls;
 
 class Cell
 {
+    protected $row;
+    protected $col;
+
+    public function __construct($row, $col)
+    {
+        $this->validateRowIndex($row);
+        $this->validateColIndex($col);
+
+        $this->row = $row;
+        $this->col = $col;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRow()
+    {
+        return $this->row;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCol()
+    {
+        return $this->col;
+    }
+
     /**
      * Utility function for writing formulas
      * Converts a cell's coordinates to the A1 format.
@@ -65,5 +93,29 @@ class Cell
         $col--;
 
         return array($row, $col, $rowRel, $colRel);
+    }
+
+    /**
+     * @param $row
+     *
+     * @throws \Exception
+     */
+    protected function validateRowIndex($row)
+    {
+        if ($row >= Biff8::MAX_ROWS) {
+            throw new \Exception('Row index is beyond max row number');
+        }
+    }
+
+    /**
+     * @param $col
+     *
+     * @throws \Exception
+     */
+    protected function validateColIndex($col)
+    {
+        if ($col >= Biff8::MAX_COLS) {
+            throw new \Exception('Col index is beyond max col number');
+        }
     }
 }
