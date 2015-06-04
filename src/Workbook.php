@@ -687,9 +687,7 @@ class Workbook extends BIFFwriter
      */
     protected function storeExternsheet()
     {
-        /** @var Record\Externsheet $record */
-        $record = $this->createRecord('Externsheet');
-        $this->append($record->getDataForReferences($this->formulaParser->getReferences()));
+        $this->appendRecord('Externsheet', array($this->formulaParser->getReferences()));
     }
 
     /**
