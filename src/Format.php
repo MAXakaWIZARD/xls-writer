@@ -165,20 +165,29 @@ class Format
     protected function setProperties($properties)
     {
         foreach ($properties as $property => $value) {
-            $propertyParts = explode('.', $property);
-            if (count($propertyParts) === 2
-                && $propertyParts[0] === 'font'
-            ) {
-                $object = $this->getFont();
-                $property = $propertyParts[1];
-            } else {
-                $object = $this;
-            }
+            $this->setProperty($property, $value);
+        }
+    }
 
-            $methodName = 'set' . ucwords($property);
-            if (method_exists($object, $methodName)) {
-                $object->$methodName($value);
-            }
+    /**
+     * @param $property
+     * @param $value
+     */
+    protected function setProperty($property, $value)
+    {
+        $propertyParts = explode('.', $property);
+        if (count($propertyParts) === 2
+            && $propertyParts[0] === 'font'
+        ) {
+            $object = $this->getFont();
+            $property = $propertyParts[1];
+        } else {
+            $object = $this;
+        }
+
+        $methodName = 'set' . ucwords($property);
+        if (method_exists($object, $methodName)) {
+            $object->$methodName($value);
         }
     }
 
@@ -210,6 +219,7 @@ class Format
     public function getFontRecord()
     {
         $record = new Record\Font($this->byteOrder);
+
         return $record->getData($this->getFont());
     }
 
