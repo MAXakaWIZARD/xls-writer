@@ -2,14 +2,6 @@
 
 namespace Xls\OLE;
 
-/**
- * OLE package base class.
- *
- * @category Structures
- * @package  OLE
- * @author   Xavier Noguer <xnoguer@php.net>
- * @author   Christian Schmidt <schmidt@php.net>
- */
 class OLE
 {
     /**

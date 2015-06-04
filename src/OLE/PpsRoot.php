@@ -2,13 +2,6 @@
 
 namespace Xls\OLE;
 
-/**
- * Class for creating Root PPS's for OLE containers
- *
- * @author   Xavier Noguer <xnoguer@php.net>
- * @category Structures
- * @package  OLE
- */
 class PpsRoot extends PPS
 {
     /**

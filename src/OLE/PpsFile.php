@@ -2,13 +2,6 @@
 
 namespace Xls\OLE;
 
-/**
- * Class for creating File PPS's for OLE containers
- *
- * @author   Xavier Noguer <xnoguer@php.net>
- * @category Structures
- * @package  OLE
- */
 class PpsFile extends PPS
 {
     /**

@@ -2,13 +2,6 @@
 
 namespace Xls\OLE;
 
-/**
- * Class for creating PPS's for OLE containers
- *
- * @author   Xavier Noguer <xnoguer@php.net>
- * @category Structures
- * @package  OLE
- */
 class PPS
 {
     const PPS_TYPE_ROOT = 5;

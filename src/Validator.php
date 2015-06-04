@@ -2,13 +2,6 @@
 
 namespace Xls;
 
-/**
- * Baseclass for generating Excel DV records (validations)
- *
- * @author   Herman Kuiper
- * @category FileFormats
- * @package  Spreadsheet_Excel_Writer
- */
 class Validator
 {
     const OP_BETWEEN = 0x00;

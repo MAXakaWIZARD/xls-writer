@@ -4,23 +4,6 @@ namespace Xls;
 
 use Xls\Record\AbstractRecord;
 
-/**
- * Class for writing Excel BIFF records.
- *
- * From "MICROSOFT EXCEL BINARY FILE FORMAT" by Mark O'Brien (Microsoft Corporation):
- *
- * BIFF (BInary File Format) is the file format in which Excel documents are
- * saved on disk.  A BIFF file is a complete description of an Excel document.
- * BIFF files consist of sequences of variable-length records. There are many
- * different types of BIFF records.  For example, one record type describes a
- * formula entered into a cell; one describes the size and location of a
- * window into a document; another describes a picture format.
- *
- * @author   Xavier Noguer <xnoguer@php.net>
- * @category FileFormats
- * @package  Spreadsheet_Excel_Writer
- */
-
 class BIFFwriter
 {
     /**
