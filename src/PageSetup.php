@@ -93,60 +93,39 @@ class PageSetup
      * The horizontal centering value for the page
      * @var integer
      */
-    protected $hcenter = 0;
+    protected $hcenter = false;
 
     /**
      * The vertical centering value for the page
      * @var integer
      */
-    protected $vcenter = 0;
+    protected $vcenter = false;
 
     /**
-     * The margin for the header
-     * @var float
+     * @var Margin
      */
-    protected $marginHead = 0.50;
+    protected $margin;
 
-    /**
-     * The margin for the footer
-     * @var float
-     */
-    protected $marginFoot = 0.50;
-
-    /**
-     * The left margin for the worksheet in inches
-     * @var float
-     */
-    protected $marginLeft = 0.75;
-
-    /**
-     * The right margin for the worksheet in inches
-     * @var float
-     */
-    protected $marginRight = 0.75;
-
-    /**
-     * The top margin for the worksheet in inches
-     * @var float
-     */
-    protected $marginTop = 1.00;
-
-    /**
-     * The bottom margin for the worksheet in inches
-     * @var float
-     */
-    protected $marginBottom = 1.00;
-
-    protected $printRowColHeaders = 0;
+    protected $printRowColHeaders = false;
     protected $hbreaks = array();
     protected $vbreaks = array();
-    protected $printGridLines = 1;
-    protected $screenGridLines = 1;
+    protected $printGridLines = true;
+    protected $screenGridLines = true;
 
     /**
      * @var float
      */
     protected $zoom = 100;
+
+    /**
+     *
+     */
+    public function __construct()
+    {
+        $this->margin = new Margin(0.75, 0.75, 1.00, 1.00);
+        $this->margin->setHead(0.5);
+        $this->margin->setFoot(0.5);
+    }
 
     /**
      * @return bool
@@ -252,7 +231,7 @@ class PageSetup
         }
 
         // Turn off "fit to page" option
-        $this->fitPage = 0;
+        $this->fitPage = false;
 
         $this->printScale = floor($scale);
     }
@@ -339,7 +318,7 @@ class PageSetup
      */
     public function fitToPages($width, $height)
     {
-        $this->fitPage = 1;
+        $this->fitPage = true;
         $this->fitWidth = $width;
         $this->fitHeight = $height;
     }
@@ -352,7 +331,7 @@ class PageSetup
     public function setHeader($string, $margin = 0.50)
     {
         $this->header = $this->truncateStringIfNeeded($string);
-        $this->marginHead = $margin;
+        $this->margin->setHead($margin);
     }
 
     /**
@@ -363,7 +342,7 @@ class PageSetup
     public function setFooter($string, $margin = 0.50)
     {
         $this->footer = $this->truncateStringIfNeeded($string);
-        $this->marginFoot = $margin;
+        $this->margin->setFoot($margin);
     }
 
     /**
@@ -382,93 +361,29 @@ class PageSetup
 
     /**
      * Center the page horinzontally.
-     * @param integer $center the optional value for centering. Defaults to 1 (center).
+     *
+     * @param bool $enable the optional value for centering. Defaults to 1 (center).
      */
-    public function centerHorizontally($center = 1)
+    public function centerHorizontally($enable = true)
     {
-        $this->hcenter = $center;
+        $this->hcenter = $enable;
     }
 
     /**
      * Center the page vertically.
-     * @param integer $center the optional value for centering. Defaults to 1 (center).
+     *
+     * @param bool $enable the optional value for centering. Defaults to 1 (center).
      */
-    public function centerVertically($center = 1)
+    public function centerVertically($enable = true)
     {
-        $this->vcenter = $center;
-    }
-
-    /**
-     * Set all the page margins to the same value in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMargins($margin)
-    {
-        $this->setMarginsLeftRight($margin);
-        $this->setMarginsTopBottom($margin);
-    }
-
-    /**
-     * Set the left and right margins to the same value in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginsLeftRight($margin)
-    {
-        $this->setMarginLeft($margin);
-        $this->setMarginRight($margin);
-    }
-
-    /**
-     * Set the top and bottom margins to the same value in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginsTopBottom($margin)
-    {
-        $this->setMarginTop($margin);
-        $this->setMarginBottom($margin);
-    }
-
-    /**
-     * Set the left margin in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginLeft($margin = 0.75)
-    {
-        $this->marginLeft = $margin;
-    }
-
-    /**
-     * Set the right margin in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginRight($margin = 0.75)
-    {
-        $this->marginRight = $margin;
-    }
-
-    /**
-     * Set the top margin in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginTop($margin = 1.00)
-    {
-        $this->marginTop = $margin;
-    }
-
-    /**
-     * Set the bottom margin in inches.
-     * @param float $margin The margin to set in inches
-     */
-    public function setMarginBottom($margin = 1.00)
-    {
-        $this->marginBottom = $margin;
+        $this->vcenter = $enable;
     }
 
     /**
      * Set the option to print the row and column headers on the printed page.
-     * @param integer $print Whether to print the headers or not. Defaults to 1 (print).
+     * @param bool $print Whether to print the headers or not. Defaults to 1 (print).
      */
-    public function printRowColHeaders($print = 1)
+    public function printRowColHeaders($print = true)
     {
         $this->printRowColHeaders = $print;
     }
@@ -499,18 +414,21 @@ class PageSetup
 
     /**
      * Set the option to hide gridlines on the printed page.
+     *
+     * @param bool $enable
      */
-    public function hidePrintGridlines()
+    public function printGridlines($enable = true)
     {
-        $this->printGridLines = 0;
+        $this->printGridLines = $enable;
     }
 
     /**
      * Set the option to hide gridlines on the worksheet (as seen on the screen).
+     * @param bool $visible
      */
-    public function hideScreenGridlines()
+    public function showGridlines($visible = true)
     {
-        $this->screenGridLines = 0;
+        $this->screenGridLines = $visible;
     }
 
     /**
@@ -529,59 +447,11 @@ class PageSetup
     }
 
     /**
-     * @return float
+     * @return bool
      */
-    public function getMarginHead()
+    public function shouldPrintRowColHeaders()
     {
-        return $this->marginHead;
-    }
-
-    /**
-     * @return float
-     */
-    public function getMarginFoot()
-    {
-        return $this->marginFoot;
-    }
-
-    /**
-     * @return float
-     */
-    public function getMarginLeft()
-    {
-        return $this->marginLeft;
-    }
-
-    /**
-     * @return float
-     */
-    public function getMarginRight()
-    {
-        return $this->marginRight;
-    }
-
-    /**
-     * @return float
-     */
-    public function getMarginTop()
-    {
-        return $this->marginTop;
-    }
-
-    /**
-     * @return float
-     */
-    public function getMarginBottom()
-    {
-        return $this->marginBottom;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPrintRowColHeaders()
-    {
-        return $this->printRowColHeaders;
+        return (bool)$this->printRowColHeaders;
     }
 
     /**
@@ -601,14 +471,6 @@ class PageSetup
     }
 
     /**
-     * @return int
-     */
-    public function getPrintGridLines()
-    {
-        return $this->printGridLines;
-    }
-
-    /**
      * @return string
      */
     public function getHeader()
@@ -625,27 +487,35 @@ class PageSetup
     }
 
     /**
-     * @return int
+     * @return bool
      */
-    public function getHcenter()
+    public function isHcenteringOn()
     {
-        return $this->hcenter;
-    }
-
-    /**
-     * @return int
-     */
-    public function getVcenter()
-    {
-        return $this->vcenter;
+        return (bool)$this->hcenter;
     }
 
     /**
      * @return bool
      */
-    public function areScreenGridLinesVisible()
+    public function isVcenteringOn()
+    {
+        return (bool)$this->vcenter;
+    }
+
+    /**
+     * @return bool
+     */
+    public function areGridLinesVisible()
     {
         return (bool)$this->screenGridLines;
+    }
+
+    /**
+     * @return bool
+     */
+    public function shouldPrintGridLines()
+    {
+        return (bool)$this->printGridLines;
     }
 
     /**
@@ -654,5 +524,13 @@ class PageSetup
     public function getZoom()
     {
         return $this->zoom;
+    }
+
+    /**
+     * @return Margin
+     */
+    public function getMargin()
+    {
+        return $this->margin;
     }
 }

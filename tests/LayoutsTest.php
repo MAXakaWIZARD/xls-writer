@@ -24,7 +24,7 @@ class LayoutsTest extends TestAbstract
         $pageSetup->setZoom(125);
 
         $pageSetup->setPortrait();
-        $pageSetup->setMargins(1.25);
+        $pageSetup->getMargin()->setAll(1.25);
         $pageSetup->setHeader('Page header');
         $pageSetup->setFooter('Page footer');
 
@@ -32,7 +32,7 @@ class LayoutsTest extends TestAbstract
         $pageSetup->setPaper($pageSetup::PAPER_A3);
         $pageSetup->setPrintArea(0, 0, 5, 5);
 
-        $pageSetup->hidePrintGridlines();
+        $pageSetup->printGridlines(false);
         $pageSetup->setHPagebreaks(array(1));
         $pageSetup->setVPagebreaks(array(5));
 
@@ -145,7 +145,7 @@ class LayoutsTest extends TestAbstract
 
         $pageSetup = $sheet->getPageSetup();
 
-        $pageSetup->hideScreenGridlines();
+        $pageSetup->showGridlines(false);
 
         $pageSetup->setLandscape();
 

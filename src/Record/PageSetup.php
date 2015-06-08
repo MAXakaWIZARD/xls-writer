@@ -26,8 +26,10 @@ class PageSetup extends AbstractRecord
         $iFitHeight = $pageSetup->getFitHeight(); // Fit to number of pages high
         $iRes = 0x0258; // Print resolution
         $iVRes = 0x0258; // Vertical print resolution
-        $numHdr = $pageSetup->getMarginHead(); // Header Margin
-        $numFtr = $pageSetup->getMarginFoot(); // Footer Margin
+
+        $margin = $pageSetup->getMargin();
+        $numHdr = $margin->getHead(); // Header Margin
+        $numFtr = $margin->getFoot(); // Footer Margin
 
         $numHdr = pack("d", $numHdr);
         $numFtr = pack("d", $numFtr);

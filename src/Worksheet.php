@@ -945,11 +945,12 @@ class Worksheet extends BIFFwriter
     protected function storeMargins()
     {
         $pageSetup = $this->getPageSetup();
+        $margin = $pageSetup->getMargin();
 
-        $this->appendRecord('LeftMargin', array($pageSetup->getMarginLeft()));
-        $this->appendRecord('RightMargin', array($pageSetup->getMarginRight()));
-        $this->appendRecord('TopMargin', array($pageSetup->getMarginTop()));
-        $this->appendRecord('BottomMargin', array($pageSetup->getMarginBottom()));
+        $this->appendRecord('LeftMargin', array($margin->getLeft()));
+        $this->appendRecord('RightMargin', array($margin->getRight()));
+        $this->appendRecord('TopMargin', array($margin->getTop()));
+        $this->appendRecord('BottomMargin', array($margin->getBottom()));
     }
 
     protected function storeHeaderAndFooter()
@@ -967,8 +968,8 @@ class Worksheet extends BIFFwriter
     {
         $pageSetup = $this->getPageSetup();
 
-        $this->appendRecord('Hcenter', array($pageSetup->getHcenter()));
-        $this->appendRecord('Vcenter', array($pageSetup->getVcenter()));
+        $this->appendRecord('Hcenter', array((int)$pageSetup->isHcenteringOn()));
+        $this->appendRecord('Vcenter', array((int)$pageSetup->isVcenteringOn()));
     }
 
     /**
@@ -999,7 +1000,8 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintHeaders()
     {
-        $this->appendRecord('PrintHeaders', array($this->getPageSetup()->getPrintRowColHeaders()));
+        $printHeaders = $this->getPageSetup()->shouldPrintRowColHeaders();
+        $this->appendRecord('PrintHeaders', array($printHeaders));
     }
 
     /**
@@ -1008,8 +1010,9 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGrid()
     {
-        $this->appendRecord('PrintGridLines', array($this->getPageSetup()->getPrintGridLines()));
-        $this->appendRecord('Gridset', array(!$this->getPageSetup()->getPrintGridLines()));
+        $linesVisible = $this->getPageSetup()->shouldPrintGridLines();
+        $this->appendRecord('PrintGridLines', array($linesVisible));
+        $this->appendRecord('Gridset', array(!$linesVisible));
     }
 
     /**
