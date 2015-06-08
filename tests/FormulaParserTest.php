@@ -29,8 +29,8 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
      */
     public function testGeneral($params)
     {
-        $this->parser->setExtSheet('Sheet1', 0);
-        $this->parser->setExtSheet('Sheet2', 1);
+        $this->parser->addSheet('Sheet1', 0);
+        $this->parser->addSheet('Sheet2', 1);
 
         if (isset($params['correct']) && $params['correct'] === false) {
             $message = (isset($params['error'])) ? $params['error'] : '';

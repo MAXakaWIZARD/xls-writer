@@ -326,7 +326,7 @@ class Workbook extends BIFFwriter
         }
 
         // Register worksheet name with parser
-        $this->formulaParser->setExtSheet($name, $index);
+        $this->formulaParser->addSheet($name, $index);
         $this->formulaParser->addRef($index, $index);
 
         return $worksheet;

@@ -5,11 +5,6 @@ namespace Xls;
 class FormulaParser
 {
     /**
-     * @var array
-     */
-    protected $ptg;
-
-    /**
      * The index of the character we are currently looking at
      * @var integer
      */
@@ -349,7 +344,7 @@ class FormulaParser
      * @param string $name  The name of the worksheet being added
      * @param integer $index The index of the worksheet being added
      */
-    public function setExtSheet($name, $index)
+    public function addSheet($name, $index)
     {
         $this->extSheets[$name] = $index;
     }
@@ -386,30 +381,30 @@ class FormulaParser
     {
         $token = '';
 
-        $i = $this->eatWhitespace();
+        $position = $this->eatWhitespace();
         $formulaLength = strlen($this->formula);
 
-        while ($i < $formulaLength) {
-            $token .= $this->formula[$i];
-            if ($i < $formulaLength - 1) {
-                $this->lookahead = $this->formula[$i + 1];
+        while ($position < $formulaLength) {
+            $token .= $this->formula[$position];
+            if ($position < $formulaLength - 1) {
+                $this->lookahead = $this->formula[$position + 1];
             } else {
                 $this->lookahead = '';
             }
 
             if ($this->match($token) != '') {
-                $this->currentChar = $i + 1;
+                $this->currentChar = $position + 1;
                 $this->currentToken = $token;
                 return;
             }
 
-            if ($i < ($formulaLength - 2)) {
-                $this->lookahead = $this->formula[$i + 2];
+            if ($position < ($formulaLength - 2)) {
+                $this->lookahead = $this->formula[$position + 2];
             } else {
                 // if we run out of characters lookahead becomes empty
                 $this->lookahead = '';
             }
-            $i++;
+            $position++;
         }
     }
 
@@ -418,21 +413,21 @@ class FormulaParser
      */
     protected function eatWhitespace()
     {
-        $i = $this->currentChar;
+        $position = $this->currentChar;
         $formulaLength = strlen($this->formula);
 
         // eat up white spaces
-        if ($i < $formulaLength) {
-            while ($this->formula{$i} == " ") {
-                $i++;
+        if ($position < $formulaLength) {
+            while ($this->formula{$position} == " ") {
+                $position++;
             }
 
-            if ($i < ($formulaLength - 1)) {
-                $this->lookahead = $this->formula{$i + 1};
+            if ($position < ($formulaLength - 1)) {
+                $this->lookahead = $this->formula{$position + 1};
             }
         }
 
-        return $i;
+        return $position;
     }
 
     /**
@@ -460,46 +455,100 @@ class FormulaParser
     }
 
     /**
-     * @param $token
+     * @param string $token
      *
      * @return string
      */
     protected function processDefaultCase($token)
     {
-        $lookaheadHasNumber = preg_match("/[0-9]/", $this->lookahead) === 1;
-        $isLookaheadNotDotOrColon = $this->lookahead != '.' && $this->lookahead != ':';
-
-        if (Token::isReference($token)
-            && !$lookaheadHasNumber
-            && $isLookaheadNotDotOrColon
-            && $this->lookahead != '!'
-        ) {
-            return $token;
-        } elseif (Token::isExternalReference($token)
-            && !$lookaheadHasNumber
-            && $isLookaheadNotDotOrColon
-        ) {
-            return $token;
-        } elseif (Token::isAnyRange($token)
-            && !$lookaheadHasNumber
-        ) {
-            return $token;
-        } elseif (is_numeric($token)
-            && (!is_numeric($token . $this->lookahead) || $this->lookahead == '')
-            && $this->lookahead != '!'
-            && $this->lookahead != ':'
-        ) {
-            // If it's a number (check that it's not a sheet name or range)
-            return $token;
-        } elseif (Token::isString($token)) {
-            return $token;
-        } elseif (Token::isFunctionCall($token)
-            && $this->lookahead == "("
+        if ($this->isReference($token)
+            || $this->isExternalReference($token)
+            || $this->isAnyRange($token)
+            || $this->isNumber($token)
+            || Token::isString($token)
+            || $this->isFunctionCall($token)
         ) {
             return $token;
         }
 
         return '';
+    }
+
+    /**
+     * @return bool
+     */
+    protected function lookaheadHasNumber()
+    {
+        return preg_match("/[0-9]/", $this->lookahead) === 1;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isLookaheadDotOrColon()
+    {
+        return $this->lookahead === '.' || $this->lookahead === ':';
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return bool
+     */
+    protected function isAnyRange($token)
+    {
+        return Token::isAnyRange($token)
+            && !$this->lookaheadHasNumber();
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return bool
+     */
+    protected function isReference($token)
+    {
+        return Token::isReference($token)
+            && !$this->lookaheadHasNumber()
+            && !$this->isLookaheadDotOrColon()
+            && $this->lookahead != '!';
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return bool
+     */
+    protected function isExternalReference($token)
+    {
+        return Token::isExternalReference($token)
+            && !$this->lookaheadHasNumber()
+            && !$this->isLookaheadDotOrColon();
+    }
+
+    /**
+     * If it's a number (check that it's not a sheet name or range)
+     * @param string $token
+     *
+     * @return bool
+     */
+    protected function isNumber($token)
+    {
+        return is_numeric($token)
+            && (!is_numeric($token . $this->lookahead) || $this->lookahead == '')
+            && $this->lookahead != '!'
+            && $this->lookahead != ':';
+    }
+
+    /**
+     * @param string $token
+     *
+     * @return bool
+     */
+    protected function isFunctionCall($token)
+    {
+        return Token::isFunctionCall($token)
+            && $this->lookahead == "(";
     }
 
     /**
@@ -745,53 +794,63 @@ class FormulaParser
      * @param array $tree The optional tree to convert.
      * @return string The tree in reverse polish notation
      */
-    public function toReversePolish($tree = array())
+    protected function toReversePolish($tree)
     {
-        $polish = "";
-
-        if (empty($tree)) {
-            $tree = $this->parseTree;
-        }
-
         if (!is_array($tree)) {
             return $this->convert($tree);
         }
 
-        if (is_array($tree['left'])) {
-            $convertedTree = $this->toReversePolish($tree['left']);
-            $polish .= $convertedTree;
-        } elseif ($tree['left'] != '') { // It's a final node
-            $convertedTree = $this->convert($tree['left']);
-            $polish .= $convertedTree;
-        }
-
-        if (is_array($tree['right'])) {
-            $convertedTree = $this->toReversePolish($tree['right']);
-            $polish .= $convertedTree;
-        } elseif ($tree['right'] != '') { // It's a final node
-            $convertedTree = $this->convert($tree['right']);
-            $polish .= $convertedTree;
-        }
+        $polish = $this->getTreePartPolish($tree['left']);
+        $polish .= $this->getTreePartPolish($tree['right']);
 
         // if it's a function convert it here (so we can set it's arguments)
-        if (Token::isFunctionCall($tree['value'])
-            && !Token::isReference($tree['value'])
-            && !Token::isRangeWithDots($tree['value'])
-            && !is_numeric($tree['value'])
-            && !Ptg::exists($tree['value'])
-        ) {
+        if ($this->isFunction($tree['value'])) {
             // left subtree for a function is always an array.
             if ($tree['left'] != '') {
                 $leftTree = $this->toReversePolish($tree['left']);
             } else {
                 $leftTree = '';
             }
+
             // add it's left subtree and return.
             return $leftTree . $this->convertFunction($tree['value'], $tree['right']);
-        } else {
-            $convertedTree = $this->convert($tree['value']);
         }
-        $polish .= $convertedTree;
+
+        $polish .= $this->convert($tree['value']);
+
+        return $polish;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    protected function isFunction($value)
+    {
+        return Token::isFunctionCall($value)
+            && !Token::isReference($value)
+            && !Token::isRangeWithDots($value)
+            && !is_numeric($value)
+            && !Ptg::exists($value);
+    }
+
+    /**
+     * @param $part
+     *
+     * @return string
+     * @throws \Exception
+     */
+    protected function getTreePartPolish($part)
+    {
+        $polish = '';
+
+        if (is_array($part)) {
+            $polish .= $this->toReversePolish($part);
+        } elseif ($part != '') {
+            // It's a final node
+            $polish .= $this->convert($part);
+        }
 
         return $polish;
     }
@@ -813,6 +872,6 @@ class FormulaParser
     {
         $this->parse($formula);
 
-        return $this->toReversePolish();
+        return $this->toReversePolish($this->parseTree);
     }
 }
