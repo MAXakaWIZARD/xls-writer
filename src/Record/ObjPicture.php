@@ -3,6 +3,7 @@
 namespace Xls\Record;
 
 use Xls\Range;
+use Xls\Margin;
 
 class ObjPicture extends Obj
 {
@@ -14,22 +15,17 @@ class ObjPicture extends Obj
      *
      * @param integer $objectId
      * @param Range $area Picture position area
-     * @param integer $dxL  Distance from left side of cell
-     * @param integer $dyT  Distance from top of cell
-     * @param integer $dxR  Distance from right of cell
-     * @param integer $dyB  Distance from bottom of cell
+     * @param Margin $margin  Margins from cell sides
      * @return string
      */
-    public function getData($objectId, $area, $dxL, $dyT, $dxR, $dyB)
+    public function getData($objectId, Range $area, Margin $margin)
     {
-        $type = static::TYPE;
-        $cObj = 0x0001; // Count of objects in file (set to 1)
-        $id = $objectId; // Object ID
+        $objCount = 0x01; // Count of objects in file (set to 1)
         $grbit = 0x0614; // Option flags
+        $data = pack("Vv3", $objCount, static::TYPE, $objectId, $grbit);
 
-        $cbMacro = 0x0000; // Length of FMLA structure
-        $Reserved1 = 0x0000; // Reserved
-        $Reserved2 = 0x0000; // Reserved
+        $cbMacro = 0x00; // Length of FMLA structure
+        $reserved = 0x00; // Reserved
 
         $icvBack = 0x09; // Background colour
         $icvFore = 0x09; // Foreground colour
@@ -39,46 +35,38 @@ class ObjPicture extends Obj
         $lns = 0xff; // Line style
         $lnw = 0x01; // Line weight
         $fAutoB = 0x00; // Automatic border
-        $frs = 0x0000; // Frame style
-        $cf = 0x0009; // Image format, 9 = bitmap
-        $reserved3 = 0x0000; // Reserved
-        $cbPictFmla = 0x0000; // Length of FMLA structure
-        $reserved4 = 0x0000; // Reserved
-        $grbit2 = 0x0001; // Option flags
+        $frs = 0x00; // Frame style
+        $imageFormat = 0x09; // Image format, 9 = bitmap
+        $cbPictFmla = 0x00; // Length of FMLA structure
+        $grbit2 = 0x01; // Option flags
 
-        $data = pack("V", $cObj);
-        $data .= pack("v", $type);
-        $data .= pack("v", $id);
-        $data .= pack("v", $grbit);
+        $data .= $this->packArea($area, $margin);
 
-        $data .= pack("v", $area->getColFrom());
-        $data .= pack("v", $dxL);
-        $data .= pack("v", $area->getRowFrom());
-        $data .= pack("v", $dyT);
-        $data .= pack("v", $area->getColTo());
-        $data .= pack("v", $dxR);
-        $data .= pack("v", $area->getRowTo());
-        $data .= pack("v", $dyB);
         $data .= pack("v", $cbMacro);
-        $data .= pack("V", $Reserved1);
-        $data .= pack("v", $Reserved2);
-        $data .= pack("C", $icvBack);
-        $data .= pack("C", $icvFore);
-        $data .= pack("C", $fls);
-        $data .= pack("C", $fAuto);
-        $data .= pack("C", $icv);
-        $data .= pack("C", $lns);
-        $data .= pack("C", $lnw);
-        $data .= pack("C", $fAutoB);
-        $data .= pack("v", $frs);
-        $data .= pack("V", $cf);
-        $data .= pack("v", $reserved3);
-        $data .= pack("v", $cbPictFmla);
-        $data .= pack("v", $reserved4);
-        $data .= pack("v", $grbit2);
+        $data .= pack("Vv", $reserved, $reserved);
+        $data .= pack("C2", $icvBack, $icvFore);
+        $data .= pack("C6", $fls, $fAuto, $icv, $lns, $lnw, $fAutoB);
+        $data .= pack("vV", $frs, $imageFormat);
+        $data .= pack("v4", $reserved, $cbPictFmla, $reserved, $grbit2);
 
         $data .= $this->getFtEndSubrecord();
 
         return $this->getFullRecord($data);
+    }
+
+    /**
+     * @param Range  $area
+     * @param Margin $margin
+     *
+     * @return string
+     */
+    protected function packArea(Range $area, Margin $margin)
+    {
+        $data = pack("v2", $area->getColFrom(), $margin->getLeft());
+        $data .= pack("v2", $area->getRowFrom(), $margin->getTop());
+        $data .= pack("v2", $area->getColTo(), $margin->getRight());
+        $data .= pack("v2", $area->getRowTo(), $margin->getBottom());
+
+        return $data;
     }
 }

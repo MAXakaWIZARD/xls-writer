@@ -1182,16 +1182,12 @@ class Worksheet extends BIFFwriter
         $x2 = $width / $colEndSize * 1024; // Distance to right side of object
         $y2 = $height / $rowEndSize * 256; // Distance to bottom of object
 
-        $area = new Range($rowStart, $colStart, $rowEnd, $colEnd, false);
         $this->appendRecord(
             'ObjPicture',
             array(
                 $this->getNewObjectId(),
-                $area,
-                $x1,
-                $y1,
-                $x2,
-                $y2
+                new Range($rowStart, $colStart, $rowEnd, $colEnd, false),
+                new Margin($x1, $x2, $y1, $y2)
             )
         );
     }
