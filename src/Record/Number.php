@@ -1,8 +1,6 @@
 <?php
 namespace Xls\Record;
 
-use Xls\BIFFwriter;
-
 class Number extends AbstractRecord
 {
     const NAME = 'NUMBER';

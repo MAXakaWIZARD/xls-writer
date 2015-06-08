@@ -2,8 +2,6 @@
 
 namespace Xls\Record;
 
-use Xls\BIFFwriter;
-
 class LeftMargin extends AbstractRecord
 {
     const NAME = 'LEFTMARGIN';

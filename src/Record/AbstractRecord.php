@@ -1,7 +1,6 @@
 <?php
 namespace Xls\Record;
 
-use Xls\BIFFwriter;
 use Xls\Format as XlsFormat;
 
 abstract class AbstractRecord
