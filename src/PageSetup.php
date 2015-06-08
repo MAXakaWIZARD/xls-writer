@@ -149,16 +149,20 @@ class PageSetup
      * @param integer $firstCol First column of the area to print
      * @param integer $lastRow  Last row of the area to print
      * @param integer $lastCol  Last column of the area to print
+     * @return PageSetup
      */
     public function setPrintArea($firstRow, $firstCol, $lastRow, $lastCol)
     {
         $this->printArea = new Range($firstRow, $firstCol, $lastRow, $lastCol);
+
+        return $this;
     }
 
     /**
      * Set the rows to repeat at the top of each printed page.
      * @param integer $firstRow First row to repeat
      * @param integer $lastRow  Last row to repeat. Optional.
+     * @return PageSetup
      */
     public function printRepeatRows($firstRow, $lastRow = null)
     {
@@ -168,12 +172,15 @@ class PageSetup
 
         $this->titleRowMin = $firstRow;
         $this->titleRowMax = $lastRow;
+
+        return $this;
     }
 
     /**
      * Set the columns to repeat at the left hand side of each printed page.
      * @param integer $firstCol First column to repeat
      * @param integer $lastCol  Last column to repeat. Optional.
+     * @return PageSetup
      */
     public function printRepeatColumns($firstCol, $lastCol = null)
     {
@@ -183,6 +190,8 @@ class PageSetup
 
         $this->titleColMin = $firstCol;
         $this->titleColMax = $lastCol;
+
+        return $this;
     }
 
     /**
@@ -222,6 +231,7 @@ class PageSetup
      * It turns off the "fit to page" option
      * @param integer $scale The optional scale factor. Defaults to 100
      * @throws \Exception
+     * @return PageSetup
      */
     public function setPrintScale($scale = 100)
     {
@@ -234,6 +244,8 @@ class PageSetup
         $this->fitPage = false;
 
         $this->printScale = floor($scale);
+
+        return $this;
     }
 
     /**
@@ -247,26 +259,35 @@ class PageSetup
     /**
      * Set the paper type
      * @param integer $size The type of paper size to use
+     * @return PageSetup
      */
     public function setPaper($size = self::PAPER_CUSTOM)
     {
         $this->paperSize = $size;
+
+        return $this;
     }
 
     /**
      * Set the page orientation as portrait.
+     * @return PageSetup
      */
     public function setPortrait()
     {
         $this->orientation = self::ORIENTATION_PORTRAIT;
+
+        return $this;
     }
 
     /**
      * Set the page orientation as landscape.
+     * @return PageSetup
      */
     public function setLandscape()
     {
         $this->orientation = self::ORIENTATION_LANDSCAPE;
+
+        return $this;
     }
 
     /**
@@ -314,35 +335,43 @@ class PageSetup
      * It doesn't seem to work with OpenOffice.
      * @param  integer $width  Maximun width of printed area in pages
      * @param  integer $height Maximun heigth of printed area in pages
-     * @see setPrintScale()
+     * @return PageSetup
      */
     public function fitToPages($width, $height)
     {
         $this->fitPage = true;
         $this->fitWidth = $width;
         $this->fitHeight = $height;
+
+        return $this;
     }
 
     /**
      * Set the page header caption and optional margin.
      * @param string $string The header text
      * @param float $margin optional head margin in inches.
+     * @return PageSetup
      */
     public function setHeader($string, $margin = 0.50)
     {
         $this->header = $this->truncateStringIfNeeded($string);
         $this->margin->setHead($margin);
+
+        return $this;
     }
 
     /**
      * Set the page footer caption and optional margin.
      * @param string $string The footer text
      * @param float $margin optional foot margin in inches.
+     * @return PageSetup
      */
     public function setFooter($string, $margin = 0.50)
     {
         $this->footer = $this->truncateStringIfNeeded($string);
         $this->margin->setFoot($margin);
+
+        return $this;
     }
 
     /**
@@ -363,87 +392,113 @@ class PageSetup
      * Center the page horinzontally.
      *
      * @param bool $enable the optional value for centering. Defaults to 1 (center).
+     * @return PageSetup
      */
     public function centerHorizontally($enable = true)
     {
         $this->hcenter = $enable;
+
+        return $this;
     }
 
     /**
      * Center the page vertically.
      *
      * @param bool $enable the optional value for centering. Defaults to 1 (center).
+     * @return PageSetup
      */
     public function centerVertically($enable = true)
     {
         $this->vcenter = $enable;
+
+        return $this;
     }
 
     /**
      * Set the option to print the row and column headers on the printed page.
      * @param bool $print Whether to print the headers or not. Defaults to 1 (print).
+     * @return PageSetup
      */
     public function printRowColHeaders($print = true)
     {
         $this->printRowColHeaders = $print;
+
+        return $this;
     }
 
     /**
      * Store the horizontal page breaks on a worksheet (for printing).
      * The breaks represent the row after which the break is inserted.
      * @param array $breaks Array containing the horizontal page breaks
+     * @return PageSetup
      */
     public function setHPagebreaks($breaks)
     {
         foreach ($breaks as $break) {
             array_push($this->hbreaks, $break);
         }
+
+        return $this;
     }
 
     /**
      * Store the vertical page breaks on a worksheet (for printing).
      * The breaks represent the column after which the break is inserted.
      * @param array $breaks Array containing the vertical page breaks
+     * @return PageSetup
      */
     public function setVPagebreaks($breaks)
     {
         foreach ($breaks as $break) {
             array_push($this->vbreaks, $break);
         }
+
+        return $this;
     }
 
     /**
      * Set the option to hide gridlines on the printed page.
      *
      * @param bool $enable
+     * @return PageSetup
      */
     public function printGridlines($enable = true)
     {
         $this->printGridLines = $enable;
+
+        return $this;
     }
 
     /**
      * Set the option to hide gridlines on the worksheet (as seen on the screen).
      * @param bool $visible
+     * @return PageSetup
      */
     public function showGridlines($visible = true)
     {
         $this->screenGridLines = $visible;
+
+        return $this;
     }
 
     /**
      * Set the worksheet zoom factor.
-     * @param integer $scale The zoom factor
+     *
+     * @param integer $percents The zoom factor
+     *
      * @throws \Exception
+     * @return PageSetup
      */
-    public function setZoom($scale = 100)
+    public function setZoom($percents = 100)
     {
         // Confine the scale to Excel's range
-        if ($scale < 10 || $scale > 400) {
-            throw new \Exception("Zoom factor $scale outside range: 10 <= zoom <= 400");
+        if ($percents < 10 || $percents > 400) {
+            throw new \Exception("Zoom factor $percents outside range: 10 <= zoom <= 400");
         }
 
-        $this->zoom = floor($scale);
+        $this->zoom = floor($percents);
+
+        return $this;
     }
 
     /**
