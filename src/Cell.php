@@ -6,18 +6,42 @@ class Cell
 {
     protected $row;
     protected $col;
+    protected $rowRel;
+    protected $colRel;
 
-    public function __construct($row, $col)
+    /**
+     * @param int $row
+     * @param int $col
+     * @param bool $rowRel
+     * @param bool $colRel
+     *
+     * @throws \Exception
+     */
+    public function __construct($row, $col, $rowRel = true, $colRel = true)
     {
         $this->validateRowIndex($row);
         $this->validateColIndex($col);
 
         $this->row = $row;
         $this->col = $col;
+        $this->rowRel = $rowRel;
+        $this->colRel = $colRel;
     }
 
     /**
-     * @return mixed
+     * @param $address
+     *
+     * @return Cell
+     */
+    public static function createFromAddress($address)
+    {
+        list($row, $col, $rowRel, $colRel) = self::addressToRowCol($address);
+
+        return new self($row, $col, $rowRel, $colRel);
+    }
+
+    /**
+     * @return int
      */
     public function getRow()
     {
@@ -25,7 +49,7 @@ class Cell
     }
 
     /**
-     * @return mixed
+     * @return int
      */
     public function getCol()
     {
@@ -36,20 +60,13 @@ class Cell
      * Utility function for writing formulas
      * Converts a cell's coordinates to the A1 format.
      *
-     * @param integer $row Row for the cell to convert (0-indexed).
-     * @param integer $col Column for the cell to convert (0-indexed).
-     *
      * @throws \Exception
      * @return string The cell identifier in A1 format
      */
-    public static function getAddress($row, $col)
+    public function getAddress()
     {
-        if ($col >= Biff8::MAX_COLS) {
-            throw new \Exception("Maximum column value exceeded: $col");
-        }
-
-        $int = (int)($col / 26);
-        $frac = $col % 26;
+        $int = (int)($this->col / 26);
+        $frac = $this->col % 26;
         $chr1 = '';
 
         if ($int > 0) {
@@ -57,9 +74,8 @@ class Cell
         }
 
         $chr2 = chr(ord('A') + $frac);
-        $row++;
 
-        return $chr1 . $chr2 . $row;
+        return $chr1 . $chr2 . ($this->row + 1);
     }
 
     /**
@@ -74,9 +90,9 @@ class Cell
     {
         preg_match('/(\$)?([A-Z]+)(\$)?(\d+)/', $address, $match);
         // return absolute column if there is a $ in the ref
-        $colRel = empty($match[1]) ? 1 : 0;
+        $colRel = empty($match[1]);
         $colRef = $match[2];
-        $rowRel = empty($match[3]) ? 1 : 0;
+        $rowRel = empty($match[3]);
         $row = $match[4];
 
         // Convert base26 column string to a number.
@@ -117,5 +133,21 @@ class Cell
         if ($col >= Biff8::MAX_COLS) {
             throw new \Exception('Col index is beyond max col number');
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRowRelative()
+    {
+        return $this->rowRel;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isColRelative()
+    {
+        return $this->colRel;
     }
 }

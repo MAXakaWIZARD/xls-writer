@@ -147,7 +147,7 @@ class Workbook extends BIFFwriter
      * @param string $filePath File path to save
      *
      * @throws \Exception
-     * @return boolean true on success.
+     * @return boolean
      */
     public function save($filePath)
     {

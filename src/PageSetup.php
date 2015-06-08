@@ -63,7 +63,7 @@ class PageSetup
      * Whether to fit to page when printing or not.
      * @var bool
      */
-    protected $fitPage = 0;
+    protected $fitPage = false;
 
     /**
      * Number of pages to fit wide
@@ -91,13 +91,13 @@ class PageSetup
 
     /**
      * The horizontal centering value for the page
-     * @var integer
+     * @var bool
      */
     protected $hcenter = false;
 
     /**
      * The vertical centering value for the page
-     * @var integer
+     * @var bool
      */
     protected $vcenter = false;
 
@@ -123,8 +123,7 @@ class PageSetup
     public function __construct()
     {
         $this->margin = new Margin(0.75, 0.75, 1.00, 1.00);
-        $this->margin->setHead(0.5);
-        $this->margin->setFoot(0.5);
+        $this->margin->setHead(0.5)->setFoot(0.5);
     }
 
     /**

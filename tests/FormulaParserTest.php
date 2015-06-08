@@ -146,14 +146,14 @@ class FormulaParserTest extends \PHPUnit_Framework_TestCase
                 array(
                     'formula' => 'A100500+B100500',
                     'correct' => false,
-                    'error' => "Row in: A100500 greater than " . (Biff8::MAX_ROWS - 1)
+                    'error' => 'Row index is beyond max row number'
                 )
             ),
             array(
                 array(
                     'formula' => 'ZZ1+A1',
                     'correct' => false,
-                    'error' => "Column in: ZZ1 greater than " . (Biff8::MAX_COLS - 1)
+                    'error' => 'Col index is beyond max col number'
                 )
             ),
             array(

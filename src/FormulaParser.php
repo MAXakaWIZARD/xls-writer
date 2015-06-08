@@ -35,7 +35,7 @@ class FormulaParser
 
     /**
      * The parse tree to be generated
-     * @var string
+     * @var array
      */
     protected $parseTree = array();
 
@@ -55,7 +55,7 @@ class FormulaParser
      * Convert a token to the proper ptg value.
      *
      * @param mixed $token The token to convert.
-     * @return mixed the converted token on success.
+     * @return string the converted token
      * @throws \Exception
      */
     protected function convert($token)
@@ -87,7 +87,7 @@ class FormulaParser
      * Convert a number token to ptgInt or ptgNum
      *
      * @param mixed $num an integer or double for conversion to its ptg value
-     * @return mixed
+     * @return string
      */
     protected function convertNumber($num)
     {
@@ -105,7 +105,7 @@ class FormulaParser
      *
      * @param string $string A string for conversion to its ptg value.
      * @throws \Exception
-     * @return mixed the converted token on success.
+     * @return string the converted token
      */
     protected function convertString($string)
     {
@@ -147,7 +147,7 @@ class FormulaParser
      * Convert an Excel range such as A1:D4 to a ptgRefV.
      *
      * @param string $range An Excel range in the A1:A2 or A1..A2 format.
-     * @return mixed
+     * @return string
      */
     protected function convertRange2d($range)
     {
@@ -168,7 +168,7 @@ class FormulaParser
      * a ptgArea3d.
      *
      * @param string $token An Excel range in the Sheet1!A1:A2 format.
-     * @return mixed The packed ptgArea3d token on success
+     * @return string The packed ptgArea3d token
      */
     protected function convertRange3d($token)
     {
@@ -210,7 +210,7 @@ class FormulaParser
      * ptgRef3d.
      *
      * @param string $cell An Excel cell reference
-     * @return mixed The packed ptgRef3d token on success
+     * @return string The packed ptgRef3d token
      */
     protected function convertRef3d($cell)
     {
@@ -229,9 +229,9 @@ class FormulaParser
     }
 
     /**
-     * @param $str
+     * @param string $str
      *
-     * @return mixed
+     * @return string
      */
     protected function removeTrailingQuotes($str)
     {
@@ -288,7 +288,7 @@ class FormulaParser
      * @param string $extRef The name of the external reference
      *
      * @throws \Exception
-     * @return mixed The reference index in packed() format on success
+     * @return string The reference index in packed() format
      */
     protected function getRefIndex($extRef)
     {
@@ -327,7 +327,7 @@ class FormulaParser
      * sheet names is updated by the addworksheet() method of the
      * Workbook class.
      *
-     * @param $sheetName
+     * @param string $sheetName
      *
      * @return integer The sheet index, -1 if the sheet was not found
      */
@@ -357,29 +357,23 @@ class FormulaParser
     /**
      * pack() row and column into the required 3 or 4 byte format.
      *
-     * @param string $cell The Excel cell reference to be packed
+     * @param string $cellAddress The Excel cell reference to be packed
+     *
      * @throws \Exception
      * @return array Array containing the row and column in packed() format
      */
-    protected function cellToPackedRowcol($cell)
+    protected function cellToPackedRowcol($cellAddress)
     {
-        $cell = strtoupper($cell);
-        list($row, $col, $rowRel, $colRel) = Cell::addressToRowCol($cell);
-
-        if ($row >= Biff8::MAX_ROWS) {
-            throw new \Exception("Row in: $cell greater than " . (Biff8::MAX_ROWS - 1));
-        }
-
-        if ($col >= Biff8::MAX_COLS) {
-            throw new \Exception("Column in: $cell greater than " . (Biff8::MAX_COLS - 1));
-        }
+        $cellAddress = strtoupper($cellAddress);
+        $cell = Cell::createFromAddress($cellAddress);
 
         // Set the high bits to indicate if row or col are relative.
-        $col |= $colRel << 14;
-        $col |= $rowRel << 15;
+        $col = $cell->getCol();
+        $col |= (int)$cell->isColRelative() << 14;
+        $col |= (int)$cell->isRowRelative() << 15;
         $col = pack('v', $col);
 
-        $row = pack('v', $row);
+        $row = pack('v', $cell->getRow());
 
         return array($row, $col);
     }
@@ -445,7 +439,7 @@ class FormulaParser
      * Checks if it's a valid token.
      *
      * @param mixed $token The token to check.
-     * @return mixed       The checked token or false on failure
+     * @return string The checked token
      */
     protected function match($token)
     {
@@ -528,7 +522,7 @@ class FormulaParser
      * It parses a condition. It assumes the following rule:
      * Cond -> Expr [(">" | "<") Expr]
      *
-     * @return mixed The parsed ptg'd tree on success
+     * @return array The parsed ptg'd tree
      */
     protected function condition()
     {
@@ -549,7 +543,7 @@ class FormulaParser
      *      -> "string"
      *      -> "-" Term
      *
-     * @return mixed The parsed ptg'd tree on success
+     * @return array The parsed ptg'd tree
      */
     protected function expression()
     {
@@ -593,7 +587,7 @@ class FormulaParser
      * It parses a term. It assumes the following rule:
      * Term -> Fact [("*" | "/") Fact]
      *
-     * @return mixed The parsed ptg'd tree on success
+     * @return array The parsed ptg'd tree
      */
     protected function term()
     {
@@ -616,7 +610,7 @@ class FormulaParser
      *       | Number
      *       | Function
      * @throws \Exception
-     * @return mixed The parsed ptg'd tree on success
+     * @return array The parsed ptg'd tree
      */
     protected function fact()
     {
@@ -665,7 +659,7 @@ class FormulaParser
      * It parses a function call. It assumes the following rule:
      * Func -> ( Expr [,Expr]* )
      * @throws \Exception
-     * @return mixed The parsed ptg'd tree on success
+     * @return string|array The parsed ptg'd tree
      */
     protected function func()
     {

@@ -45,7 +45,7 @@ class PpsRoot extends PPS
      *
      * @param string $filename The name of the file where to save the OLE container
      * @throws \Exception
-     * @return boolean true on success
+     * @return boolean
      */
     public function save($filename)
     {

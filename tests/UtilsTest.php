@@ -11,15 +11,6 @@ use Xls\Token;
 class UtilsTest extends TestAbstract
 {
     /**
-     *
-     */
-    public function testRowColToCellInvalid()
-    {
-        $this->setExpectedException('\Exception', 'Maximum column value exceeded: 256');
-        Cell::getAddress(0, 256);
-    }
-
-    /**
      * @dataProvider providerRowColToCell
      * @param $expected
      * @param $row
@@ -29,7 +20,8 @@ class UtilsTest extends TestAbstract
      */
     public function testRowColToCell($expected, $row, $col)
     {
-        $this->assertSame($expected, Cell::getAddress($row, $col));
+        $cell = new Cell($row, $col);
+        $this->assertSame($expected, $cell->getAddress());
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace Xls\Record;
 
-use Xls\BIFFwriter;
 use Xls\Worksheet;
 
 class PageSetup extends AbstractRecord
