@@ -31,11 +31,8 @@ class OLE
     public static function localDate2OLE($date = null)
     {
         if (!isset($date)) {
-            return "\x00\x00\x00\x00\x00\x00\x00\x00";
+            return str_repeat("\x00", 8);
         }
-
-        // factor used for separating numbers into 4 bytes parts
-        $factor = pow(2, 32);
 
         // days from 1-1-1601 until the beggining of UNIX era
         $days = 134774;
@@ -49,28 +46,16 @@ class OLE
                 date("d", $date),
                 date("Y", $date)
             );
-        // multiply just to make MS happy
         $bigDate *= 10000000;
 
-        $highPart = floor($bigDate / $factor);
+        // factor used for separating numbers into 4 bytes parts
+        $factor = pow(2, 32);
+
+        $div = $bigDate / $factor;
+        $highPart = floor($div);
         // lower 4 bytes
-        $lowPart = floor((($bigDate / $factor) - $highPart) * $factor);
+        $lowPart = floor(($div - $highPart) * $factor);
 
-        // Make HEX string
-        $res = '';
-
-        for ($i = 0; $i < 4; $i++) {
-            $hex = $lowPart % 0x100;
-            $res .= pack('c', $hex);
-            $lowPart /= 0x100;
-        }
-
-        for ($i = 0; $i < 4; $i++) {
-            $hex = $highPart % 0x100;
-            $res .= pack('c', $hex);
-            $highPart /= 0x100;
-        }
-
-        return $res;
+        return pack('V2', $lowPart, $highPart);
     }
 }
