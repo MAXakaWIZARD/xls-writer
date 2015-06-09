@@ -309,4 +309,22 @@ class GeneralTest extends TestAbstract
 
         $this->assertTestFileEqualsTo('outline_off');
     }
+
+    public function testMaxRowCol()
+    {
+        return;
+        $sheet = $this->workbook->addWorksheet();
+
+        $headers = array('ID');
+        $sheet->writeRow(0, 0, $headers);
+
+        for ($i = 1; $i < 65536; $i++) {
+            $sheet->write($i, 0, $i);
+        }
+
+        $this->workbook->save($this->testFilePath);
+        exit;
+
+        $this->assertTestFileEqualsTo('max_row_col');
+    }
 }

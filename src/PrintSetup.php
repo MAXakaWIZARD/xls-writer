@@ -167,7 +167,15 @@ class PrintSetup
 
         $this->printRepeat
             ->setRowFrom($firstRow)
-            ->setRowTo($lastRow);
+            ->setRowTo($lastRow)
+        ;
+
+        if (is_null($this->printRepeat->getColFrom())) {
+            $this->printRepeat
+                ->setColFrom(0)
+                ->setColTo(Biff8::MAX_COL_IDX)
+            ;
+        }
 
         return $this;
     }
@@ -188,7 +196,15 @@ class PrintSetup
 
         $this->printRepeat
             ->setColFrom($firstCol)
-            ->setColTo($lastCol);
+            ->setColTo($lastCol)
+        ;
+
+        if (is_null($this->printRepeat->getRowFrom())) {
+            $this->printRepeat
+                ->setRowFrom(0)
+                ->setRowTo(Biff8::MAX_ROW_IDX)
+            ;
+        }
 
         return $this;
     }

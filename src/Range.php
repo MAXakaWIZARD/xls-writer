@@ -168,4 +168,12 @@ class Range
 
         return $this;
     }
+
+    /**
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return is_null($this->getRowFrom()) && is_null($this->getColFrom());
+    }
 }

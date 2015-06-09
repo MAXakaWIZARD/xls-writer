@@ -49,7 +49,7 @@ class Workbook extends BIFFwriter
 
     /**
      * The default XF format.
-     * @var object Format
+     * @var Format
      */
     protected $tmpFormat;
 
@@ -79,7 +79,7 @@ class Workbook extends BIFFwriter
 
     /**
      * The default format for URLs.
-     * @var object Format
+     * @var Format
      */
     protected $urlFormat;
 
@@ -542,17 +542,17 @@ class Workbook extends BIFFwriter
         // tmpFormat is added by the constructor. We use this to write the default XF's
         // The default font index is 0
         for ($i = 0; $i <= 14; $i++) {
-            $xf = $this->tmpFormat->getXf('style');
-            $this->append($xf);
+            $xfRecord = $this->tmpFormat->getXf('style');
+            $this->append($xfRecord);
         }
 
-        $xf = $this->tmpFormat->getXf('cell');
-        $this->append($xf);
+        $xfRecord = $this->tmpFormat->getXf('cell');
+        $this->append($xfRecord);
 
         // User defined XFs
         foreach ($this->formats as $format) {
-            $xf = $format->getXf('cell');
-            $this->append($xf);
+            $xfRecord = $format->getXf('cell');
+            $this->append($xfRecord);
         }
     }
 
@@ -625,45 +625,47 @@ class Workbook extends BIFFwriter
      */
     protected function storePrintTitleName(Worksheet $sheet)
     {
-        $printSetup = $sheet->getPrintSetup();
-        $printRepeat = $printSetup->getPrintRepeat();
+        $printRepeat = $sheet->getPrintSetup()->getPrintRepeat();
+        if ($printRepeat->isEmpty()) {
+            return;
+        }
+
+        $this->appendRecord('DefinedName', array(
+            Record\DefinedName::BUILTIN_PRINT_TITLES,
+            $sheet->getIndex() + 1,
+            $this->getPrintTitleData($sheet)
+        ));
+    }
+
+    /**
+     * @param Worksheet $sheet
+     *
+     * @return string
+     */
+    protected function getPrintTitleData(Worksheet $sheet)
+    {
+        $printRepeat = $sheet->getPrintSetup()->getPrintRepeat();
 
         $rowmin = $printRepeat->getRowFrom();
         $rowmax = $printRepeat->getRowTo();
         $colmin = $printRepeat->getColFrom();
         $colmax = $printRepeat->getColTo();
 
-        if (!isset($rowmin) && !isset($colmin)) {
-            return;
-        }
-
         $rangeHeader = $this->getRangeCommonHeader($sheet);
 
-        if (isset($rowmin) && isset($colmin)) {
+        if ($rowmax !== Biff8::MAX_ROW_IDX && $colmax !== Biff8::MAX_COL_IDX) {
             $data = pack('Cv', 0x29, 0x17); // tMemFunc
             $data .= $rangeHeader;
-            $data .= pack('vvvv', 0, 65535, $colmin, $colmax); // tArea3d
+            $data .= pack('v4', 0, Biff8::MAX_ROW_IDX, $colmin, $colmax); // tArea3d
             $data .= $rangeHeader;
-            $data .= pack('vvvv', $rowmin, $rowmax, 0, Biff8::MAX_COLS - 1); // tArea3d
+            $data .= pack('v4', $rowmin, $rowmax, 0, Biff8::MAX_COL_IDX); // tArea3d
             $data .= pack('C', 0x10); // tList
         } else {
-            if (isset($colmin)) {
-                $rowmin = 0;
-                $rowmax = 65535;
-            } else {
-                $colmin = 0;
-                $colmax = Biff8::MAX_COLS - 1;
-            }
-
             $data = $rangeHeader;
-            $data .= pack('vvvv', $rowmin, $rowmax, $colmin, $colmax);
+            $data .= pack('v4', $rowmin, $rowmax, $colmin, $colmax);
         }
 
-        $this->appendRecord('DefinedName', array(
-            Record\DefinedName::BUILTIN_PRINT_TITLES,
-            $sheet->getIndex() + 1,
-            $data
-        ));
+        return $data;
     }
 
     /**

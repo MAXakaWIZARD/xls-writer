@@ -3,7 +3,6 @@ namespace Test;
 
 use Xls\Cell;
 use Xls\Utils;
-use Xls\Token;
 
 /**
  *

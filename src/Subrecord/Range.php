@@ -22,7 +22,7 @@ class Range
 
         foreach ($ranges as $range) {
             $data .= pack(
-                'vvvv',
+                'v4',
                 $range->getRowFrom(),
                 $range->getRowTo(),
                 $range->getColFrom(),
