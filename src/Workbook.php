@@ -147,7 +147,6 @@ class Workbook extends BIFFwriter
      * @param string $filePath File path to save
      *
      * @throws \Exception
-     * @return boolean
      */
     public function save($filePath)
     {
@@ -451,7 +450,7 @@ class Workbook extends BIFFwriter
 
     /**
      * Store the workbook in an OLE container
-     * @param $filePath
+     * @param string $filePath
      */
     protected function saveOleFile($filePath)
     {

@@ -24,7 +24,7 @@ abstract class AbstractRecord
      */
     protected function xf($format)
     {
-        return (is_object($format)) ? $format->getXfIndex(): 0x0F;
+        return (is_object($format)) ? $format->getXfIndex() : 0x0F;
     }
 
     /**

@@ -117,7 +117,7 @@ class Xf extends AbstractRecord
     }
 
     /**
-     * @param $style
+     * @param string $style
      * @param XlsFormat $format
      *
      * @return int

@@ -296,8 +296,8 @@ class FormulaParser
 
     /**
      * Add reference and return its index
-     * @param $sheet1
-     * @param $sheet2
+     * @param int $sheet1
+     * @param int $sheet2
      *
      * @return int
      */
@@ -433,7 +433,7 @@ class FormulaParser
     /**
      * Checks if it's a valid token.
      *
-     * @param mixed $token The token to check.
+     * @param string $token The token to check.
      * @return string The checked token
      */
     protected function match($token)
