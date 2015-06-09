@@ -98,20 +98,12 @@ class Range
      */
     public function expand(Cell $cell)
     {
-        if ($cell->getRow() < $this->rowFrom) {
-            $this->rowFrom = $cell->getRow();
-        }
-
         if ($cell->getRow() > $this->rowTo) {
-            $this->rowTo = $cell->getRow();
-        }
-
-        if ($cell->getCol() < $this->colFrom) {
-            $this->colFrom = $cell->getCol();
+            $this->setRowTo($cell->getRow());
         }
 
         if ($cell->getCol() > $this->colTo) {
-            $this->colTo = $cell->getCol();
+            $this->setColTo($cell->getCol());
         }
 
         return $this;

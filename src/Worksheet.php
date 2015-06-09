@@ -181,16 +181,8 @@ class Worksheet extends BIFFwriter
         $this->urlFormat = $urlFormat;
         $this->formulaParser = $formulaParser;
 
-        $this->dimensions = new Range(
-            Biff8::MAX_ROWS + 1,
-            Biff8::MAX_COLS + 1,
-            0,
-            0,
-            false
-        );
-
+        $this->dimensions = new Range();
         $this->selection = new Range();
-
         $this->printSetup = new PrintSetup();
     }
 

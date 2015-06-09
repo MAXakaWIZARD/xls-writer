@@ -118,7 +118,7 @@ class Cell
      */
     protected function validateRowIndex($row)
     {
-        if ($row >= Biff8::MAX_ROWS) {
+        if ($row > Biff8::MAX_ROW_IDX) {
             throw new \Exception('Row index is beyond max row number');
         }
     }
@@ -130,7 +130,7 @@ class Cell
      */
     protected function validateColIndex($col)
     {
-        if ($col >= Biff8::MAX_COLS) {
+        if ($col > Biff8::MAX_COL_IDX) {
             throw new \Exception('Col index is beyond max col number');
         }
     }
