@@ -11,8 +11,6 @@ class Worksheet extends BIFFwriter
     const STATE_VERYHIDDEN = 0x02;
 
     const TYPE_SHEET = 0x00;
-    const TYPE_CHART = 0x02;
-    const TYPE_VB_MODULE = 0x06;
 
     /**
      * Name of the Worksheet
@@ -124,20 +122,6 @@ class Worksheet extends BIFFwriter
      * @var Workbook
      */
     protected $workbook;
-
-    /**
-     * Number of merged cell ranges in actual record
-     *
-     * @var int $mergedCellsCounter
-     */
-    protected $mergedCellsCounter = 0;
-
-    /**
-     * Number of actual mergedcells record
-     *
-     * @var int $mergedCellsRecord
-     */
-    protected $mergedCellsRecord = 0;
 
     /**
      * Merged cell ranges
@@ -941,8 +925,8 @@ class Worksheet extends BIFFwriter
      */
     protected function storeMergedCells()
     {
-        foreach ($this->mergedRanges as $ranges) {
-            $this->appendRecord('MergeCells', array($ranges));
+        if (count($this->mergedRanges) > 0) {
+            $this->appendRecord('MergeCells', array($this->mergedRanges));
         }
     }
 
@@ -985,21 +969,11 @@ class Worksheet extends BIFFwriter
      * @param integer $firstCol First column of the area to merge
      * @param integer $lastRow  Last row of the area to merge
      * @param integer $lastCol  Last column of the area to merge
-     * @throws \Exception
      */
     public function mergeCells($firstRow, $firstCol, $lastRow, $lastCol)
     {
-        $maxRecordRanges = floor((Biff8::LIMIT - 6) / 8);
-        if ($this->mergedCellsCounter >= $maxRecordRanges) {
-            $this->mergedCellsRecord++;
-            $this->mergedCellsCounter = 0;
-        }
-
-        // don't check rowmin, rowmax, etc... because we don't know when this
-        // is going to be called
         $range = new Range($firstRow, $firstCol, $lastRow, $lastCol);
-        $this->mergedRanges[$this->mergedCellsRecord][] = $range;
-        $this->mergedCellsCounter++;
+        $this->mergedRanges[] = $range;
     }
 
     /**
