@@ -800,23 +800,33 @@ class FormulaParser
             return $this->convert($tree);
         }
 
-        $polish = $this->getTreePartPolish($tree['left']);
-        $polish .= $this->getTreePartPolish($tree['right']);
-
         // if it's a function convert it here (so we can set it's arguments)
         if ($this->isFunction($tree['value'])) {
-            // left subtree for a function is always an array.
-            if ($tree['left'] != '') {
-                $leftTree = $this->toReversePolish($tree['left']);
-            } else {
-                $leftTree = '';
-            }
-
-            // add it's left subtree and return.
-            return $leftTree . $this->convertFunction($tree['value'], $tree['right']);
+            return $this->getFunctionPolish($tree);
         }
 
+        $polish = $this->getTreePartPolish($tree['left']);
+        $polish .= $this->getTreePartPolish($tree['right']);
         $polish .= $this->convert($tree['value']);
+
+        return $polish;
+    }
+
+    /**
+     * @param $tree
+     *
+     * @return string
+     */
+    protected function getFunctionPolish($tree)
+    {
+        $polish = '';
+
+        // left subtree for a function is always an array.
+        if ($tree['left'] != '') {
+            $polish .= $this->toReversePolish($tree['left']);
+        }
+
+        $polish .= $this->convertFunction($tree['value'], $tree['right']);
 
         return $polish;
     }
