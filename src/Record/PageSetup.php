@@ -16,17 +16,17 @@ class PageSetup extends AbstractRecord
      */
     public function getData($sheet)
     {
-        $pageSetup = $sheet->getPrintSetup();
+        $printSetup = $sheet->getPrintSetup();
 
-        $iPaperSize = $pageSetup->getPaperSize(); // Paper size
-        $iScale = $pageSetup->getPrintScale(); // Print scaling factor
+        $iPaperSize = $printSetup->getPaperSize(); // Paper size
+        $iScale = $printSetup->getPrintScale(); // Print scaling factor
         $iPageStart = 0x01; // Starting page number
-        $iFitWidth = $pageSetup->getFitWidth(); // Fit to number of pages wide
-        $iFitHeight = $pageSetup->getFitHeight(); // Fit to number of pages high
+        $iFitWidth = $printSetup->getFitWidth(); // Fit to number of pages wide
+        $iFitHeight = $printSetup->getFitHeight(); // Fit to number of pages high
         $iRes = 0x0258; // Print resolution
         $iVRes = 0x0258; // Vertical print resolution
 
-        $margin = $pageSetup->getMargin();
+        $margin = $printSetup->getMargin();
         $numHdr = $margin->getHead(); // Header Margin
         $numFtr = $margin->getFoot(); // Footer Margin
 

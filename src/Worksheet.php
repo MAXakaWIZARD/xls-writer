@@ -85,27 +85,27 @@ class Worksheet extends BIFFwriter
 
     /**
      * Whether to use outline.
-     * @var integer
+     * @var bool
      */
-    protected $outlineOn = 1;
+    protected $outlineOn = true;
 
     /**
      * Auto outline styles.
      * @var bool
      */
-    protected $outlineStyle = 0;
+    protected $outlineStyle = false;
 
     /**
      * Whether to have outline summary below.
      * @var bool
      */
-    protected $outlineBelow = 1;
+    protected $outlineBelow = true;
 
     /**
      * Whether to have outline summary at the right.
      * @var bool
      */
-    protected $outlineRight = 1;
+    protected $outlineRight = true;
 
     /**
      * Outline row level.
@@ -367,6 +367,25 @@ class Worksheet extends BIFFwriter
     }
 
     /**
+     * This method is used to set the height and format for a row.
+     * @param integer $row    The row to set
+     * @param integer $height Height we are giving to the row.
+     *                        Use null to set XF without setting height
+     * @param mixed $format XF format we are giving to the row
+     * @param bool $hidden The optional hidden attribute
+     * @param integer $level  The optional outline level for row, in range [0,7]
+     */
+    public function setRowHeight($row, $height, $format = null, $hidden = false, $level = 0)
+    {
+        $this->rowSizes[$row] = $height;
+
+        $level = max(0, min($level, 7)); // level should be between 0 and 7
+        $this->outlineRowLevel = max($level, $this->outlineRowLevel);
+
+        $this->appendRecord('Row', array($row, $height, $format, $hidden, $level));
+    }
+
+    /**
      * Set which cell or cells are selected in a worksheet
      *
      * @param integer $firstRow    first row in the selected quadrant
@@ -401,11 +420,7 @@ class Worksheet extends BIFFwriter
             $panes[3] = $panes[1];
         }
 
-        if (!isset($panes[4])) {
-            $panes[4] = null;
-        }
-
-        $this->panes = $panes;
+        $this->setPanes($panes);
     }
 
     /**
@@ -426,7 +441,6 @@ class Worksheet extends BIFFwriter
         // The default row height is 12.75
         // The default column width is 8.43
         // The following slope and intersection values were interpolated.
-        //
         $panes[0] = 20 * $panes[0] + 255;
         $panes[1] = 113.879 * $panes[1] + 390;
 
@@ -438,9 +452,16 @@ class Worksheet extends BIFFwriter
             $panes[3] = 0;
         }
 
+        $this->setPanes($panes);
+    }
+
+    protected function setPanes($panes)
+    {
         if (!isset($panes[4])) {
-            $panes[4] = null;
+            $panes[4] = $this->calculateActivePane($panes[0], $panes[1]);
         }
+
+        $this->activePane = $panes[4];
 
         $this->panes = $panes;
     }
@@ -455,12 +476,6 @@ class Worksheet extends BIFFwriter
     {
         if (empty($this->panes)) {
             return;
-        }
-
-        $this->activePane = $this->panes[4];
-        if (!isset($this->activePane)) {
-            $this->activePane = $this->calculateActivePane($this->panes[0], $this->panes[1]);
-            $this->panes[4] = $this->activePane;
         }
 
         $this->appendRecord('Pane', $this->panes);
@@ -602,7 +617,7 @@ class Worksheet extends BIFFwriter
         $symbolsRight = true,
         $autoStyle = false
     ) {
-        $this->outlineOn = ($visible) ? 1 : 0;
+        $this->outlineOn = $visible;
         $this->outlineBelow = $symbolsBelow;
         $this->outlineRight = $symbolsRight;
         $this->outlineStyle = $autoStyle;
@@ -663,7 +678,7 @@ class Worksheet extends BIFFwriter
      * @param string $str    The string to write
      * @param mixed $format The XF format for the cell
      */
-    public function writeStringSST($row, $col, $str, $format = null)
+    protected function writeStringSST($row, $col, $str, $format = null)
     {
         $strIdx = $this->sst->add($str);
 
@@ -881,25 +896,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * This method is used to set the height and format for a row.
-     * @param integer $row    The row to set
-     * @param integer $height Height we are giving to the row.
-     *                        Use null to set XF without setting height
-     * @param mixed $format XF format we are giving to the row
-     * @param bool $hidden The optional hidden attribute
-     * @param integer $level  The optional outline level for row, in range [0,7]
-     */
-    public function setRowHeight($row, $height, $format = null, $hidden = false, $level = 0)
-    {
-        $this->rowSizes[$row] = $height;
-
-        $level = max(0, min($level, 7)); // level should be between 0 and 7
-        $this->outlineRowLevel = max($level, $this->outlineRowLevel);
-
-        $this->appendRecord('Row', array($row, $height, $format, $hidden, $level));
-    }
-
-    /**
      * Writes Excel DIMENSIONS to define the area in which there is data.
      * @throw \Exception
      */
@@ -935,8 +931,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeMargins()
     {
-        $pageSetup = $this->getPrintSetup();
-        $margin = $pageSetup->getMargin();
+        $margin = $this->getPrintSetup()->getMargin();
 
         $this->appendRecord('LeftMargin', array($margin->getLeft()));
         $this->appendRecord('RightMargin', array($margin->getRight()));
@@ -946,10 +941,10 @@ class Worksheet extends BIFFwriter
 
     protected function storeHeaderAndFooter()
     {
-        $pageSetup = $this->getPrintSetup();
+        $printSetup = $this->getPrintSetup();
 
-        $this->appendRecord('Header', array($pageSetup->getHeader()));
-        $this->appendRecord('Footer', array($pageSetup->getFooter()));
+        $this->appendRecord('Header', array($printSetup->getHeader()));
+        $this->appendRecord('Footer', array($printSetup->getFooter()));
     }
 
     /**
@@ -957,10 +952,10 @@ class Worksheet extends BIFFwriter
      */
     protected function storeCentering()
     {
-        $pageSetup = $this->getPrintSetup();
+        $printSetup = $this->getPrintSetup();
 
-        $this->appendRecord('Hcenter', array((int)$pageSetup->isHcenteringOn()));
-        $this->appendRecord('Vcenter', array((int)$pageSetup->isVcenteringOn()));
+        $this->appendRecord('Hcenter', array((int)$printSetup->isHcenteringOn()));
+        $this->appendRecord('Vcenter', array((int)$printSetup->isVcenteringOn()));
     }
 
     /**
@@ -1001,14 +996,14 @@ class Worksheet extends BIFFwriter
      */
     protected function storePageBreaks()
     {
-        $pageSetup = $this->getPrintSetup();
+        $printSetup = $this->getPrintSetup();
 
-        $hbreaks = $pageSetup->getHbreaks();
+        $hbreaks = $printSetup->getHbreaks();
         if (!empty($hbreaks)) {
             $this->appendRecord('HorizontalPagebreaks', array($hbreaks));
         }
 
-        $vbreaks = $pageSetup->getVbreaks();
+        $vbreaks = $printSetup->getVbreaks();
         if (!empty($vbreaks)) {
             $this->appendRecord('VerticalPagebreaks', array($vbreaks));
         }
@@ -1289,14 +1284,6 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * @return bool
-     */
-    public function isOutlineOn()
-    {
-        return (bool)$this->outlineOn;
-    }
-
-    /**
      * @return int
      */
     public function getIndex()
@@ -1320,6 +1307,14 @@ class Worksheet extends BIFFwriter
     public function getDrawings()
     {
         return $this->drawings;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOutlineOn()
+    {
+        return $this->outlineOn;
     }
 
     /**

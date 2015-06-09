@@ -291,4 +291,32 @@ class GeneralTest extends TestAbstract
 
         $this->assertTestFileEqualsTo('cross_sheets_formulas');
     }
+
+    public function testOutlineOff()
+    {
+        $sheet = $this->workbook->addWorksheet();
+
+        $fields = range(1, 15);
+        $fieldValues = array();
+        $headers = array('ID', 'Name');
+        foreach ($fields as $idx) {
+            $headers[] = 'Field' . $idx;
+            $fieldValues[] = 'Value ' . $idx;
+        }
+
+        $sheet->writeRow(0, 0, $headers);
+
+        $ids = range(1, 65);
+        foreach ($ids as $id) {
+            $sheet->write($id, 0, $id);
+            $sheet->write($id, 1, 'Name' . $id);
+            $sheet->writeRow($id, 2, $fieldValues);
+        }
+
+        $sheet->setOutline(false, false, false);
+
+        $this->workbook->save($this->testFilePath);
+
+        $this->assertTestFileEqualsTo('outline_off');
+    }
 }

@@ -589,9 +589,9 @@ class Workbook extends BIFFwriter
     protected function storePrintAreaNames()
     {
         foreach ($this->worksheets as $sheet) {
-            $pageSetup = $sheet->getPrintSetup();
-            if ($pageSetup->isPrintAreaSet()) {
-                $area = $pageSetup->getPrintArea();
+            $printSetup = $sheet->getPrintSetup();
+            if ($printSetup->isPrintAreaSet()) {
+                $area = $printSetup->getPrintArea();
 
                 $data = $this->getRangeCommonHeader($sheet);
                 $data .= \Xls\Subrecord\Range::getData(array($area), false);
@@ -625,8 +625,8 @@ class Workbook extends BIFFwriter
      */
     protected function storePrintTitleName(Worksheet $sheet)
     {
-        $pageSetup = $sheet->getPrintSetup();
-        $printRepeat = $pageSetup->getPrintRepeat();
+        $printSetup = $sheet->getPrintSetup();
+        $printRepeat = $printSetup->getPrintRepeat();
 
         $rowmin = $printRepeat->getRowFrom();
         $rowmax = $printRepeat->getRowTo();
