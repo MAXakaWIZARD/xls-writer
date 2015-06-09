@@ -47,8 +47,8 @@ class RichTest extends TestAbstract
         $sheet->write(11, 4, '20% скидка!', $this->getDiscountFormat());
         $sheet->write(11, 5, 'subscript', $this->getSubscriptFormat());
 
-        $sheet->setColumnWidth(0, 0, 20);
-        $sheet->setColumnWidth(3, 3, 15);
+        $sheet->setColumnWidth(0, 20);
+        $sheet->setColumnWidth(3, 15);
 
         $anotherSheet = $this->workbook->addWorksheet('Лист2');
         $anotherSheet->write(0, 0, 'Тест');

@@ -9,8 +9,6 @@ class Colinfo extends AbstractRecord
 
     /**
      * Generate the COLINFO biff record to define column widths
-     * @note: The SDK says the record length is 0x0B but Excel writes a 0x0C
-     * length record.
      *
      * @param array $colArray This is the only parameter received and is composed of the following:
      *                0 => First formatted column,

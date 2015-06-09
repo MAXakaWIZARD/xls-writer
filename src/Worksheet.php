@@ -308,62 +308,21 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Set the width of a single column or a range of columns.
+     * Set the width of a single column
      *
-     * @param integer $firstcol first column on the range
-     * @param integer $lastcol  last column on the range
+     * @param integer $col Column index
      * @param integer $width    width to set
      * @param mixed $format   The optional XF format to apply to the columns
-     * @param integer $hidden   The optional hidden atribute
+     * @param bool $hidden   The optional hidden atribute
      * @param integer $level    The optional outline level
      */
-    public function setColumnWidth($firstcol, $lastcol, $width, $format = null, $hidden = 0, $level = 0)
+    public function setColumnWidth($col, $width, $format = null, $hidden = false, $level = 0)
     {
-        // look for any ranges this might overlap and remove, size or split where necessary
-        foreach ($this->colInfo as $key => $colinfo) {
-            $existingStart = $colinfo[0];
-            $existingEnd = $colinfo[1];
-
-            if ($firstcol > $existingStart
-                && $firstcol < $existingEnd
-            ) {
-                // if the new range starts within another range
-                // trim the existing range to the beginning of the new range
-                $this->colInfo[$key][1] = $firstcol - 1;
-
-                if ($lastcol < $existingEnd) {
-                    // if the new range lies WITHIN the existing range
-                    // split the existing range by adding a range after our new range
-                    $this->colInfo[] = array(
-                        $lastcol + 1,
-                        $existingEnd,
-                        $colinfo[2],
-                        &$colinfo[3],
-                        $colinfo[4],
-                        $colinfo[5]
-                    );
-                }
-            } elseif ($lastcol > $existingStart
-                && $lastcol < $existingEnd
-            ) {
-                // if the new range ends inside an existing range
-                // trim the existing range to the end of the new range
-                $this->colInfo[$key][0] = $lastcol + 1;
-            } elseif ($firstcol <= $existingStart && $lastcol >= $existingEnd) {
-                // if the new range completely overlaps the existing range
-                unset($this->colInfo[$key]);
-            }
-        }
-
-        // regenerate keys
-        $this->colInfo = array_values($this->colInfo);
-        $this->colInfo[] = array($firstcol, $lastcol, $width, &$format, $hidden, $level);
+        $this->colInfo[$col] = array($col, $col, $width, $format, $hidden, $level);
 
         // Set width to zero if column is hidden
         $width = ($hidden) ? 0 : $width;
-        for ($col = $firstcol; $col <= $lastcol; $col++) {
-            $this->colSizes[$col] = $width;
-        }
+        $this->colSizes[$col] = $width;
     }
 
     /**
@@ -1116,12 +1075,12 @@ class Worksheet extends BIFFwriter
         $rowEnd = $rowStart; // Row containing bottom right corner of object
 
         // Zero the specified offset if greater than the cell dimensions
-        $colStartSize = $this->sizeCol($colStart);
+        $colStartSize = $this->getColWidth($colStart);
         if ($x1 >= $colStartSize) {
             $x1 = 0;
         }
 
-        $rowStartSize = $this->sizeRow($rowStart);
+        $rowStartSize = $this->getRowHeight($rowStart);
         if ($y1 >= $rowStartSize) {
             $y1 = 0;
         }
@@ -1130,19 +1089,19 @@ class Worksheet extends BIFFwriter
         $height = $height + $y1 - 1;
 
         // Subtract the underlying cell widths to find the end cell of the image
-        while ($width >= $this->sizeCol($colEnd)) {
-            $width -= $this->sizeCol($colEnd);
+        while ($width >= $this->getColWidth($colEnd)) {
+            $width -= $this->getColWidth($colEnd);
             $colEnd++;
         }
 
         // Subtract the underlying cell heights to find the end cell of the image
-        while ($height >= $this->sizeRow($rowEnd)) {
-            $height -= $this->sizeRow($rowEnd);
+        while ($height >= $this->getRowHeight($rowEnd)) {
+            $height -= $this->getRowHeight($rowEnd);
             $rowEnd++;
         }
 
-        $colEndSize = $this->sizeCol($colEnd);
-        $rowEndSize = $this->sizeRow($rowEnd);
+        $colEndSize = $this->getColWidth($colEnd);
+        $rowEndSize = $this->getRowHeight($rowEnd);
 
         if ($colStartSize == 0
             || $colEndSize == 0
@@ -1177,7 +1136,7 @@ class Worksheet extends BIFFwriter
      * @param integer $col The column
      * @return integer The width in pixels
      */
-    protected function sizeCol($col)
+    protected function getColWidth($col)
     {
         // Look up the cell value to see if it has been changed
         if (isset($this->colSizes[$col])) {
@@ -1201,7 +1160,7 @@ class Worksheet extends BIFFwriter
      * @param integer $row The row
      * @return integer The width in pixels
      */
-    protected function sizeRow($row)
+    protected function getRowHeight($row)
     {
         // Look up the cell value to see if it has been changed
         if (isset($this->rowSizes[$row])) {
