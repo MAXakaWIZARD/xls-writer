@@ -52,31 +52,23 @@ class Bitmap
     protected function validate()
     {
         if (strlen($this->data) <= self::HEADER_SIZE) {
-            throw new \Exception("$this->filePath doesn't contain enough data.\n");
+            throw new \Exception("$this->filePath doesn't contain enough data");
         }
 
         if ($this->getIdent() != "BM") {
-            throw new \Exception("$this->filePath doesn't appear to be a valid bitmap image.\n");
-        }
-
-        if ($this->getWidth() > 0xFFFF) {
-            throw new \Exception("$this->filePath: largest image width supported is 65k.\n");
-        }
-
-        if ($this->getHeight() > 0xFFFF) {
-            throw new \Exception("$this->filePath: largest image height supported is 65k.\n");
+            throw new \Exception("$this->filePath doesn't appear to be a valid bitmap image");
         }
 
         if ($this->getColorDepth() != 24) {
-            throw new \Exception("$this->filePath isn't a 24bit true color bitmap.\n");
+            throw new \Exception("$this->filePath isn't a 24bit true color bitmap");
         }
 
         if ($this->getPlanesCount() != 1) {
-            throw new \Exception("$this->filePath: only 1 plane supported in bitmap image.\n");
+            throw new \Exception("$this->filePath: only 1 plane supported in bitmap image");
         }
 
         if ($this->getCompression() != 0) {
-            throw new \Exception("$this->filePath: compression not supported in bitmap image.\n");
+            throw new \Exception("$this->filePath: compression not supported in bitmap image");
         }
     }
 

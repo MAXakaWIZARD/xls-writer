@@ -132,17 +132,6 @@ class GeneralTest extends TestAbstract
         $this->assertTestFileEqualsTo('defcols_rowsizes');
     }
 
-    public function testImage()
-    {
-        $sheet = $this->workbook->addWorksheet();
-        $sheet->write(0, 0, 'Test');
-        $sheet->insertBitmap(2, 2, TEST_DATA_PATH . '/elephpant.bmp');
-
-        $this->workbook->save($this->testFilePath);
-
-        $this->assertTestFileEqualsTo('image');
-    }
-
     public function testMergeCells()
     {
         $sheet = $this->workbook->addWorksheet();

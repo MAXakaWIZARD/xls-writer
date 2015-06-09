@@ -148,42 +148,6 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     /**
      *
      */
-    public function testWrongImagePath()
-    {
-        $sheet = $this->workbook->addWorksheet();
-
-        $path = TEST_DATA_PATH . '/not_exists.bmp';
-        $this->setExpectedException('\Exception', "Couldn't import $path");
-        $sheet->insertBitmap(0, 0, $path);
-    }
-
-    /**
-     *
-     */
-    public function testNonBmp()
-    {
-        $sheet = $this->workbook->addWorksheet();
-
-        $path = TEST_DATA_PATH . '/fill.xls';
-        $this->setExpectedException('\Exception', "$path doesn't appear to be a valid bitmap image");
-        $sheet->insertBitmap(0, 0, $path);
-    }
-
-    /**
-     *
-     */
-    public function testEmptyBmp()
-    {
-        $sheet = $this->workbook->addWorksheet();
-
-        $path = TEST_DATA_PATH . '/corrupted.bmp';
-        $this->setExpectedException('\Exception', "$path doesn't contain enough data");
-        $sheet->insertBitmap(0, 0, $path);
-    }
-
-    /**
-     *
-     */
     public function testWrongRowIndex()
     {
         $sheet = $this->workbook->addWorksheet();
@@ -201,18 +165,6 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
 
         $this->setExpectedException('\Exception', "Col index is beyond max col number");
         $sheet->write(0, 100500, 'Test');
-    }
-
-    /**
-     *
-     */
-    public function testBitmapInHiddenCell()
-    {
-        $sheet = $this->workbook->addWorksheet();
-
-        $sheet->setRowHeight(0, 0);
-        $this->setExpectedException('\Exception', "Bitmap isn't allowed to start or finish in a hidden cell");
-        $sheet->insertBitmap(0, 0, TEST_DATA_PATH . '/elephpant.bmp');
     }
 
     /**
