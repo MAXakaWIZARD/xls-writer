@@ -150,7 +150,7 @@ class Worksheet extends BIFFwriter
     protected $colSizes = array();
     protected $rowSizes = array();
 
-    protected $dv = array();
+    protected $validations = array();
 
     /**
      * Holds last OBJ record id
@@ -1264,7 +1264,7 @@ class Worksheet extends BIFFwriter
     public function setValidation($row1, $col1, $row2, $col2, $validator)
     {
         $range = new Range($row1, $col1, $row2, $col2);
-        $this->dv[] = $validator->getData($range);
+        $this->validations[] = $validator->getData($range);
     }
 
     /**
@@ -1272,13 +1272,13 @@ class Worksheet extends BIFFwriter
      */
     protected function storeDataValidity()
     {
-        if (count($this->dv) == 0) {
+        if (count($this->validations) == 0) {
             return;
         }
 
-        $this->appendRecord('DataValidations', array($this->dv));
+        $this->appendRecord('DataValidations', array($this->validations));
 
-        foreach ($this->dv as $dv) {
+        foreach ($this->validations as $dv) {
             $this->appendRecord('DataValidation', array($dv));
         }
     }

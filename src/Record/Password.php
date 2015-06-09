@@ -29,16 +29,16 @@ class Password extends AbstractRecord
     protected function encode($plaintext)
     {
         $password = 0x0000;
-        $i = 1; // char position
+        $pos = 1; // char position
 
         // split the plain text password in its component characters
         $chars = preg_split('//', $plaintext, -1, PREG_SPLIT_NO_EMPTY);
         foreach ($chars as $char) {
-            $value = ord($char) << $i; // shifted ASCII value
+            $value = ord($char) << $pos; // shifted ASCII value
             $rotatedBits = $value >> 15; // rotated bits beyond bit 15
             $value &= 0x7fff; // first 15 bits
             $password ^= ($value | $rotatedBits);
-            $i++;
+            $pos++;
         }
 
         $password ^= strlen($plaintext);
