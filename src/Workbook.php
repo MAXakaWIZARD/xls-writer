@@ -435,11 +435,6 @@ class Workbook extends BIFFwriter
      */
     public function setCustomColor($index, $red, $green, $blue)
     {
-        // Match a HTML #xxyyzz style parameter
-        /*if (defined $_[1] and $_[1] =~ /^#(\w\w)(\w\w)(\w\w)/ ) {
-            @_ = ($_[0], hex $1, hex $2, hex $3);
-        }*/
-
         Palette::validateColor($index, $red, $green, $blue);
 
         // Set the RGB value, adjust colour index (wingless dragonfly)
@@ -474,36 +469,44 @@ class Workbook extends BIFFwriter
      */
     protected function storeAllFonts()
     {
-        // tmp_format is added by the constructor. We use this to write the default XF's
-        $fontRecordData = $this->tmpFormat->getFontRecord();
-
-        // Note: Fonts are 0-indexed. According to the SDK there is no index 4,
-        // so the following fonts are 0, 1, 2, 3, 5
-        for ($i = 1; $i <= 5; $i++) {
-            $this->append($fontRecordData);
+        foreach ($this->getFonts() as $font) {
+            $this->appendRecord('Font', array($font));
         }
+    }
+
+    /**
+     * @return Font[]
+     */
+    protected function getFonts()
+    {
+        $fontsMap = array();
+
+        $defaultFont = $this->tmpFormat->getFont();
+        $defaultFont->setIndex(0);
+
+        $key = $defaultFont->getKey();
+        $fontsMap[$key] = 1;
+
+        //add default font for 5 times
+        $fonts = array_fill(0, 5, $defaultFont);
 
         // Iterate through the XF objects and write a FONT record if it isn't the
         // same as the default FONT and if it hasn't already been used.
-        $fonts = array();
         $index = 6; // The first user defined FONT
-        $key = $this->tmpFormat->getFont()->getKey(); // The default font from _tmp_format
-        $fonts[$key] = 0; // Index of the default font
-
         foreach ($this->formats as $format) {
             $font = $format->getFont();
             $key = $font->getKey();
-            if (isset($fonts[$key])) {
-                // FONT has already been used
-                $font->setIndex($fonts[$key]);
-            } else {
+
+            if (!isset($fontsMap[$key])) {
                 // Add a new FONT record
-                $fonts[$key] = $index;
+                $fontsMap[$key] = 1;
                 $font->setIndex($index);
+                $fonts[] = $font;
                 $index++;
-                $this->append($format->getFontRecord());
             }
         }
+
+        return $fonts;
     }
 
     /**
