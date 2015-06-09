@@ -6,33 +6,13 @@ class StringUtils
     const STRING_REGEXP_FRACTION = '(-?)(\d+)\s+(\d+\/\d+)';
 
     /**
-     * Is mbstring extension avalable?
-     *
-     * @var boolean
-     */
-    private static $isMbstringEnabled;
-
-    /**
-     * Is iconv extension avalable?
-     *
-     * @var boolean
-     */
-    private static $isIconvEnabled;
-
-    /**
      * Get whether mbstring extension is available
      *
      * @return boolean
      */
     public static function isMbstringEnabled()
     {
-        if (isset(self::$isMbstringEnabled)) {
-            return self::$isMbstringEnabled;
-        }
-
-        self::$isMbstringEnabled = function_exists('mb_convert_encoding');
-
-        return self::$isMbstringEnabled;
+        return function_exists('mb_convert_encoding');
     }
 
     /**
@@ -42,28 +22,7 @@ class StringUtils
      */
     public static function isIconvEnabled()
     {
-        if (isset(self::$isIconvEnabled)) {
-            return self::$isIconvEnabled;
-        }
-
-        // Fail if iconv doesn't exist
-        if (!function_exists('iconv')) {
-            self::$isIconvEnabled = false;
-
-            return false;
-        }
-
-        // Sometimes iconv is not working, and e.g. iconv('UTF-8', 'UTF-16LE', 'x') just returns false,
-        if (!iconv('UTF-8', 'UTF-16LE', 'x')) {
-            self::$isIconvEnabled = false;
-
-            return false;
-        }
-
-        // If we reach here no problems were detected with iconv
-        self::$isIconvEnabled = true;
-
-        return true;
+        return function_exists('iconv');
     }
 
     /**
@@ -206,16 +165,7 @@ class StringUtils
      */
     public static function toUtf16Le($value)
     {
-        if (!self::isMbstringEnabled()) {
-            return $value;
-        }
-
-        $encoding = mb_detect_encoding($value, 'auto');
-        if ($encoding !== 'UTF-16LE') {
-            $value = self::convertEncoding($value, $encoding, 'UTF-16LE');
-        }
-
-        return $value;
+        return self::convertEncoding($value, 'UTF-8', 'UTF-16LE');
     }
 
     /**
