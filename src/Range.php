@@ -94,6 +94,7 @@ class Range
     /**
      * Include specified cell
      * @param Cell $cell
+     * @return Range
      */
     public function expand(Cell $cell)
     {
@@ -112,13 +113,59 @@ class Range
         if ($cell->getCol() > $this->colTo) {
             $this->colTo = $cell->getCol();
         }
+
+        return $this;
     }
 
     /**
      * @return Cell
      */
-    public function startCell()
+    public function getStartCell()
     {
         return new Cell($this->rowFrom, $this->colFrom);
+    }
+
+    /**
+     * @param int $colFrom
+     * @return Range
+     */
+    public function setColFrom($colFrom)
+    {
+        $this->colFrom = $colFrom;
+
+        return $this;
+    }
+
+    /**
+     * @param int|null $colTo
+     * @return Range
+     */
+    public function setColTo($colTo)
+    {
+        $this->colTo = $colTo;
+
+        return $this;
+    }
+
+    /**
+     * @param int $rowFrom
+     * @return Range
+     */
+    public function setRowFrom($rowFrom)
+    {
+        $this->rowFrom = $rowFrom;
+
+        return $this;
+    }
+
+    /**
+     * @param int|null $rowTo
+     * @return Range
+     */
+    public function setRowTo($rowTo)
+    {
+        $this->rowTo = $rowTo;
+
+        return $this;
     }
 }

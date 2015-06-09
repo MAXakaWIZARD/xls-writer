@@ -19,10 +19,11 @@ class LayoutsTest extends TestAbstract
         );
         $sheet->writeRow(0, 0, $row);
 
-        $pageSetup = $sheet->getPageSetup();
+        $sheet->setZoom(125);
+
+        $pageSetup = $sheet->getPrintSetup();
 
         $pageSetup
-            ->setZoom(125)
             ->setPortrait()
             ->setHeader('Page header')
             ->setFooter('Page footer')
@@ -52,7 +53,7 @@ class LayoutsTest extends TestAbstract
             $sheet->write($id, 1, 'Name' . $id);
         }
 
-        $sheet->getPageSetup()
+        $sheet->getPrintSetup()
             ->printRepeatRows(0)
             ->printRepeatRows(0, 0)
         ;
@@ -83,7 +84,7 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->getPageSetup()
+        $sheet->getPrintSetup()
             ->printRepeatColumns(0)
             ->printRepeatColumns(0, 0)
         ;
@@ -114,7 +115,7 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $sheet->getPageSetup()
+        $sheet->getPrintSetup()
             ->printRepeatRows(0)
             ->printRepeatColumns(0)
         ;
@@ -145,13 +146,14 @@ class LayoutsTest extends TestAbstract
             $sheet->writeRow($id, 2, $fieldValues);
         }
 
-        $pageSetup = $sheet->getPageSetup();
+        $sheet->showGridlines(false);
+
+        $pageSetup = $sheet->getPrintSetup();
 
         //header and footer should be cut to max length (255)
         $pageSetup
             ->setHeader('Page header ' . str_repeat('.', 255))
             ->setFooter('Page footer ' . str_repeat('.', 255))
-            ->showGridlines(false)
             ->setLandscape()
             ->centerHorizontally()
             ->centerVertically()

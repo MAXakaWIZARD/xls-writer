@@ -589,7 +589,7 @@ class Workbook extends BIFFwriter
     protected function storePrintAreaNames()
     {
         foreach ($this->worksheets as $sheet) {
-            $pageSetup = $sheet->getPageSetup();
+            $pageSetup = $sheet->getPrintSetup();
             if ($pageSetup->isPrintAreaSet()) {
                 $area = $pageSetup->getPrintArea();
 
@@ -625,11 +625,13 @@ class Workbook extends BIFFwriter
      */
     protected function storePrintTitleName(Worksheet $sheet)
     {
-        $pageSetup = $sheet->getPageSetup();
-        $rowmin = $pageSetup->getTitleRowMin();
-        $rowmax = $pageSetup->getTitleRowMax();
-        $colmin = $pageSetup->getTitleColMin();
-        $colmax = $pageSetup->getTitleColMax();
+        $pageSetup = $sheet->getPrintSetup();
+        $printRepeat = $pageSetup->getPrintRepeat();
+
+        $rowmin = $printRepeat->getRowFrom();
+        $rowmax = $printRepeat->getRowTo();
+        $colmin = $printRepeat->getColFrom();
+        $colmax = $printRepeat->getColTo();
 
         if (!isset($rowmin) && !isset($colmin)) {
             return;

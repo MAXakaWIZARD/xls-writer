@@ -161,9 +161,16 @@ class Worksheet extends BIFFwriter
     protected $drawings = array();
 
     /**
-     * @var PageSetup
+     * @var PrintSetup
      */
-    protected $pageSetup;
+    protected $printSetup;
+
+    protected $screenGridLines = true;
+
+    /**
+     * @var float
+     */
+    protected $zoom = 100;
 
     /**
      * Constructor
@@ -200,7 +207,7 @@ class Worksheet extends BIFFwriter
 
         $this->selection = new Range();
 
-        $this->pageSetup = new PageSetup();
+        $this->printSetup = new PrintSetup();
     }
 
     /**
@@ -826,7 +833,7 @@ class Worksheet extends BIFFwriter
      */
     protected function writeUrlWeb(Range $range, $url, $str, $format = null)
     {
-        $this->writeUrlLabel($range->startCell(), $url, $str, $format);
+        $this->writeUrlLabel($range->getStartCell(), $url, $str, $format);
         $this->appendRecord('Hyperlink', array($range, $url));
     }
 
@@ -847,7 +854,7 @@ class Worksheet extends BIFFwriter
             $url = substr($url, 1);
         }
 
-        $this->writeUrlLabel($range->startCell(), $url, $label, $format);
+        $this->writeUrlLabel($range->getStartCell(), $url, $label, $format);
         $this->appendRecord('HyperlinkInternal', array($range, $url));
     }
 
@@ -866,7 +873,7 @@ class Worksheet extends BIFFwriter
         $url = preg_replace('/^external:/', '', $url);
         $url = preg_replace('/\//', "\\", $url);
 
-        $this->writeUrlLabel($range->startCell(), $url, $label, $format);
+        $this->writeUrlLabel($range->getStartCell(), $url, $label, $format);
         $this->appendRecord('HyperlinkExternal', array($range, $url));
     }
 
@@ -944,7 +951,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeMargins()
     {
-        $pageSetup = $this->getPageSetup();
+        $pageSetup = $this->getPrintSetup();
         $margin = $pageSetup->getMargin();
 
         $this->appendRecord('LeftMargin', array($margin->getLeft()));
@@ -955,7 +962,7 @@ class Worksheet extends BIFFwriter
 
     protected function storeHeaderAndFooter()
     {
-        $pageSetup = $this->getPageSetup();
+        $pageSetup = $this->getPrintSetup();
 
         $this->appendRecord('Header', array($pageSetup->getHeader()));
         $this->appendRecord('Footer', array($pageSetup->getFooter()));
@@ -966,7 +973,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeCentering()
     {
-        $pageSetup = $this->getPageSetup();
+        $pageSetup = $this->getPrintSetup();
 
         $this->appendRecord('Hcenter', array((int)$pageSetup->isHcenteringOn()));
         $this->appendRecord('Vcenter', array((int)$pageSetup->isVcenteringOn()));
@@ -1000,7 +1007,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePrintHeaders()
     {
-        $printHeaders = $this->getPageSetup()->shouldPrintRowColHeaders();
+        $printHeaders = $this->getPrintSetup()->shouldPrintRowColHeaders();
         $this->appendRecord('PrintHeaders', array($printHeaders));
     }
 
@@ -1010,7 +1017,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storeGrid()
     {
-        $linesVisible = $this->getPageSetup()->shouldPrintGridLines();
+        $linesVisible = $this->getPrintSetup()->shouldPrintGridLines();
         $this->appendRecord('PrintGridLines', array($linesVisible));
         $this->appendRecord('Gridset', array(!$linesVisible));
     }
@@ -1020,7 +1027,7 @@ class Worksheet extends BIFFwriter
      */
     protected function storePageBreaks()
     {
-        $pageSetup = $this->getPageSetup();
+        $pageSetup = $this->getPrintSetup();
 
         $hbreaks = $pageSetup->getHbreaks();
         if (!empty($hbreaks)) {
@@ -1246,7 +1253,7 @@ class Worksheet extends BIFFwriter
     protected function storeZoom()
     {
         // If scale is 100 we don't need to write a record
-        $zoom = $this->getPageSetup()->getZoom();
+        $zoom = $this->getZoom();
         if ($zoom == 100) {
             return;
         }
@@ -1366,10 +1373,60 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * @return PageSetup
+     * @return PrintSetup
      */
-    public function getPageSetup()
+    public function getPrintSetup()
     {
-        return $this->pageSetup;
+        return $this->printSetup;
+    }
+
+    /**
+     * Set the option to hide gridlines on the worksheet (as seen on the screen).
+     *
+     * @param bool $visible
+     *
+     * @return Worksheet
+     */
+    public function showGridlines($visible = true)
+    {
+        $this->screenGridLines = $visible;
+
+        return $this;
+    }
+
+    /**
+     * Set the worksheet zoom factor.
+     *
+     * @param integer $percents The zoom factor
+     *
+     * @throws \Exception
+     * @return Worksheet
+     */
+    public function setZoom($percents = 100)
+    {
+        // Confine the scale to Excel's range
+        if ($percents < 10 || $percents > 400) {
+            throw new \Exception("Zoom factor $percents outside range: 10 <= zoom <= 400");
+        }
+
+        $this->zoom = floor($percents);
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function areGridLinesVisible()
+    {
+        return (bool)$this->screenGridLines;
+    }
+
+    /**
+     * @return float
+     */
+    public function getZoom()
+    {
+        return $this->zoom;
     }
 }

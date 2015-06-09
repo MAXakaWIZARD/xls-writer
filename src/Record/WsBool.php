@@ -29,7 +29,7 @@ class WsBool extends AbstractRecord
         if ($sheet->getOutlineRight()) {
             $grbit |= 0x0080; // Outline summary right
         }
-        if ($sheet->getPageSetup()->isFitPage()) {
+        if ($sheet->getPrintSetup()->isFitPage()) {
             $grbit |= 0x0100; // Page setup fit to page
         }
         if ($sheet->isOutlineOn()) {

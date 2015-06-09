@@ -16,7 +16,7 @@ class PageSetup extends AbstractRecord
      */
     public function getData($sheet)
     {
-        $pageSetup = $sheet->getPageSetup();
+        $pageSetup = $sheet->getPrintSetup();
 
         $iPaperSize = $pageSetup->getPaperSize(); // Paper size
         $iScale = $pageSetup->getPrintScale(); // Print scaling factor
@@ -60,7 +60,7 @@ class PageSetup extends AbstractRecord
     protected function calcGrbit(Worksheet $worksheet)
     {
         $fLeftToRight = 0x0; // Print over then down
-        $fLandscape = $worksheet->getPageSetup()->getOrientation(); // Page orientation
+        $fLandscape = $worksheet->getPrintSetup()->getOrientation(); // Page orientation
         $fNoPls = 0x0; // Setup not read from printer
         $fNoColor = 0x0; // Print black and white
         $fDraft = 0x0; // Print draft quality

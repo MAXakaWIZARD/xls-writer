@@ -110,7 +110,7 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     {
         $sheet = $this->workbook->addWorksheet();
         $this->setExpectedException('\Exception', 'Zoom factor 1000 outside range: 10 <= zoom <= 400');
-        $sheet->getPageSetup()->setZoom(1000);
+        $sheet->setZoom(1000);
     }
 
     /**
@@ -119,8 +119,8 @@ class WorkbookTest extends \PHPUnit_Framework_TestCase
     public function testWrongPrintScaleFactor()
     {
         $sheet = $this->workbook->addWorksheet();
-        $this->setExpectedException('\Exception', 'Print scale 1000 outside range: 10 <= zoom <= 400');
-        $sheet->getPageSetup()->setPrintScale(1000);
+        $this->setExpectedException('\Exception', 'Print scale 1000 outside range: 10 <= scale <= 400');
+        $sheet->getPrintSetup()->setPrintScale(1000);
     }
 
     /**
