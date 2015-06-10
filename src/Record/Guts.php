@@ -28,10 +28,7 @@ class Guts extends AbstractRecord
         // Calculate the maximum column outline level. The equivalent calculation
         // for the row outline level is carried out in setRow().
         foreach ($colInfo as $col) {
-            // Skip cols without outline level info.
-            if (count($col) >= 6) {
-                $colLevel = max($col[5], $colLevel);
-            }
+            $colLevel = max($col['level'], $colLevel);
         }
 
         // Set the limits for the outline levels (0 <= x <= 7).

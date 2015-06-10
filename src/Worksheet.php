@@ -48,6 +48,12 @@ class Worksheet extends BIFFwriter
     protected $colInfo = array();
 
     /**
+     * Array containing format information for rows
+     * @var array
+     */
+    protected $rowInfo = array();
+
+    /**
      * Range containing the selected area for the worksheet
      * @var Range
      */
@@ -131,8 +137,6 @@ class Worksheet extends BIFFwriter
 
     protected $protect = 0;
     protected $password = null;
-    protected $colSizes = array();
-    protected $rowSizes = array();
 
     protected $validations = array();
 
@@ -200,7 +204,7 @@ class Worksheet extends BIFFwriter
 
         $this->appendRecord('Bof', array(static::BOF_TYPE));
 
-        $this->storeColinfo();
+        $this->storeColsAndRowsInfo();
         $this->storePrintHeaders();
         $this->storeGrid();
         $this->appendRecord('Guts', array($this->colInfo, $this->outlineRowLevel));
@@ -305,16 +309,17 @@ class Worksheet extends BIFFwriter
      * @param integer $col Column index
      * @param integer $width    width to set
      * @param mixed $format   The optional XF format to apply to the columns
-     * @param bool $hidden   The optional hidden atribute
-     * @param integer $level    The optional outline level
      */
-    public function setColumnWidth($col, $width, $format = null, $hidden = false, $level = 0)
+    public function setColumnWidth($col, $width, $format = null)
     {
-        $this->colInfo[$col] = array($col, $col, $width, $format, $hidden, $level);
-
-        // Set width to zero if column is hidden
-        $width = ($hidden) ? 0 : $width;
-        $this->colSizes[$col] = $width;
+        $this->colInfo[$col] = array(
+            'col' => $col,
+            'col2' => $col,
+            'width' => $width,
+            'format' => $format,
+            'hidden' => $width == 0,
+            'level' => 0
+        );
     }
 
     /**
@@ -323,17 +328,16 @@ class Worksheet extends BIFFwriter
      * @param integer $height Height we are giving to the row.
      *                        Use null to set XF without setting height
      * @param mixed $format XF format we are giving to the row
-     * @param bool $hidden The optional hidden attribute
-     * @param integer $level  The optional outline level for row, in range [0,7]
      */
-    public function setRowHeight($row, $height, $format = null, $hidden = false, $level = 0)
+    public function setRowHeight($row, $height, $format = null)
     {
-        $this->rowSizes[$row] = $height;
-
-        $level = max(0, min($level, 7)); // level should be between 0 and 7
-        $this->outlineRowLevel = max($level, $this->outlineRowLevel);
-
-        $this->appendRecord('Row', array($row, $height, $format, $hidden, $level));
+        $this->rowInfo[$row] = array(
+            'row' => $row,
+            'height' => $height,
+            'format' => $format,
+            'hidden' => $height == 0,
+            'level' => 0
+        );
     }
 
     /**
@@ -856,14 +860,18 @@ class Worksheet extends BIFFwriter
     }
 
     /**
-     * Append the COLINFO records if they exist
+     * Append the COLINFO and ROW records if they exist
      */
-    protected function storeColinfo()
+    protected function storeColsAndRowsInfo()
     {
         $this->appendRecord('Defcolwidth');
 
         foreach ($this->colInfo as $item) {
             $this->appendRecord('Colinfo', array($item));
+        }
+
+        foreach ($this->rowInfo as $item) {
+            $this->appendRecord('Row', array($item));
         }
     }
 
@@ -1131,12 +1139,13 @@ class Worksheet extends BIFFwriter
     protected function getColWidth($col)
     {
         // Look up the cell value to see if it has been changed
-        if (isset($this->colSizes[$col])) {
-            if ($this->colSizes[$col] == 0) {
+        if (isset($this->colInfo[$col])) {
+            $width = $this->colInfo[$col]['width'];
+            if ($width == 0) {
                 return 0;
-            } else {
-                return floor(7 * $this->colSizes[$col] + 5);
             }
+
+            return floor(7 * $width + 5);
         }
 
         return 64;
@@ -1155,12 +1164,13 @@ class Worksheet extends BIFFwriter
     protected function getRowHeight($row)
     {
         // Look up the cell value to see if it has been changed
-        if (isset($this->rowSizes[$row])) {
-            if ($this->rowSizes[$row] == 0) {
+        if (isset($this->rowInfo[$row])) {
+            $height = $this->rowInfo[$row]['height'];
+            if ($height == 0) {
                 return 0;
-            } else {
-                return floor(4 / 3 * $this->rowSizes[$row]);
             }
+
+            return floor(4 / 3 * $height);
         }
 
         return 17;

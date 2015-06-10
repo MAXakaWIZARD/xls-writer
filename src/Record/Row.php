@@ -7,39 +7,36 @@ class Row extends AbstractRecord
     const ID = 0x0208;
 
     /**
-     * @param      $row
-     * @param      $height
-     * @param null $format
-     * @param bool $hidden
-     * @param int  $level
+     * @param array $rowInfo
      *
      * @return string
      */
-    public function getData($row, $height, $format = null, $hidden = false, $level = 0)
+    public function getData($rowInfo)
     {
         $colMic = 0x0000; // First defined column
         $colMac = 0x0000; // Last defined column
         $irwMac = 0x0000; // Used by Excel to optimise loading
         $reserved = 0x0000; // Reserved
 
+        $height = $rowInfo['height'];
         if (!is_null($height)) {
             $height = $height * 20; // row height
         } else {
             $height = 0xff; // default row height is 256
         }
 
-        $level = max(0, min($level, 7)); // level should be between 0 and 7
+        $level = max(0, min($rowInfo['level'], 7)); // level should be between 0 and 7
 
         $data = pack(
             "vvvvvvvv",
-            $row,
+            $rowInfo['row'],
             $colMic,
             $colMac,
             $height,
             $irwMac,
             $reserved,
-            $this->getGrBit($format, $hidden, $level),
-            $this->xf($format)
+            $this->getGrBit($rowInfo['format'], $rowInfo['hidden'], $level),
+            $this->xf($rowInfo['format'])
         );
 
         return $this->getFullRecord($data);

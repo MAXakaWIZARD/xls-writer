@@ -10,7 +10,7 @@ class Colinfo extends AbstractRecord
     /**
      * Generate the COLINFO biff record to define column widths
      *
-     * @param array $colArray This is the only parameter received and is composed of the following:
+     * @param array $colInfo This is the only parameter received and is composed of the following:
      *                0 => First formatted column,
      *                1 => Last formatted column,
      *                2 => Col width (8.43 is Excel default),
@@ -20,35 +20,16 @@ class Colinfo extends AbstractRecord
      *
      * @return string
      */
-    public function getData($colArray)
+    public function getData($colInfo)
     {
-        $colFirst = (isset($colArray[0])) ? $colArray[0] : 0;
-        $colLast = (isset($colArray[1])) ? $colArray[1] : 0;
+        $colFirst = (isset($colInfo['col'])) ? $colInfo['col'] : 0;
+        $colLast = (isset($colInfo['col2'])) ? $colInfo['col2'] : 0;
 
-        if (isset($colArray[2])) {
-            $coldx = $colArray[2];
-        } else {
-            $coldx = 8.43;
-        }
+        $format = $colInfo['format'];
+        $grbit = $colInfo['hidden'];
+        $level = $colInfo['level'];
 
-        if (isset($colArray[3])) {
-            $format = $colArray[3];
-        } else {
-            $format = null;
-        }
-
-        if (isset($colArray[4])) {
-            $grbit = $colArray[4];
-        } else {
-            $grbit = 0;
-        }
-
-        if (isset($colArray[5])) {
-            $level = $colArray[5];
-        } else {
-            $level = 0;
-        }
-
+        $coldx = $colInfo['width'];
         $coldx += 0.72; // Fudge. Excel subtracts 0.72 !?
         $coldx *= 256; // Convert to units of 1/256 of a char
 

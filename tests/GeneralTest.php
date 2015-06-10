@@ -120,12 +120,12 @@ class GeneralTest extends TestAbstract
 
         $sheet->setColumnWidth(0, 25);
         $sheet->setColumnWidth(1, 50);
-        $sheet->setColumnWidth(2, 10, null, true);
+        $sheet->setColumnWidth(2, 0);
         $sheet->setColumnWidth(3, 5);
 
         $sheet->setRowHeight(0, 30);
         $sheet->setRowHeight(1, 15);
-        $sheet->setRowHeight(2, 10, null, true);
+        $sheet->setRowHeight(2, 0);
 
         $this->workbook->save($this->testFilePath);
 
