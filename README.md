@@ -10,7 +10,7 @@
 [![Latest Unstable Version](https://poser.pugx.org/maxakawizard/xls-writer/v/unstable)](https://packagist.org/packages/maxakawizard/xls-writer)
 [![Packagist](https://img.shields.io/packagist/dt/maxakawizard/xls-writer.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
 
-[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.3-8892BF.svg)](https://php.net/)
+[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.3.3-8892BF.svg)](https://php.net/)
 [![PHP 7 ready](http://php7ready.timesplinter.ch/MAXakaWIZARD/xls-writer/badge.svg)](https://travis-ci.org/MAXakaWIZARD/xls-writer)
 [![License](https://img.shields.io/packagist/l/maxakawizard/xls-writer.svg)](https://packagist.org/packages/maxakawizard/xls-writer)
 
