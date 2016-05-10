@@ -23,7 +23,7 @@ class DefinedName extends AbstractRecord
         $options = 0x20; // Option flags
 
         $name = pack("C", $type);
-        $nameLen = StringUtils::CountCharacters($name);
+        $nameLen = StringUtils::countCharacters($name);
         $name = StringUtils::toBiff8UnicodeLongWoLenInfo($name);
 
         $formulaLen = strlen($formulaData);

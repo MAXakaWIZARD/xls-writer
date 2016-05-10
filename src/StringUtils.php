@@ -71,7 +71,7 @@ class StringUtils
      */
     public static function toBiff8Unicode($value, $lengthSize)
     {
-        $ln = self::CountCharacters($value);
+        $ln = self::countCharacters($value);
         $lengthFormat = ($lengthSize == 8) ? 'C' : 'v';
         $data = pack($lengthFormat, $ln);
 
